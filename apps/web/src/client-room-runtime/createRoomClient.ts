@@ -394,6 +394,11 @@ export function createRoomClient(options: CreateRoomClientOptions): RoomClient {
         revision: result.ok ? result.data.revision : undefined,
       });
 
+      if (!result.ok && action.type === 'endStroke') {
+        recordDrawingResync({ roomCode: code, target: 'match', reason: 'action_rejected' });
+        queueRoomResync(code);
+      }
+
       return result;
     },
     async submitLobbyDrawingAction(code, action) {
@@ -407,6 +412,11 @@ export function createRoomClient(options: CreateRoomClientOptions): RoomClient {
         ackBytes: estimateSerializedPayloadBytes(result),
         revision: result.ok ? result.data.revision : undefined,
       });
+
+      if (!result.ok && action.type === 'endStroke') {
+        recordDrawingResync({ roomCode: code, target: 'lobby', reason: 'action_rejected' });
+        queueRoomResync(code);
+      }
 
       return result;
     },

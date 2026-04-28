@@ -157,8 +157,8 @@ export function recordDrawingPaint(fields: {
 export function recordDrawingResync(fields: {
   roomCode: string;
   target: DrawingMetricsTarget;
-  revision: number;
-  reason: 'revision_mismatch';
+  revision?: number;
+  reason: 'revision_mismatch' | 'action_rejected';
 }): void {
   if (!isDrawingMetricsEnabled()) {
     return;

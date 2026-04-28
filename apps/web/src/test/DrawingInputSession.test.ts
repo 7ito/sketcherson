@@ -24,6 +24,14 @@ function fail(message = 'nope'): ApiResult<DrawingActionSuccess> {
 
 const point = (x: number, y: number): DrawingPoint => ({ x, y });
 
+function deferred<T>() {
+  let resolve: (value: T) => void = () => undefined;
+  const promise = new Promise<T>((nextResolve) => {
+    resolve = nextResolve;
+  });
+  return { promise, resolve };
+}
+
 describe('DrawingInputSession', () => {
   it('sends begin, batched extend, and end actions in order', async () => {
     let timer: (() => void) | null = null;
@@ -69,6 +77,49 @@ describe('DrawingInputSession', () => {
     expect(session.getOptimisticStroke()).toBeNull();
     session.move(point(2, 2));
     expect(submitAction).toHaveBeenCalledTimes(1);
+  });
+
+  it('waits for begin acknowledgement before submitting end', async () => {
+    const begin = deferred<ApiResult<DrawingActionSuccess>>();
+    const submitAction = vi.fn<(action: DrawingAction) => Promise<ApiResult<DrawingActionSuccess>>>()
+      .mockReturnValueOnce(begin.promise)
+      .mockResolvedValueOnce(ok(2));
+    const session = createDrawingInputSession({
+      submitAction,
+      createStrokeId: () => 'stroke-1',
+    });
+
+    const beginResult = session.begin({ point: point(1, 1), tool: 'pen', color: '#123456', size: 8 });
+    const endResult = session.end();
+    await Promise.resolve();
+
+    expect(submitAction.mock.calls.map(([action]) => action.type)).toEqual(['beginStroke']);
+
+    begin.resolve(ok(1));
+    await beginResult;
+    await endResult;
+
+    expect(submitAction.mock.calls.map(([action]) => action)).toEqual([
+      { type: 'beginStroke', strokeId: 'stroke-1', tool: 'pen', color: '#123456', size: 8, point: point(1, 1) },
+      { type: 'endStroke', strokeId: 'stroke-1' },
+    ]);
+  });
+
+  it('does not submit end when delayed begin fails', async () => {
+    const begin = deferred<ApiResult<DrawingActionSuccess>>();
+    const submitAction = vi.fn<(action: DrawingAction) => Promise<ApiResult<DrawingActionSuccess>>>().mockReturnValueOnce(begin.promise);
+    const session = createDrawingInputSession({
+      submitAction,
+      createStrokeId: () => 'stroke-1',
+    });
+
+    const beginResult = session.begin({ point: point(1, 1), tool: 'pen', color: '#123456', size: 8 });
+    const endResult = session.end();
+    begin.resolve(fail('begin failed'));
+
+    await beginResult;
+    await expect(endResult).resolves.toBeNull();
+    expect(submitAction.mock.calls.map(([action]) => action.type)).toEqual(['beginStroke']);
   });
 
   it('requeues failed extend batches while the stroke is still active', async () => {

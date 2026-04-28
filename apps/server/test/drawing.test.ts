@@ -1,5 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { applyDrawingAction, createDrawingState, finalizeDrawingState } from '../src/domain/drawing';
+import { ServerDrawingChannel } from '../src/domain/roomRuntime/ServerDrawingChannel';
+import type { RoomRecord } from '../src/domain/roomRuntime/model';
 
 describe('drawing state', () => {
   it('tracks a live stroke and captures a bitmap snapshot at turn end', () => {
@@ -78,6 +80,76 @@ describe('drawing state', () => {
 
     expect(drawing.operations.map((operation) => operation.kind)).toEqual(['stroke', 'clear']);
     expect(drawing.undoneOperations).toEqual([]);
+  });
+
+  it('allows match drawer to replace a stale active stroke', () => {
+    const drawing = createDrawingState();
+    applyDrawingAction(drawing, {
+      type: 'beginStroke',
+      strokeId: 'stale-stroke',
+      tool: 'pen',
+      color: '#2d56ff',
+      size: 6,
+      point: { x: 40, y: 40 },
+    });
+    const room = {
+      code: 'ABCDEF',
+      stateRevision: 1,
+      status: 'round',
+      match: {
+        activeTurn: {
+          drawerPlayerId: 'player-1',
+          drawing,
+        },
+      },
+      lobbyDrawing: createDrawingState(),
+    } as RoomRecord;
+    const channel = new ServerDrawingChannel({
+      applyDrawingAction,
+      consumeDrawingRateLimit: () => null,
+      touchRoom: vi.fn(),
+      lobbyDrawingEnabled: true,
+    });
+
+    const result = channel.apply({
+      room,
+      actor: { playerId: 'player-1', connectionId: 'socket-1' },
+      target: 'match',
+      action: {
+        type: 'beginStroke',
+        strokeId: 'fresh-stroke',
+        tool: 'pen',
+        color: '#ff6600',
+        size: 6,
+        point: { x: 80, y: 80 },
+      },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(drawing.activeStrokes.map((stroke) => stroke.id)).toEqual(['fresh-stroke']);
+  });
+
+  it('allows fill while another stroke is active', () => {
+    const drawing = createDrawingState();
+
+    applyDrawingAction(drawing, {
+      type: 'beginStroke',
+      strokeId: 'stroke-1',
+      tool: 'pen',
+      color: '#2d56ff',
+      size: 6,
+      point: { x: 40, y: 40 },
+    });
+
+    const result = applyDrawingAction(drawing, {
+      type: 'fill',
+      color: '#ff6600',
+      point: { x: 80, y: 80 },
+    });
+
+    expect(result.ok).toBe(true);
+    expect(drawing.operations.map((operation) => operation.kind)).toEqual(['fill']);
+    expect(drawing.activeStrokes).toHaveLength(1);
   });
 
   it('clears redo history after a new drawing action', () => {

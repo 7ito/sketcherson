@@ -263,10 +263,6 @@ export function applyDrawingActionToState(drawing: DrawingState, action: Drawing
     }
 
     case 'fill': {
-      if (drawing.activeStrokes.length > 0) {
-        return invalidDrawingActionResult('Finish the active strokes before filling.');
-      }
-
       if (!isDrawingColorValid(action.color)) {
         return invalidDrawingActionResult('Drawing color is invalid.');
       }

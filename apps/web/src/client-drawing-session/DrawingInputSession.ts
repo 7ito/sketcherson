@@ -37,6 +37,7 @@ export function createDrawingInputSession<TSuccess extends ExtendBatchSuccess = 
   options: DrawingInputSessionOptions<TSuccess>,
 ): DrawingInputSession<TSuccess> {
   let optimisticStroke: OptimisticStroke | null = null;
+  let beginStrokePromise: Promise<ApiResult<TSuccess>> | null = null;
   const makeStrokeId = options.createStrokeId ?? createStrokeId;
   const notifyOptimisticStrokeChange = () => options.onOptimisticStrokeChange?.(optimisticStroke);
 
@@ -72,7 +73,7 @@ export function createDrawingInputSession<TSuccess extends ExtendBatchSuccess = 
       };
       notifyOptimisticStrokeChange();
 
-      const result = await options.submitAction({
+      const resultPromise = options.submitAction({
         type: 'beginStroke',
         strokeId,
         tool: input.tool,
@@ -80,6 +81,11 @@ export function createDrawingInputSession<TSuccess extends ExtendBatchSuccess = 
         size: input.size,
         point: input.point,
       });
+      beginStrokePromise = resultPromise;
+      const result = await resultPromise;
+      if (beginStrokePromise === resultPromise) {
+        beginStrokePromise = null;
+      }
       if (!result.ok) {
         controller.abortActiveStroke();
         clearOptimisticStroke();
@@ -95,12 +101,15 @@ export function createDrawingInputSession<TSuccess extends ExtendBatchSuccess = 
     async end() {
       const strokeId = controller.endActiveStroke();
       if (!strokeId) return null;
+      const beginResult = await beginStrokePromise;
+      if (beginResult && !beginResult.ok) return null;
       const result = await options.submitAction({ type: 'endStroke', strokeId });
       clearOptimisticStroke();
       controller.resetPendingExtend();
       return result;
     },
     cancel() {
+      beginStrokePromise = null;
       controller.abortActiveStroke();
       clearOptimisticStroke();
     },

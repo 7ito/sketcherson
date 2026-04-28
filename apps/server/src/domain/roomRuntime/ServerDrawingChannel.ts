@@ -125,13 +125,8 @@ export class ServerDrawingChannel implements DrawingChannelServer {
     }
 
     if (input.action.type === 'beginStroke' && activeTurn.drawing.activeStrokes.length > 0) {
-      return {
-        ok: false,
-        error: {
-          code: 'INVALID_DRAW_ACTION',
-          message: 'Finish the active stroke before starting another.',
-        },
-      };
+      activeTurn.drawing.activeStrokes = [];
+      activeTurn.drawing.snapshotDataUrl = null;
     }
 
     return { ok: true, data: activeTurn.drawing };
