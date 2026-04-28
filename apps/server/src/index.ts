@@ -4,7 +4,10 @@ import { createGameServer } from './createServer';
 import { logServerError, logServerEvent } from './logger';
 
 const app = createSketchersonApp(shellConfig);
-const server = createGameServer(app.server.options());
+const server = createGameServer(app.server.options({
+  appOrigin: process.env.APP_ORIGIN,
+  corsOrigin: process.env.CORS_ORIGIN,
+}));
 
 server
   .start()

@@ -1,5 +1,5 @@
 import { normalizeLobbySettingsForGame } from '@sketcherson/common/settings';
-import { MAX_CHAT_MESSAGE_LENGTH, MIN_PLAYERS_TO_START, type ApiResult, type LobbyDrawingActionSuccess, type LobbySettings, type RoomState } from '@sketcherson/common/room';
+import { buildShareUrl, MAX_CHAT_MESSAGE_LENGTH, MIN_PLAYERS_TO_START, type ApiResult, type LobbyDrawingActionSuccess, type LobbySettings, type RoomState } from '@sketcherson/common/room';
 import type { DrawingAction } from '@sketcherson/common/drawing';
 import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { formatShellCopy } from '@sketcherson/common/game';
@@ -23,6 +23,13 @@ const SHELL_COMMON_COPY = GAME_WEB_CONFIG.ui.copy.common;
 const SHELL_ROOM_COPY = GAME_WEB_CONFIG.ui.copy.room;
 const SHELL_LOBBY_COPY = GAME_WEB_CONFIG.ui.copy.lobby;
 const SHELL_SKIN_ICONS = GAME_WEB_CONFIG.ui.skin.tokens.icons;
+
+export function buildLobbyInviteUrl(
+  room: Pick<RoomState, 'code' | 'shareUrl'>,
+  origin = typeof window === 'undefined' ? '' : window.location.origin,
+): string {
+  return origin ? buildShareUrl(origin, room.code) : room.shareUrl;
+}
 
 export function LobbyView({
   room,
@@ -77,7 +84,7 @@ export function LobbyView({
       return;
     }
 
-    await navigator.clipboard.writeText(room.shareUrl);
+    await navigator.clipboard.writeText(buildLobbyInviteUrl(room));
     setCopyState('copied');
     window.setTimeout(() => setCopyState('idle'), 1500);
   };
