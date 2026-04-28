@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="Dragon reference sketch">
+  <rect width="160" height="160" rx="18" fill="#ecfdf5"/>
+  <path d="M42 98c8-34 42-54 72-30 18 14 18 44-2 58-26 18-62 8-70-28z" fill="#22c55e" stroke="#14532d" stroke-width="5"/>
+  <path d="M88 58l16-28 10 34M58 72L34 44l8 42" fill="#86efac" stroke="#14532d" stroke-width="5" stroke-linejoin="round"/>
+  <circle cx="104" cy="82" r="5" fill="#172554"/>
+  <path d="M118 92l20-10-12 18 16 8-24 4" fill="#f97316"/>
+</svg>

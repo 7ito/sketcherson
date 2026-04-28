@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="Arrows reference sketch">
+  <rect width="160" height="160" rx="18" fill="#eff6ff"/>
+  <path d="M30 52h82" stroke="#2563eb" stroke-width="10" stroke-linecap="round"/>
+  <path d="M98 34l28 18-28 18" fill="none" stroke="#2563eb" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M130 108H48" stroke="#f97316" stroke-width="10" stroke-linecap="round"/>
+  <path d="M62 90l-28 18 28 18" fill="none" stroke="#f97316" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

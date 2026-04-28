@@ -1,0 +1,36 @@
+{
+  "name": "@sketcherson/demo-game",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./buildConfig": {
+      "types": "./src/buildConfig.ts",
+      "default": "./src/buildConfig.ts"
+    },
+    "./gamePack": {
+      "types": "./src/gamePack.ts",
+      "default": "./src/gamePack.ts"
+    },
+    "./prompts": {
+      "types": "./src/prompts.ts",
+      "default": "./src/prompts.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@sketcherson/common": "*"
+  },
+  "devDependencies": {
+    "vitest": "^3.1.2"
+  }
+}

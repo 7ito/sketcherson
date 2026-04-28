@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="Archer reference sketch">
+  <rect width="160" height="160" rx="18" fill="#f8fafc"/>
+  <circle cx="70" cy="38" r="16" fill="#fbbf24" stroke="#172554" stroke-width="4"/>
+  <path d="M70 56v48M48 78h44M70 104l-24 34M70 104l28 34" fill="none" stroke="#172554" stroke-width="8" stroke-linecap="round"/>
+  <path d="M105 34c32 24 32 68 0 92" fill="none" stroke="#2563eb" stroke-width="7" stroke-linecap="round"/>
+  <path d="M95 80h46" stroke="#f97316" stroke-width="6" stroke-linecap="round"/>
+  <path d="M132 70l12 10-12 10" fill="none" stroke="#f97316" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

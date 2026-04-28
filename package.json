@@ -1,0 +1,22 @@
+{
+  "name": "sketcherson",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n server,web -c cyan,magenta \"npm run dev -w @sketcherson/server\" \"npm run dev -w @sketcherson/web\"",
+    "build": "npm run build -w @sketcherson/common && npm run build -w @sketcherson/demo-game && npm run build -w @sketcherson/server && npm run build -w @sketcherson/web",
+    "test": "npm run test -w @sketcherson/common && npm run test -w @sketcherson/demo-game && npm run test -w @sketcherson/server && npm run test -w @sketcherson/web"
+  },
+  "dependencies": {
+    "@sketcherson/common": "*",
+    "@sketcherson/demo-game": "*"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.8.3"
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "name": "@sketcherson/common",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./game": {
+      "types": "./src/game.ts",
+      "default": "./src/game.ts"
+    },
+    "./vite": {
+      "types": "./src/vite.ts",
+      "default": "./src/vite.ts"
+    },
+    "./gamePack": {
+      "types": "./src/gamePack.ts",
+      "default": "./src/gamePack.ts"
+    },
+    "./gameRuntime": {
+      "types": "./src/gameRuntime.ts",
+      "default": "./src/gameRuntime.ts"
+    },
+    "./gameAuthoring": {
+      "types": "./src/gameAuthoring.ts",
+      "default": "./src/gameAuthoring.ts"
+    },
+    "./gameDefinition": {
+      "types": "./src/gameDefinition.ts",
+      "default": "./src/gameDefinition.ts"
+    },
+    "./prompts": {
+      "types": "./src/prompts.ts",
+      "default": "./src/prompts.ts"
+    },
+    "./settings": {
+      "types": "./src/settings.ts",
+      "default": "./src/settings.ts"
+    },
+    "./room": {
+      "types": "./src/room.ts",
+      "default": "./src/room.ts"
+    },
+    "./roomEvents": {
+      "types": "./src/roomEvents.ts",
+      "default": "./src/roomEvents.ts"
+    },
+    "./drawing": {
+      "types": "./src/drawing.ts",
+      "default": "./src/drawing.ts"
+    },
+    "./drawingProtocol": {
+      "types": "./src/drawingProtocol.ts",
+      "default": "./src/drawingProtocol.ts"
+    },
+    "./drawingRealtime": {
+      "types": "./src/drawingRealtime.ts",
+      "default": "./src/drawingRealtime.ts"
+    },
+    "./drawingRaster": {
+      "types": "./src/drawingRaster.ts",
+      "default": "./src/drawingRaster.ts"
+    },
+    "./identity": {
+      "types": "./src/identity.ts",
+      "default": "./src/identity.ts"
+    },
+    "./moderation": {
+      "types": "./src/moderation.ts",
+      "default": "./src/moderation.ts"
+    },
+    "./scoring": {
+      "types": "./src/scoring.ts",
+      "default": "./src/scoring.ts"
+    },
+    "./storage": {
+      "types": "./src/storage.ts",
+      "default": "./src/storage.ts"
+    },
+    "./testing/testGame": {
+      "types": "./src/games/testGame/index.ts",
+      "default": "./src/games/testGame/index.ts"
+    },
+    "./games/testGame": {
+      "types": "./src/games/testGame/index.ts",
+      "default": "./src/games/testGame/index.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run --passWithNoTests"
+  },
+  "devDependencies": {
+    "vite": "^6.3.5",
+    "vitest": "^3.1.2"
+  }
+}

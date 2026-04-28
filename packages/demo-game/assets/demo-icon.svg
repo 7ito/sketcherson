@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Sketcherson demo icon">
+  <rect width="128" height="128" rx="28" fill="#eff6ff"/>
+  <path d="M30 92l14-46 38 38-46 14-6-6z" fill="#f97316"/>
+  <path d="M44 46l12-12 38 38-12 12-38-38z" fill="#2563eb"/>
+  <circle cx="89" cy="39" r="8" fill="#22c55e"/>
+</svg>

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="Goblin cage reference sketch">
+  <rect width="160" height="160" rx="18" fill="#f1f5f9"/>
+  <rect x="38" y="34" width="84" height="94" rx="8" fill="#e2e8f0" stroke="#172554" stroke-width="6"/>
+  <path d="M58 36v90M80 36v90M102 36v90M38 64h84M38 96h84" stroke="#172554" stroke-width="5"/>
+  <circle cx="80" cy="82" r="18" fill="#86efac" stroke="#14532d" stroke-width="4"/>
+  <path d="M66 70l-8-12M94 70l8-12" stroke="#14532d" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="73" cy="80" r="3" fill="#172554"/>
+  <circle cx="87" cy="80" r="3" fill="#172554"/>
+  <path d="M72 92h16" stroke="#172554" stroke-width="4" stroke-linecap="round"/>
+</svg>
