@@ -14,7 +14,7 @@ export const PAUSE_MAX_DURATION_SECONDS = 30 * 60;
 export const PAUSE_REPAUSE_COOLDOWN_SECONDS = 10;
 export const MAX_CHAT_MESSAGE_LENGTH = 140;
 export const ROUND_TIMER_PRESETS = [60, 75, 90, 105, 120] as const;
-export const FIRST_CORRECT_GUESS_TIME_CAP_PRESETS = [15, 30, 45, 60, 75, 90] as const;
+export const FIRST_CORRECT_GUESS_TIME_CAP_PRESETS = [15, 30, 45, 60, 75, 90, 105, 120] as const;
 export const GUESSING_DELAY_PRESETS = [0, 5, 10, 15] as const;
 export const TURNS_PER_PLAYER_PRESETS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
 

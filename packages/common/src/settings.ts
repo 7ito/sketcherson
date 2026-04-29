@@ -24,9 +24,8 @@ export function areLobbySettingsValidForGame(gameDefinition: GameDefinition, set
 
   return (
     rules.settings.roundTimerSeconds.options.includes(normalizedSettings.roundTimerSeconds) &&
-    rules.settings.firstCorrectGuessTimeCapSeconds.options.includes(normalizedSettings.firstCorrectGuessTimeCapSeconds) &&
+    getFirstCorrectGuessTimeCapPresets(normalizedSettings.roundTimerSeconds, rules).includes(normalizedSettings.firstCorrectGuessTimeCapSeconds) &&
     rules.settings.guessingDelaySeconds.options.includes(normalizedSettings.guessingDelaySeconds ?? 0) &&
-    normalizedSettings.firstCorrectGuessTimeCapSeconds <= normalizedSettings.roundTimerSeconds &&
     rules.settings.turnsPerPlayer.options.includes(normalizedSettings.turnsPerPlayer) &&
     createPromptEngine({ definition: gameDefinition }).areCollectionIdsValid(settings.enabledCollectionIds ?? normalizedSettings.enabledCollectionIds)
   );
@@ -43,5 +42,7 @@ export function defaultLobbySettingsForGame(gameDefinition: GameDefinition, rule
 }
 
 export function getFirstCorrectGuessTimeCapPresets(roundTimerSeconds: RoundTimerPreset, rules: ResolvedDrawingGameRules = resolveDrawingGameRules()): FirstCorrectGuessTimeCapPreset[] {
-  return rules.settings.firstCorrectGuessTimeCapSeconds.options.filter((preset) => preset <= roundTimerSeconds);
+  return Array.from(new Set([...rules.settings.firstCorrectGuessTimeCapSeconds.options, roundTimerSeconds]))
+    .filter((preset) => preset <= roundTimerSeconds)
+    .sort((left, right) => left - right);
 }

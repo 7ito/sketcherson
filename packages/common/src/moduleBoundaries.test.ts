@@ -169,7 +169,7 @@ describe('lobby settings helpers', () => {
 
   it('validates and filters first-correct-guess time cap settings against the round timer', () => {
     expect(getFirstCorrectGuessTimeCapPresets(60)).toEqual([15, 30, 45, 60]);
-    expect(getFirstCorrectGuessTimeCapPresets(120)).toEqual([15, 30, 45, 60, 75, 90]);
+    expect(getFirstCorrectGuessTimeCapPresets(120)).toEqual([15, 30, 45, 60, 75, 90, 105, 120]);
 
     expect(
       areLobbySettingsValidForGame(TEST_GAME_DEFINITION, {

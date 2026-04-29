@@ -13,7 +13,15 @@ import {
 const SHELL_SETTINGS_COPY = GAME_WEB_CONFIG.ui.copy.settings;
 const GAME_SETTINGS_RULES = GAME_RUNTIME.rules.settings;
 const getFirstCorrectGuessTimeCapOptions = (roundTimerSeconds: LobbySettings['roundTimerSeconds']) =>
-  GAME_SETTINGS_RULES.firstCorrectGuessTimeCapSeconds.options.filter((preset) => preset <= roundTimerSeconds);
+  Array.from(new Set([...GAME_SETTINGS_RULES.firstCorrectGuessTimeCapSeconds.options, roundTimerSeconds]))
+    .filter((preset) => preset <= roundTimerSeconds)
+    .sort((left, right) => left - right);
+
+const formatFirstCorrectGuessTimeCapOption = (
+  preset: LobbySettings['firstCorrectGuessTimeCapSeconds'],
+  roundTimerSeconds: LobbySettings['roundTimerSeconds'],
+  unit: 's' | 'seconds',
+) => `${preset}${unit === 's' ? 's' : ' seconds'}${preset === roundTimerSeconds ? ' (none)' : ''}`;
 
 function updateRoundTimerSettings(
   settings: LobbySettings,
@@ -117,7 +125,7 @@ export function SharedSettingsFields({
             >
               {getFirstCorrectGuessTimeCapOptions(settings.roundTimerSeconds).map((preset) => (
                 <option key={preset} value={preset}>
-                  {preset}s
+                  {formatFirstCorrectGuessTimeCapOption(preset, settings.roundTimerSeconds, 's')}
                 </option>
               ))}
             </select>
@@ -219,7 +227,7 @@ export function SharedSettingsFields({
         >
           {getFirstCorrectGuessTimeCapOptions(settings.roundTimerSeconds).map((preset) => (
             <option key={preset} value={preset}>
-              {preset} seconds
+              {formatFirstCorrectGuessTimeCapOption(preset, settings.roundTimerSeconds, 'seconds')}
             </option>
           ))}
         </select>
@@ -304,7 +312,9 @@ export function SettingsSummary({
           </div>
           <div className="lobby-setting-display">
             <span className="lobby-setting-label">{SHELL_SETTINGS_COPY.firstCorrectGuessTimeCapLabel}</span>
-            <span className="lobby-setting-value">{settings.firstCorrectGuessTimeCapSeconds}s</span>
+            <span className="lobby-setting-value">
+              {formatFirstCorrectGuessTimeCapOption(settings.firstCorrectGuessTimeCapSeconds, settings.roundTimerSeconds, 's')}
+            </span>
           </div>
         </div>
         <div className="lobby-settings-row">
@@ -340,7 +350,7 @@ export function SettingsSummary({
         </div>
         <div>
           <dt>{SHELL_SETTINGS_COPY.firstCorrectGuessTimeCapLabel}</dt>
-          <dd>{settings.firstCorrectGuessTimeCapSeconds} seconds</dd>
+          <dd>{formatFirstCorrectGuessTimeCapOption(settings.firstCorrectGuessTimeCapSeconds, settings.roundTimerSeconds, 'seconds')}</dd>
         </div>
         <div>
           <dt>{SHELL_SETTINGS_COPY.guessingDelayLabel}</dt>

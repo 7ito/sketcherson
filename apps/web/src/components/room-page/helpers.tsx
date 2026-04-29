@@ -119,7 +119,9 @@ export function clampFirstCorrectGuessTimeCapSeconds(
   roundTimerSeconds: RoundTimerPreset,
   firstCorrectGuessTimeCapSeconds: FirstCorrectGuessTimeCapPreset,
 ): FirstCorrectGuessTimeCapPreset {
-  const availableCaps = GAME_RUNTIME.rules.settings.firstCorrectGuessTimeCapSeconds.options.filter((preset) => preset <= roundTimerSeconds);
+  const availableCaps = Array.from(new Set([...GAME_RUNTIME.rules.settings.firstCorrectGuessTimeCapSeconds.options, roundTimerSeconds]))
+    .filter((preset) => preset <= roundTimerSeconds)
+    .sort((left, right) => left - right);
 
   if (availableCaps.includes(firstCorrectGuessTimeCapSeconds)) {
     return firstCorrectGuessTimeCapSeconds;

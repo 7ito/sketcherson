@@ -443,7 +443,8 @@ describe('RoomPage', () => {
     );
 
     const firstCorrectGuessSelect = screen.getByLabelText(GAME_WEB_CONFIG.ui.copy.settings.firstCorrectGuessTimeCapLabel) as HTMLSelectElement;
-    expect(Array.from(firstCorrectGuessSelect.options, (option) => option.value)).toEqual(['15', '30', '45', '60', '75', '90']);
+    expect(Array.from(firstCorrectGuessSelect.options, (option) => option.value)).toEqual(['15', '30', '45', '60', '75', '90', '105', '120']);
+    expect(Array.from(firstCorrectGuessSelect.options, (option) => option.textContent)).toContain('120s (none)');
     expect(firstCorrectGuessSelect).toHaveValue('90');
 
     fireEvent.change(screen.getByLabelText(GAME_WEB_CONFIG.ui.copy.settings.roundTimerLabel), { target: { value: '60' } });
