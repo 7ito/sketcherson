@@ -184,6 +184,7 @@ export function useDrawingSession({
   const handlePointerDown = (event: ReactPointerEvent<HTMLCanvasElement>) => {
     if (!canDraw || event.button !== 0) return;
     event.preventDefault();
+    event.currentTarget.focus({ preventScroll: true });
     clearActionError();
 
     const point = getCanvasPoint(canvasRef.current, drawing, event);

@@ -102,6 +102,50 @@ describe('DrawingCanvas', () => {
     expect(smallestSizeButton).toHaveClass('size-btn-active');
   });
 
+  it('moves focus from a chat input to the canvas when drawing starts', () => {
+    window.PointerEvent = MouseEvent as typeof PointerEvent;
+    const onSubmitAction = buildSubmitActionMock();
+
+    const { container } = render(
+      <>
+        <input aria-label="Chat" />
+        <DrawingCanvas
+          drawing={buildDrawingState()}
+          roomStatus="round"
+          canDraw
+          onSubmitAction={onSubmitAction}
+        />
+      </>,
+    );
+
+    const input = screen.getByLabelText('Chat');
+    const canvas = container.querySelector('canvas') as HTMLCanvasElement | null;
+    expect(canvas).not.toBeNull();
+    const canvasElement = canvas as HTMLCanvasElement;
+
+    Object.defineProperty(canvasElement, 'getBoundingClientRect', {
+      value: () => ({
+        left: 0,
+        top: 0,
+        right: 800,
+        bottom: 600,
+        width: 800,
+        height: 600,
+        x: 0,
+        y: 0,
+        toJSON: () => undefined,
+      }),
+    });
+
+    input.focus();
+    expect(input).toHaveFocus();
+
+    fireEvent.pointerDown(canvasElement, { button: 0, buttons: 1, clientX: 100, clientY: 100, pointerId: 1 });
+
+    expect(input).not.toHaveFocus();
+    expect(canvasElement).toHaveFocus();
+  });
+
   it('keeps the local stroke alive after a failed extend ack so the stroke can still complete', async () => {
     vi.useFakeTimers();
     window.PointerEvent = MouseEvent as typeof PointerEvent;

@@ -3,7 +3,7 @@ import type { ApiResult } from '@sketcherson/common/room';
 import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 import { getAdjustedBrushSize } from './brushControls';
 
-const PALETTE_COLS = 11;
+const PALETTE_COLS = 12;
 
 export interface UseDrawingSessionControlsOptions<TSuccess> {
   canDraw: boolean;
@@ -114,6 +114,11 @@ export function useDrawingSessionControls<TSuccess>({
         case 'a':
         case 's':
         case 'd':
+        case 'ArrowUp':
+        case 'ArrowLeft':
+        case 'ArrowDown':
+        case 'ArrowRight':
+          e.preventDefault();
           setSelectedColor((prev) => getKeyboardPaletteColor(prev, e.key));
           break;
       }
@@ -148,11 +153,12 @@ function getKeyboardPaletteColor(currentColor: string, key: string): string {
   const col = idx % PALETTE_COLS;
   let newRow = row;
   let newCol = col;
-  if (key === 'w') newRow = Math.max(0, row - 1);
-  else if (key === 's') newRow = Math.min(Math.ceil(DRAWING_COLORS.length / PALETTE_COLS) - 1, row + 1);
-  else if (key === 'a') newCol = Math.max(0, col - 1);
-  else if (key === 'd') newCol = Math.min(PALETTE_COLS - 1, col + 1);
+  const rows = Math.ceil(DRAWING_COLORS.length / PALETTE_COLS);
+  if (key === 'w' || key === 'ArrowUp') newRow = (row - 1 + rows) % rows;
+  else if (key === 's' || key === 'ArrowDown') newRow = (row + 1) % rows;
+  else if (key === 'a' || key === 'ArrowLeft') newCol = (col - 1 + PALETTE_COLS) % PALETTE_COLS;
+  else if (key === 'd' || key === 'ArrowRight') newCol = (col + 1) % PALETTE_COLS;
 
   const newIdx = newRow * PALETTE_COLS + newCol;
-  return newIdx < DRAWING_COLORS.length ? DRAWING_COLORS[newIdx] : currentColor;
+  return DRAWING_COLORS[newIdx] ?? currentColor;
 }

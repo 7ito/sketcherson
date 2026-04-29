@@ -54,6 +54,7 @@ export function DrawingCanvas({
             className={canDraw ? 'editable' : undefined}
             width={drawing?.width ?? DRAWING_CANVAS_WIDTH}
             height={drawing?.height ?? DRAWING_CANVAS_HEIGHT}
+            tabIndex={-1}
             onWheel={session.canvasHandlers.onWheel}
             onPointerDown={session.canvasHandlers.onPointerDown}
             onPointerMove={session.canvasHandlers.onPointerMove}
@@ -67,10 +68,10 @@ export function DrawingCanvas({
       {canDraw ? (
         <div className="toolbar-strip">
           <div className="keyhint-wasd" aria-hidden="true">
-            <span className="keyhint-key">W</span>
-            <span className="keyhint-key">A</span>
-            <span className="keyhint-key">S</span>
-            <span className="keyhint-key">D</span>
+            <span className="keyhint-key">↑</span>
+            <span className="keyhint-key">←</span>
+            <span className="keyhint-key">↓</span>
+            <span className="keyhint-key">→</span>
           </div>
           <div className="palette" aria-label={SHELL_DRAWING_TOOLBAR_COPY.colorsLabel}>
             {DRAWING_COLORS.map((color) => (
