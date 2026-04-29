@@ -1133,8 +1133,8 @@ describe('RoomRuntime', () => {
     }
 
     expect(revealState.data.room.status).toBe('reveal');
-    expect(revealState.data.room.match.currentTurn.drawing.snapshotDataUrl).toMatch(/^data:image\/bmp;base64,/);
-    expect(revealState.data.room.match.completedTurns[0]?.finalImageDataUrl).toMatch(/^data:image\/bmp;base64,/);
+    expect(revealState.data.room.match.currentTurn.drawing.snapshotDataUrl).toMatch(/^data:image\/png;base64,/);
+    expect(revealState.data.room.match.completedTurns[0]?.finalImageDataUrl).toMatch(/^data:image\/png;base64,/);
   });
 
   it('can drive phase timers and reveal snapshots through injected engine dependencies', () => {

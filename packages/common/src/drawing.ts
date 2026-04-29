@@ -4,8 +4,8 @@ export type { ApiResult } from './apiResult';
 
 export const DRAWING_CANVAS_WIDTH = 800;
 export const DRAWING_CANVAS_HEIGHT = 600;
-export const DRAWING_SNAPSHOT_WIDTH = 400;
-export const DRAWING_SNAPSHOT_HEIGHT = 300;
+export const DRAWING_SNAPSHOT_WIDTH = DRAWING_CANVAS_WIDTH;
+export const DRAWING_SNAPSHOT_HEIGHT = DRAWING_CANVAS_HEIGHT;
 export const DRAWING_BACKGROUND_COLOR = '#f7fbff';
 export const DRAWING_PEN_SIZE = 6;
 export const DRAWING_ERASER_SIZE = 18;

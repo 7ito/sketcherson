@@ -465,8 +465,8 @@ describe('room realtime flow', () => {
       watcherHistory,
     );
 
-    expect(revealState.match?.currentTurn?.drawing.snapshotDataUrl).toMatch(/^data:image\/bmp;base64,/);
-    expect(revealState.match?.completedTurns[0]?.finalImageDataUrl).toMatch(/^data:image\/bmp;base64,/);
+    expect(revealState.match?.currentTurn?.drawing.snapshotDataUrl).toMatch(/^data:image\/png;base64,/);
+    expect(revealState.match?.completedTurns[0]?.finalImageDataUrl).toMatch(/^data:image\/png;base64,/);
   });
 
   it('broadcasts pause and resume state without advancing the frozen round timer', async () => {

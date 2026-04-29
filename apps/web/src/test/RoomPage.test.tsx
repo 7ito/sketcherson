@@ -1994,7 +1994,7 @@ describe('RoomPage', () => {
                     drawerNickname: 'Host',
                     answer: 'Knight',
                     rerolledFrom: null,
-                    finalImageDataUrl: 'data:image/bmp;base64,AAAA',
+                    finalImageDataUrl: 'data:image/png;base64,AAAA',
                     scoreChanges: [
                       {
                         playerId: 'host-1',
@@ -2010,7 +2010,7 @@ describe('RoomPage', () => {
                     drawerNickname: 'Guest',
                     answer: 'Dragon',
                     rerolledFrom: 'Archer',
-                    finalImageDataUrl: 'data:image/bmp;base64,BBBB',
+                    finalImageDataUrl: 'data:image/png;base64,BBBB',
                     scoreChanges: [
                       {
                         playerId: 'guest-1',

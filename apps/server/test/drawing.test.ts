@@ -43,7 +43,7 @@ describe('drawing state', () => {
 
     finalizeDrawingState(drawing);
 
-    expect(drawing.snapshotDataUrl).toMatch(/^data:image\/bmp;base64,/);
+    expect(drawing.snapshotDataUrl).toMatch(/^data:image\/png;base64,/);
   });
 
   it('treats clear as an undoable drawing operation', () => {
