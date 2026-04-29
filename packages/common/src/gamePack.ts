@@ -53,6 +53,7 @@ export interface ShellSkinIconTokens {
   correctGuess?: string;
   sendMessage?: string;
   referencePlaceholder?: string;
+  copyLink?: string;
 }
 
 export interface ShellSkinTypographyTokens {
@@ -440,19 +441,19 @@ const SHELL_SKIN_PRESET_DEFAULTS: Record<ShellSkinPreset, Omit<ResolvedShellSkin
     typography: { displayFont: 'Inter, system-ui, sans-serif', bodyFont: 'Inter, system-ui, sans-serif', monoFont: 'ui-monospace, SFMono-Regular, monospace' },
     shape: { radiusSm: '8px', radiusMd: '12px', radiusLg: '20px', radiusPill: '999px' },
     effects: { surfaceShadow: '0 24px 80px rgb(15 23 42 / 0.22)', buttonShadow: '0 12px 24px rgb(37 99 235 / 0.28)', focusRing: '0 0 0 3px rgb(59 130 246 / 0.35)' },
-    icons: { createRoom: '✨', joinRoom: '🔗', drawer: '🎨', connected: '✓', disconnected: '⚠', reconnecting: '↻', close: '✕', correctGuess: '✓', sendMessage: '➤', referencePlaceholder: '🖼️' },
+    icons: { createRoom: '✨', joinRoom: '🔗', drawer: '🎨', connected: '✓', disconnected: '⚠', reconnecting: '↻', close: '✕', correctGuess: '✓', sendMessage: '➤', referencePlaceholder: '🖼️', copyLink: '🔗' },
   },
   'clean-light': {
     typography: { displayFont: 'Inter, system-ui, sans-serif', bodyFont: 'Inter, system-ui, sans-serif', monoFont: 'ui-monospace, SFMono-Regular, monospace' },
     shape: { radiusSm: '6px', radiusMd: '10px', radiusLg: '16px', radiusPill: '999px' },
     effects: { surfaceShadow: '0 18px 50px rgb(15 23 42 / 0.12)', buttonShadow: '0 10px 18px rgb(15 23 42 / 0.12)', focusRing: '0 0 0 3px rgb(14 165 233 / 0.28)' },
-    icons: { createRoom: '+', joinRoom: '↗', drawer: '✎', connected: '✓', disconnected: '!', reconnecting: '…', close: '×', correctGuess: '✓', sendMessage: '→', referencePlaceholder: '□' },
+    icons: { createRoom: '+', joinRoom: '↗', drawer: '✎', connected: '✓', disconnected: '!', reconnecting: '…', close: '×', correctGuess: '✓', sendMessage: '→', referencePlaceholder: '□', copyLink: '⧉' },
   },
   'poster-dark': {
     typography: { displayFont: 'Impact, Haettenschweiler, sans-serif', bodyFont: 'Inter, system-ui, sans-serif', monoFont: 'ui-monospace, SFMono-Regular, monospace' },
     shape: { radiusSm: '10px', radiusMd: '16px', radiusLg: '28px', radiusPill: '999px' },
     effects: { surfaceShadow: '0 28px 90px rgb(0 0 0 / 0.35)', buttonShadow: '0 14px 0 rgb(0 0 0 / 0.22)', focusRing: '0 0 0 4px rgb(250 204 21 / 0.38)' },
-    icons: { createRoom: '★', joinRoom: '●', drawer: '✏️', connected: '✓', disconnected: '⚠', reconnecting: '↻', close: '✕', correctGuess: '✓', sendMessage: '➤', referencePlaceholder: '?' },
+    icons: { createRoom: '★', joinRoom: '●', drawer: '✏️', connected: '✓', disconnected: '⚠', reconnecting: '↻', close: '✕', correctGuess: '✓', sendMessage: '➤', referencePlaceholder: '?', copyLink: '🔗' },
   },
 };
 

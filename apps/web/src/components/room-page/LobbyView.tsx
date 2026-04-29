@@ -167,7 +167,7 @@ export function LobbyView({
             <span className="room-tag-value">{room.code}</span>
           </span>
           <button type="button" className="lobby-copy-btn" onClick={handleCopy} title={SHELL_LOBBY_COPY.copyInviteLink}>
-            {copyState === 'copied' ? SHELL_SKIN_ICONS.correctGuess : SHELL_SKIN_ICONS.joinRoom}
+            {copyState === 'copied' ? SHELL_SKIN_ICONS.correctGuess : SHELL_SKIN_ICONS.copyLink}
           </button>
         </div>
 

@@ -4,40 +4,40 @@
 
 /* ===== Base ===== */
 :root {
-  color-scheme: light;
+  color-scheme: dark;
   font-family: var(--shell-font-body);
   line-height: 1.5;
   font-weight: 400;
 
-  --shell-color-primary: #2563eb;
-  --shell-color-primary-strong: #1d4ed8;
+  --shell-color-primary: #6390e8;
+  --shell-color-primary-strong: #4a78d6;
   --shell-color-primary-text: #ffffff;
-  --shell-color-accent: #f97316;
-  --shell-color-accent-strong: #ea580c;
-  --shell-color-accent-text: #111827;
-  --shell-color-background: #f0f4ff;
-  --shell-color-surface: #ffffff;
-  --shell-color-surface-strong: #f8fafc;
-  --shell-color-border: #c7d8f0;
-  --shell-color-text: #172554;
-  --shell-color-muted-text: #64748b;
-  --shell-color-success: #16a34a;
-  --shell-color-warning: #f59e0b;
-  --shell-color-danger: #dc2626;
+  --shell-color-accent: #e8873a;
+  --shell-color-accent-strong: #d47428;
+  --shell-color-accent-text: #f0f0f0;
+  --shell-color-background: #111318;
+  --shell-color-surface: #1a1d24;
+  --shell-color-surface-strong: #22262e;
+  --shell-color-border: #2e3440;
+  --shell-color-text: #e0e4ec;
+  --shell-color-muted-text: #8892a4;
+  --shell-color-success: #3dba68;
+  --shell-color-warning: #e8a830;
+  --shell-color-danger: #e04848;
 
-  --shell-color-primary-soft: color-mix(in srgb, var(--shell-color-primary) 65%, white);
+  --shell-color-primary-soft: color-mix(in srgb, var(--shell-color-primary) 40%, var(--shell-color-surface));
   --shell-color-primary-deep: var(--shell-color-primary-strong);
-  --shell-color-accent-soft: color-mix(in srgb, var(--shell-color-accent) 65%, white);
-  --shell-color-success-soft: color-mix(in srgb, var(--shell-color-success) 70%, white);
-  --shell-color-warning-soft: color-mix(in srgb, var(--shell-color-warning) 65%, white);
-  --shell-color-danger-soft: color-mix(in srgb, var(--shell-color-danger) 65%, white);
+  --shell-color-accent-soft: color-mix(in srgb, var(--shell-color-accent) 40%, var(--shell-color-surface));
+  --shell-color-success-soft: color-mix(in srgb, var(--shell-color-success) 35%, var(--shell-color-surface));
+  --shell-color-warning-soft: color-mix(in srgb, var(--shell-color-warning) 40%, var(--shell-color-surface));
+  --shell-color-danger-soft: color-mix(in srgb, var(--shell-color-danger) 35%, var(--shell-color-surface));
   --shell-color-canvas: #ffffff;
-  --shell-color-canvas-warm: color-mix(in srgb, var(--shell-color-canvas) 98%, var(--shell-color-accent));
+  --shell-color-canvas-warm: #faf8f5;
   --shell-color-rank-gold: var(--shell-color-warning-soft);
   --shell-color-rank-bronze: color-mix(in srgb, var(--shell-color-accent-strong) 80%, var(--shell-color-warning));
-  --shell-color-purple: #7c3aed;
-  --shell-color-purple-soft: color-mix(in srgb, var(--shell-color-purple) 70%, white);
-  --shell-color-toast-background: color-mix(in srgb, var(--shell-color-danger) 10%, white);
+  --shell-color-purple: #9570f0;
+  --shell-color-purple-soft: color-mix(in srgb, var(--shell-color-purple) 40%, var(--shell-color-surface));
+  --shell-color-toast-background: color-mix(in srgb, var(--shell-color-danger) 12%, var(--shell-color-surface));
 
   --shell-font-display: 'Inter', system-ui, sans-serif;
   --shell-font-body: 'Inter', system-ui, sans-serif;
@@ -48,25 +48,25 @@
   --shell-radius-lg: 20px;
   --shell-radius-pill: 999px;
 
-  --shell-shadow-surface: 0 1px 3px rgb(0 0 0 / 0.04), 0 12px 32px rgb(0 0 0 / 0.06);
-  --shell-shadow-button: 0 1px 3px rgb(0 0 0 / 0.06);
-  --shell-focus-ring: 0 0 0 3px color-mix(in srgb, var(--shell-color-primary) 18%, transparent);
+  --shell-shadow-surface: 0 1px 3px rgb(0 0 0 / 0.2), 0 12px 32px rgb(0 0 0 / 0.3);
+  --shell-shadow-button: 0 1px 3px rgb(0 0 0 / 0.25);
+  --shell-focus-ring: 0 0 0 3px color-mix(in srgb, var(--shell-color-primary) 25%, transparent);
 
-  --shell-overlay-dark-12: color-mix(in srgb, var(--shell-color-text) 4%, transparent);
-  --shell-overlay-dark-15: color-mix(in srgb, var(--shell-color-text) 5%, transparent);
-  --shell-overlay-dark-20: color-mix(in srgb, var(--shell-color-text) 6%, transparent);
-  --shell-overlay-dark-25: color-mix(in srgb, var(--shell-color-text) 8%, transparent);
-  --shell-overlay-dark-30: color-mix(in srgb, var(--shell-color-text) 10%, transparent);
-  --shell-overlay-dark-60: color-mix(in srgb, var(--shell-color-text) 50%, transparent);
-  --shell-overlay-light-02: color-mix(in srgb, white 40%, transparent);
-  --shell-overlay-light-025: color-mix(in srgb, white 50%, transparent);
-  --shell-overlay-light-03: color-mix(in srgb, white 55%, transparent);
-  --shell-overlay-light-04: color-mix(in srgb, white 60%, transparent);
-  --shell-overlay-light-05: color-mix(in srgb, white 65%, transparent);
-  --shell-overlay-light-06: color-mix(in srgb, white 70%, transparent);
-  --shell-overlay-light-08: color-mix(in srgb, white 75%, transparent);
-  --shell-overlay-light-10: color-mix(in srgb, white 80%, transparent);
-  --shell-overlay-light-20: color-mix(in srgb, white 90%, transparent);
+  --shell-overlay-dark-12: color-mix(in srgb, black 8%, transparent);
+  --shell-overlay-dark-15: color-mix(in srgb, black 10%, transparent);
+  --shell-overlay-dark-20: color-mix(in srgb, black 12%, transparent);
+  --shell-overlay-dark-25: color-mix(in srgb, black 15%, transparent);
+  --shell-overlay-dark-30: color-mix(in srgb, black 18%, transparent);
+  --shell-overlay-dark-60: color-mix(in srgb, black 40%, transparent);
+  --shell-overlay-light-02: color-mix(in srgb, white 4%, transparent);
+  --shell-overlay-light-025: color-mix(in srgb, white 5%, transparent);
+  --shell-overlay-light-03: color-mix(in srgb, white 6%, transparent);
+  --shell-overlay-light-04: color-mix(in srgb, white 8%, transparent);
+  --shell-overlay-light-05: color-mix(in srgb, white 10%, transparent);
+  --shell-overlay-light-06: color-mix(in srgb, white 12%, transparent);
+  --shell-overlay-light-08: color-mix(in srgb, white 15%, transparent);
+  --shell-overlay-light-10: color-mix(in srgb, white 18%, transparent);
+  --shell-overlay-light-20: color-mix(in srgb, white 25%, transparent);
 
   background: var(--shell-color-background);
   color: var(--shell-color-text);
@@ -478,12 +478,12 @@ label span {
   padding: 1.75rem;
   color: var(--shell-color-text);
   width: min(380px, 90vw);
-  box-shadow: 0 24px 80px rgb(0 0 0 / 0.12), 0 4px 16px rgb(0 0 0 / 0.06);
+  box-shadow: 0 24px 80px rgb(0 0 0 / 0.4), 0 4px 16px rgb(0 0 0 / 0.25);
   animation: dialog-enter 0.2s ease-out;
 }
 
 .home-dialog::backdrop {
-  background: color-mix(in srgb, var(--shell-color-text) 30%, transparent);
+  background: color-mix(in srgb, black 60%, transparent);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   animation: backdrop-enter 0.2s ease-out;
@@ -741,12 +741,12 @@ label span {
   padding: 1.5rem;
   color: var(--shell-color-text);
   width: min(420px, 90vw);
-  box-shadow: 0 24px 80px rgb(0 0 0 / 0.12), 0 4px 16px rgb(0 0 0 / 0.06);
+  box-shadow: 0 24px 80px rgb(0 0 0 / 0.4), 0 4px 16px rgb(0 0 0 / 0.25);
   animation: dialog-enter 0.2s ease-out;
 }
 
 .settings-dialog::backdrop {
-  background: color-mix(in srgb, var(--shell-color-text) 30%, transparent);
+  background: color-mix(in srgb, black 60%, transparent);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   animation: backdrop-enter 0.2s ease-out;
@@ -1145,7 +1145,7 @@ label span {
   border-bottom: 1px solid var(--shell-color-border);
   flex-shrink: 0;
   gap: 1rem;
-  box-shadow: 0 1px 3px rgb(0 0 0 / 0.04);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.2);
 }
 
 .topbar-left, .topbar-right {

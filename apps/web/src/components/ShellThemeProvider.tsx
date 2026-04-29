@@ -53,6 +53,7 @@ export function buildShellSkinStyle(skin: ResolvedShellSkinConfig = GAME_WEB_CON
     '--shell-icon-correct-guess': JSON.stringify(icons.correctGuess),
     '--shell-icon-send-message': JSON.stringify(icons.sendMessage),
     '--shell-icon-reference-placeholder': JSON.stringify(icons.referencePlaceholder),
+    '--shell-icon-copy-link': JSON.stringify(icons.copyLink),
   };
 }
 

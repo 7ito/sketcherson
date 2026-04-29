@@ -14,8 +14,8 @@ export const DEMO_GAME = defineAudienceGame<DemoPrompt>({
   brand: {
     logoText: ['Sketcherson', 'Demo'],
     colors: {
-      primary: '#2563eb',
-      accent: '#f97316',
+      primary: '#6390e8',
+      accent: '#e8873a',
     },
   },
   terminology: {
@@ -46,7 +46,7 @@ export const DEMO_GAME = defineAudienceGame<DemoPrompt>({
       join: 'SketchGuest',
     },
     skin: {
-      preset: 'clean-light',
+      preset: 'arcade-dark',
       tokens: {
         typography: {
           displayFont: "'Trebuchet MS', 'Segoe UI', sans-serif",
@@ -61,23 +61,23 @@ export const DEMO_GAME = defineAudienceGame<DemoPrompt>({
     },
     theme: {
       colors: {
-        primary: '#2563eb',
-        primaryStrong: '#1d4ed8',
+        primary: '#6390e8',
+        primaryStrong: '#4a78d6',
         primaryText: '#ffffff',
-        accent: '#f97316',
-        accentStrong: '#ea580c',
-        accentText: '#111827',
-        background: '#eff6ff',
-        surface: '#ffffff',
-        surfaceStrong: '#f8fafc',
-        border: '#bfdbfe',
-        text: '#172554',
-        mutedText: '#64748b',
-        success: '#16a34a',
-        warning: '#f59e0b',
-        danger: '#dc2626',
+        accent: '#e8873a',
+        accentStrong: '#d47428',
+        accentText: '#f0f0f0',
+        background: '#111318',
+        surface: '#1a1d24',
+        surfaceStrong: '#22262e',
+        border: '#2e3440',
+        text: '#e0e4ec',
+        mutedText: '#8892a4',
+        success: '#3dba68',
+        warning: '#e8a830',
+        danger: '#e04848',
       },
-      playerAccentColors: ['#2563eb', '#f97316', '#22c55e', '#a855f7'],
+      playerAccentColors: ['#6390e8', '#e8873a', '#3dba68', '#b07cf0'],
     },
   },
 });
