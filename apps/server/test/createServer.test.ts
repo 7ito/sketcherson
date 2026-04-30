@@ -1,6 +1,6 @@
 import { TEST_GAME_DEFINITION } from '@sketcherson/common/testing/testGame';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createGameServer, type GameServer } from '../src/createServer';
+import { createGameServer, SOCKET_MAX_HTTP_BUFFER_SIZE_BYTES, type GameServer } from '../src/createServer';
 
 const ORIGIN = 'http://localhost:4173';
 
@@ -41,6 +41,22 @@ function startRuntimeRoom(server: GameServer) {
 
   return startResult.data.room;
 }
+
+describe('createGameServer transport config', () => {
+  it('caps Socket.IO HTTP payloads', async () => {
+    const server = createGameServer({
+      appOrigin: ORIGIN,
+      corsOrigin: '*',
+      gameDefinition: TEST_GAME_DEFINITION,
+    });
+
+    try {
+      expect(server.io.engine.opts.maxHttpBufferSize).toBe(SOCKET_MAX_HTTP_BUFFER_SIZE_BYTES);
+    } finally {
+      await stopServer(server);
+    }
+  });
+});
 
 describe('createGameServer reference art config', () => {
   afterEach(() => {

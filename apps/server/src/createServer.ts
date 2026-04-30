@@ -19,6 +19,8 @@ interface ActionSuccess {
   data: unknown;
 }
 
+export const SOCKET_MAX_HTTP_BUFFER_SIZE_BYTES = 1_000_000;
+
 export interface GameServer {
   io: Server<RoomClientToServerSocketEvents, RoomServerToClientSocketEvents>;
   httpServer: ReturnType<typeof createHttpServer>;
@@ -57,6 +59,7 @@ export function createGameServer(options?: Partial<CreateGameServerOptions<any>>
     cors: {
       origin: corsOrigin,
     },
+    maxHttpBufferSize: SOCKET_MAX_HTTP_BUFFER_SIZE_BYTES,
   });
   const roomRuntime = new RoomRuntime({
     countdownMs: options?.countdownMs,
