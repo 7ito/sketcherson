@@ -1,3 +1,4 @@
+import { performance } from 'node:perf_hooks';
 import { deflateSync } from 'node:zlib';
 import type { ApiResult } from '@sketcherson/common/room';
 import { DRAWING_BACKGROUND_COLOR, DRAWING_SNAPSHOT_HEIGHT, DRAWING_SNAPSHOT_WIDTH, type DrawingAction, type DrawingState } from '@sketcherson/common/drawing';
@@ -7,6 +8,7 @@ import {
   createDrawingState,
   finalizeDrawingStateMutable,
 } from '@sketcherson/common/drawingProtocol';
+import { logDrawingTransportMetric } from '../drawingMetrics';
 
 export { createDrawingState };
 
@@ -24,13 +26,23 @@ export function finalizeDrawingState(
 }
 
 function renderSnapshotDataUrl(drawing: DrawingState): string {
+  const startedAt = performance.now();
   const raster = rasterizeDrawingState(drawing, {
     outputWidth: DRAWING_SNAPSHOT_WIDTH,
     outputHeight: DRAWING_SNAPSHOT_HEIGHT,
     backgroundColor: DRAWING_BACKGROUND_COLOR,
   });
+  const dataUrl = encodePngDataUrl(raster.pixels, raster.width, raster.height);
 
-  return encodePngDataUrl(raster.pixels, raster.width, raster.height);
+  logDrawingTransportMetric('drawing.snapshot.rendered', {
+    durationMs: Math.round((performance.now() - startedAt) * 100) / 100,
+    outputBytes: Buffer.byteLength(dataUrl, 'utf8'),
+    operationCount: drawing.operations.length,
+    activeStrokeCount: drawing.activeStrokes.length,
+    undoneOperationCount: drawing.undoneOperations.length,
+  });
+
+  return dataUrl;
 }
 
 function encodePngDataUrl(buffer: Uint8ClampedArray, width: number, height: number): string {

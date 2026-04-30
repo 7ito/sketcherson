@@ -1,6 +1,7 @@
 import type { DrawingTarget } from '@sketcherson/common/drawingRealtime';
 import type { DrawingAction, DrawingActionAppliedEvent, DrawingState } from '@sketcherson/common/drawing';
 import type { ApiResult } from '@sketcherson/common/room';
+import { estimateSerializedPayloadBytes, logDrawingTransportMetric } from '../../drawingMetrics';
 import type { RoomRecord } from './model';
 
 export interface DrawingChannelActor {
@@ -49,6 +50,14 @@ export class ServerDrawingChannel implements DrawingChannelServer {
     }
 
     this.options.touchRoom(input.room);
+    logDrawingTransportMetric('drawing.retained_state', {
+      roomCode: input.room.code,
+      target: input.target,
+      operationCount: policyResult.data.operations.length,
+      activeStrokeCount: policyResult.data.activeStrokes.length,
+      undoneOperationCount: policyResult.data.undoneOperations.length,
+      retainedBytes: estimateSerializedPayloadBytes(policyResult.data),
+    });
 
     return {
       ok: true,
