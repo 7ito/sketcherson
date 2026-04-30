@@ -4,6 +4,8 @@ import type { ApiResult } from '@sketcherson/common/room';
 import { estimateSerializedPayloadBytes, logDrawingTransportMetric } from '../../drawingMetrics';
 import type { RoomRecord } from './model';
 
+export const LOBBY_DRAWING_MAX_OPERATIONS = 500;
+
 export interface DrawingChannelActor {
   playerId: string;
   connectionId: string;
@@ -107,6 +109,11 @@ export class ServerDrawingChannel implements DrawingChannelServer {
         };
       }
 
+      const lobbyDrawingLimitResult = this.validateLobbyDrawingLimits(input.room, input.action);
+      if (!lobbyDrawingLimitResult.ok) {
+        return lobbyDrawingLimitResult;
+      }
+
       return { ok: true, data: input.room.lobbyDrawing };
     }
 
@@ -139,6 +146,36 @@ export class ServerDrawingChannel implements DrawingChannelServer {
     }
 
     return { ok: true, data: activeTurn.drawing };
+  }
+
+  private validateLobbyDrawingLimits(room: RoomRecord, action: DrawingAction): ApiResult<null> {
+    if (
+      (action.type === 'beginStroke' || action.type === 'fill') &&
+      room.lobbyDrawing.operations.length >= LOBBY_DRAWING_MAX_OPERATIONS
+    ) {
+      return {
+        ok: false,
+        error: {
+          code: 'INVALID_DRAW_ACTION',
+          message: `Lobby drawing history can only contain ${LOBBY_DRAWING_MAX_OPERATIONS} operations.`,
+        },
+      };
+    }
+
+    if (action.type === 'beginStroke') {
+      const activeStrokeLimit = Math.max(1, room.players.size);
+      if (room.lobbyDrawing.activeStrokes.length >= activeStrokeLimit) {
+        return {
+          ok: false,
+          error: {
+            code: 'INVALID_DRAW_ACTION',
+            message: 'Lobby drawing already has the maximum number of active strokes.',
+          },
+        };
+      }
+    }
+
+    return { ok: true, data: null };
   }
 
   private consumeRateLimitForAction(connectionId: string, action: DrawingAction): ApiResult<never> | null {

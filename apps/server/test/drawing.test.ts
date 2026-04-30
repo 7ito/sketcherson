@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { applyDrawingAction, createDrawingState, finalizeDrawingState } from '../src/domain/drawing';
-import { ServerDrawingChannel } from '../src/domain/roomRuntime/ServerDrawingChannel';
+import { LOBBY_DRAWING_MAX_OPERATIONS, ServerDrawingChannel } from '../src/domain/roomRuntime/ServerDrawingChannel';
 import type { RoomRecord } from '../src/domain/roomRuntime/model';
 
 describe('drawing state', () => {
@@ -104,12 +104,7 @@ describe('drawing state', () => {
       },
       lobbyDrawing: createDrawingState(),
     } as RoomRecord;
-    const channel = new ServerDrawingChannel({
-      applyDrawingAction,
-      consumeDrawingRateLimit: () => null,
-      touchRoom: vi.fn(),
-      lobbyDrawingEnabled: true,
-    });
+    const channel = createDrawingChannel();
 
     const result = channel.apply({
       room,
@@ -127,6 +122,61 @@ describe('drawing state', () => {
 
     expect(result.ok).toBe(true);
     expect(drawing.activeStrokes.map((stroke) => stroke.id)).toEqual(['fresh-stroke']);
+  });
+
+  it('rejects lobby strokes beyond the participant active stroke cap', () => {
+    const room = createLobbyDrawingRoom(['player-1']);
+    room.lobbyDrawing.activeStrokes = [{
+      kind: 'stroke',
+      id: 'stroke-1',
+      tool: 'pen',
+      color: '#2d56ff',
+      size: 6,
+      points: [{ x: 40, y: 40 }],
+    }];
+    const channel = createDrawingChannel();
+
+    const result = channel.apply({
+      room,
+      actor: { playerId: 'player-1', connectionId: 'socket-1' },
+      target: 'lobby',
+      action: {
+        type: 'beginStroke',
+        strokeId: 'stroke-2',
+        tool: 'pen',
+        color: '#ff6600',
+        size: 6,
+        point: { x: 80, y: 80 },
+      },
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.ok ? null : result.error.message).toBe('Lobby drawing already has the maximum number of active strokes.');
+  });
+
+  it('rejects lobby drawing operations beyond the stricter lobby history cap', () => {
+    const room = createLobbyDrawingRoom(['player-1']);
+    room.lobbyDrawing.operations = Array.from({ length: LOBBY_DRAWING_MAX_OPERATIONS }, (_, index) => ({
+      kind: 'fill',
+      id: `fill-${index}`,
+      color: '#2d56ff',
+      point: { x: 40, y: 40 },
+    }));
+    const channel = createDrawingChannel();
+
+    const result = channel.apply({
+      room,
+      actor: { playerId: 'player-1', connectionId: 'socket-1' },
+      target: 'lobby',
+      action: {
+        type: 'fill',
+        color: '#ff6600',
+        point: { x: 80, y: 80 },
+      },
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.ok ? null : result.error.message).toBe(`Lobby drawing history can only contain ${LOBBY_DRAWING_MAX_OPERATIONS} operations.`);
   });
 
   it('allows fill while another stroke is active', () => {
@@ -185,3 +235,37 @@ describe('drawing state', () => {
     expect(drawing.undoneOperations).toEqual([]);
   });
 });
+
+function createDrawingChannel(): ServerDrawingChannel {
+  return new ServerDrawingChannel({
+    applyDrawingAction,
+    consumeDrawingRateLimit: () => null,
+    touchRoom: vi.fn(),
+    lobbyDrawingEnabled: true,
+  });
+}
+
+function createLobbyDrawingRoom(playerIds: string[]): RoomRecord {
+  return {
+    code: 'ABCDEF',
+    stateRevision: 1,
+    status: 'lobby',
+    match: null,
+    players: new Map(playerIds.map((playerId) => [playerId, {
+      id: playerId,
+      nickname: playerId,
+      sessionToken: `${playerId}-session`,
+      socketId: `${playerId}-socket`,
+      connected: true,
+      reconnectBy: null,
+      reconnectRemainingMs: null,
+      reconnectTimer: null,
+      canGuessFromTurnNumber: null,
+    }])),
+    hostPlayerId: playerIds[0] ?? 'player-1',
+    settings: {} as RoomRecord['settings'],
+    lobbyDrawing: createDrawingState(),
+    lobbyFeed: [],
+    timer: null,
+  };
+}
