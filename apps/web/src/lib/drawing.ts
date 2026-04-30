@@ -211,15 +211,15 @@ function canvasFloodFill(
   const savedTransform = context.getTransform();
   context.setTransform(1, 0, 0, 1, 0, 0);
 
-  const imageData = context.getImageData(0, 0, deviceWidth, deviceHeight);
-  const pixels = imageData.data;
-  const x = Math.round(operation.point.x * dpr);
-  const y = Math.round(operation.point.y * dpr);
-
-  if (x < 0 || x >= deviceWidth || y < 0 || y >= deviceHeight) {
+  if (deviceWidth <= 0 || deviceHeight <= 0) {
     context.setTransform(savedTransform);
     return;
   }
+
+  const imageData = context.getImageData(0, 0, deviceWidth, deviceHeight);
+  const pixels = imageData.data;
+  const x = Math.max(0, Math.min(deviceWidth - 1, Math.round(operation.point.x * dpr)));
+  const y = Math.max(0, Math.min(deviceHeight - 1, Math.round(operation.point.y * dpr)));
 
   const fillColor = hexToRgba(operation.color);
   const targetIndex = (y * deviceWidth + x) * 4;
