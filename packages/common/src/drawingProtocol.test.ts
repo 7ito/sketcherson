@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import type { DrawingActionAppliedEvent, DrawingState, DrawingStrokeOperation } from './drawing';
+import {
+  DRAWING_MAX_EXTEND_POINTS,
+  DRAWING_MAX_OPERATIONS,
+  DRAWING_MAX_STROKE_POINTS,
+  DRAWING_MAX_UNDO_OPERATIONS,
+  type DrawingActionAppliedEvent,
+  type DrawingState,
+  type DrawingStrokeOperation,
+} from './drawing';
 import {
   applyDrawingAction,
   applyDrawingActionMutable,
@@ -75,6 +83,60 @@ describe('drawingProtocol', () => {
     expect(result.ok).toBe(true);
     expect(drawing.revision).toBe(1);
     expect(drawing.activeStrokes).toHaveLength(1);
+  });
+
+  it('rejects oversized drawing stroke batches before mutating state', () => {
+    const drawing = createDrawingState();
+    drawing.activeStrokes = [stroke()];
+
+    const result = applyDrawingActionMutable(drawing, {
+      type: 'extendStroke',
+      strokeId: 'stroke-1',
+      points: Array.from({ length: DRAWING_MAX_EXTEND_POINTS + 1 }, (_, index) => ({ x: index, y: 20 })),
+    });
+
+    expect(result.ok).toBe(false);
+    expect(drawing.activeStrokes[0]?.points).toHaveLength(1);
+    expect(drawing.revision).toBe(0);
+  });
+
+  it('rejects strokes and drawing history that exceed retained state caps', () => {
+    const drawing = createDrawingState();
+    drawing.activeStrokes = [stroke({ points: Array.from({ length: DRAWING_MAX_STROKE_POINTS }, (_, index) => ({ x: index % 800, y: 20 })) })];
+
+    const extendResult = applyDrawingActionMutable(drawing, {
+      type: 'extendStroke',
+      strokeId: 'stroke-1',
+      point: { x: 100, y: 21 },
+    });
+
+    expect(extendResult.ok).toBe(false);
+    expect(drawing.activeStrokes[0]?.points).toHaveLength(DRAWING_MAX_STROKE_POINTS);
+
+    drawing.activeStrokes = [stroke()];
+    drawing.operations = Array.from({ length: DRAWING_MAX_OPERATIONS }, (_, index) => stroke({ id: `operation-${index}` }));
+
+    const endResult = applyDrawingActionMutable(drawing, {
+      type: 'endStroke',
+      strokeId: 'stroke-1',
+    });
+
+    expect(endResult.ok).toBe(false);
+    expect(drawing.operations).toHaveLength(DRAWING_MAX_OPERATIONS);
+    expect(drawing.activeStrokes).toHaveLength(1);
+  });
+
+  it('caps retained undo history', () => {
+    const drawing = createDrawingState();
+    drawing.operations = Array.from({ length: DRAWING_MAX_UNDO_OPERATIONS + 1 }, (_, index) => stroke({ id: `operation-${index}` }));
+
+    for (let index = 0; index < DRAWING_MAX_UNDO_OPERATIONS + 1; index += 1) {
+      const result = applyDrawingActionMutable(drawing, { type: 'undo' });
+      expect(result.ok).toBe(true);
+    }
+
+    expect(drawing.undoneOperations).toHaveLength(DRAWING_MAX_UNDO_OPERATIONS);
+    expect(drawing.undoneOperations[0]?.id).toBe('operation-49');
   });
 
   it('applies remote events, ignores stale events, and detects revision gaps', () => {

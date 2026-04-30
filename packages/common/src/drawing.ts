@@ -110,6 +110,11 @@ export interface DrawingActionAppliedEvent {
   stateRevision?: number;
 }
 
+export const DRAWING_MAX_EXTEND_POINTS = 128;
+export const DRAWING_MAX_STROKE_POINTS = 4_000;
+export const DRAWING_MAX_OPERATIONS = 1_000;
+export const DRAWING_MAX_UNDO_OPERATIONS = 50;
+
 const DRAWING_ACTION_COLOR_PATTERN = /^#[0-9a-f]{6}$/i;
 const DRAWING_ACTION_MIN_BRUSH_SIZE = 2;
 const DRAWING_ACTION_MAX_BRUSH_SIZE = 32;
@@ -170,6 +175,10 @@ export function applyDrawingActionToState(drawing: DrawingState, action: Drawing
         return invalidDrawingActionResult('Drawing point is outside the canvas bounds.');
       }
 
+      if (inputPoints.length > DRAWING_MAX_EXTEND_POINTS) {
+        return invalidDrawingActionResult(`Drawing strokes can only send ${DRAWING_MAX_EXTEND_POINTS} points at a time.`);
+      }
+
       const clampedPoints = inputPoints.map((point) => {
         if (!isDrawingPointWithinBounds(point, drawing.width, drawing.height)) {
           return null;
@@ -199,6 +208,10 @@ export function applyDrawingActionToState(drawing: DrawingState, action: Drawing
         return { ok: true, data: null };
       }
 
+      if (activeStroke.points.length + uniquePoints.length > DRAWING_MAX_STROKE_POINTS) {
+        return invalidDrawingActionResult(`Drawing strokes can only contain ${DRAWING_MAX_STROKE_POINTS} points.`);
+      }
+
       clearDrawingRedoHistory(drawing);
       activeStroke.points.push(...uniquePoints);
       drawing.snapshotDataUrl = null;
@@ -210,6 +223,10 @@ export function applyDrawingActionToState(drawing: DrawingState, action: Drawing
       const activeStrokeIndex = drawing.activeStrokes.findIndex((stroke) => stroke.id === action.strokeId);
       if (activeStrokeIndex === -1) {
         return invalidDrawingActionResult('The drawing stroke could not be completed.');
+      }
+
+      if (drawing.operations.length >= DRAWING_MAX_OPERATIONS) {
+        return invalidDrawingActionResult(`Drawing history can only contain ${DRAWING_MAX_OPERATIONS} operations.`);
       }
 
       const [activeStroke] = drawing.activeStrokes.splice(activeStrokeIndex, 1);
@@ -232,6 +249,7 @@ export function applyDrawingActionToState(drawing: DrawingState, action: Drawing
         }
       }
 
+      capDrawingUndoHistory(drawing);
       drawing.snapshotDataUrl = null;
       drawing.revision += 1;
       return { ok: true, data: null };
@@ -243,6 +261,11 @@ export function applyDrawingActionToState(drawing: DrawingState, action: Drawing
         return { ok: true, data: null };
       }
 
+      if (drawing.operations.length >= DRAWING_MAX_OPERATIONS) {
+        drawing.undoneOperations.push(operation);
+        return invalidDrawingActionResult(`Drawing history can only contain ${DRAWING_MAX_OPERATIONS} operations.`);
+      }
+
       drawing.activeStrokes = [];
       drawing.operations.push(cloneDrawingOperation(operation));
       drawing.snapshotDataUrl = null;
@@ -251,6 +274,10 @@ export function applyDrawingActionToState(drawing: DrawingState, action: Drawing
     }
 
     case 'clear': {
+      if (drawing.operations.length >= DRAWING_MAX_OPERATIONS) {
+        return invalidDrawingActionResult(`Drawing history can only contain ${DRAWING_MAX_OPERATIONS} operations.`);
+      }
+
       clearDrawingRedoHistory(drawing);
       drawing.activeStrokes = [];
       drawing.operations.push({
@@ -269,6 +296,10 @@ export function applyDrawingActionToState(drawing: DrawingState, action: Drawing
 
       if (!isDrawingPointWithinBounds(action.point, drawing.width, drawing.height)) {
         return invalidDrawingActionResult('Fill point is outside the canvas bounds.');
+      }
+
+      if (drawing.operations.length >= DRAWING_MAX_OPERATIONS) {
+        return invalidDrawingActionResult(`Drawing history can only contain ${DRAWING_MAX_OPERATIONS} operations.`);
       }
 
       clearDrawingRedoHistory(drawing);
@@ -360,6 +391,12 @@ function cloneDrawingOperation(operation: DrawingOperation): DrawingOperation {
 function clearDrawingRedoHistory(drawing: DrawingState): void {
   if (drawing.undoneOperations.length > 0) {
     drawing.undoneOperations = [];
+  }
+}
+
+function capDrawingUndoHistory(drawing: DrawingState): void {
+  if (drawing.undoneOperations.length > DRAWING_MAX_UNDO_OPERATIONS) {
+    drawing.undoneOperations = drawing.undoneOperations.slice(-DRAWING_MAX_UNDO_OPERATIONS);
   }
 }
 

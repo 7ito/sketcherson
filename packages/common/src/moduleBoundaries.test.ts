@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, extname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { applyDrawingActionToState, type DrawingState } from './drawing';
+import { DRAWING_MAX_EXTEND_POINTS, applyDrawingActionToState, type DrawingState } from './drawing';
 import { createPromptEngine, normalizeGuessText } from './prompts';
 import { calculateGuesserScore } from './scoring';
 import { areLobbySettingsValidForGame, getFirstCorrectGuessTimeCapPresets } from './settings';
@@ -277,13 +277,15 @@ describe('drawing state helpers', () => {
       y: (Math.floor(index / 700) % 500) + 20,
     }));
 
-    expect(
-      applyDrawingActionToState(drawing, {
-        type: 'extendStroke',
-        strokeId: 'long-stroke',
-        points: longStrokePoints,
-      }).ok,
-    ).toBe(true);
+    for (let index = 0; index < longStrokePoints.length; index += DRAWING_MAX_EXTEND_POINTS) {
+      expect(
+        applyDrawingActionToState(drawing, {
+          type: 'extendStroke',
+          strokeId: 'long-stroke',
+          points: longStrokePoints.slice(index, index + DRAWING_MAX_EXTEND_POINTS),
+        }).ok,
+      ).toBe(true);
+    }
 
     expect(
       applyDrawingActionToState(drawing, {
