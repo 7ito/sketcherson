@@ -1,6 +1,15 @@
 import type { DrawingState } from '@sketcherson/common/drawing';
 import type { ApiResult, DrawingActionSuccess, RoomState } from '@sketcherson/common/room';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+
+const soundEffectsPlay = vi.hoisted(() => vi.fn());
+
+vi.mock('../lib/soundEffects', () => ({
+  soundEffects: {
+    play: soundEffectsPlay,
+  },
+}));
+
 import { MatchView } from '../components/room-page/MatchView';
 
 function buildDrawingState(): DrawingState {
@@ -71,6 +80,82 @@ function renderMatchView(room: RoomState, currentPlayerId = 'guest-1') {
     />,
   );
 }
+
+describe('MatchView round warning audio', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    soundEffectsPlay.mockClear();
+  });
+
+  it('does not play from stale countdown seconds when the round starts', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-01T00:00:00.000Z'));
+
+    const countdownRoom = buildRoom({
+      status: 'countdown',
+      match: {
+        ...buildRoom().match!,
+        phaseEndsAt: Date.now() + 1_000,
+      },
+    });
+    const { rerender } = renderMatchView(countdownRoom);
+
+    const roundRoom = buildRoom({
+      status: 'round',
+      match: {
+        ...countdownRoom.match!,
+        phaseEndsAt: Date.now() + 60_000,
+      },
+    });
+
+    rerender(
+      <MatchView
+        room={roundRoom}
+        currentPlayerId="guest-1"
+        connectionNotice={null}
+        onPause={vi.fn()}
+        onResume={vi.fn()}
+        onReroll={vi.fn()}
+        onKickPlayer={vi.fn()}
+        onSubmitDrawingAction={vi.fn<(action: unknown) => Promise<ApiResult<DrawingActionSuccess>>>()}
+        onSubmitMessage={vi.fn()}
+        onOpenSettings={vi.fn()}
+      />,
+    );
+
+    expect(soundEffectsPlay).not.toHaveBeenCalled();
+
+    act(() => {
+      vi.advanceTimersByTime(49_999);
+    });
+    expect(soundEffectsPlay).not.toHaveBeenCalled();
+
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(soundEffectsPlay).toHaveBeenCalledWith('roundWarning');
+  });
+
+  it('does not play immediately when joining an already expiring round', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-05-01T00:00:00.000Z'));
+
+    renderMatchView(buildRoom({
+      status: 'round',
+      match: {
+        ...buildRoom().match!,
+        phaseEndsAt: Date.now() + 5_000,
+      },
+    }));
+
+    expect(soundEffectsPlay).not.toHaveBeenCalled();
+
+    act(() => {
+      vi.advanceTimersByTime(5_000);
+    });
+    expect(soundEffectsPlay).not.toHaveBeenCalled();
+  });
+});
 
 describe('MatchView chat focus shortcuts', () => {
   it('focuses chat and keeps the typed character when a non-drawer starts typing', () => {

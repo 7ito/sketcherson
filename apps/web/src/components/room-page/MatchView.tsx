@@ -126,11 +126,7 @@ export function MatchView({
   const timerPercent = secondsRemaining !== null ? Math.max(0, Math.min(100, (secondsRemaining / room.settings.roundTimerSeconds) * 100)) : 0;
 
   useEffect(() => {
-    if (room.status !== 'round' || !currentTurn || secondsRemaining === null) {
-      return;
-    }
-
-    if (secondsRemaining > 10 || secondsRemaining <= 0) {
+    if (room.status !== 'round' || !currentTurn || !phaseEndsAt) {
       return;
     }
 
@@ -138,9 +134,20 @@ export function MatchView({
       return;
     }
 
-    roundWarningTurnRef.current = currentTurn.turnNumber;
-    void soundEffects.play('roundWarning');
-  }, [currentTurn, room.status, secondsRemaining]);
+    const warningDelayMs = phaseEndsAt - Date.now() - 10_000;
+    if (warningDelayMs <= 0) {
+      return;
+    }
+
+    const warningTimer = window.setTimeout(() => {
+      roundWarningTurnRef.current = currentTurn.turnNumber;
+      void soundEffects.play('roundWarning');
+    }, warningDelayMs);
+
+    return () => {
+      window.clearTimeout(warningTimer);
+    };
+  }, [currentTurn?.turnNumber, phaseEndsAt, room.status]);
 
   const handleReroll = async () => {
     setRerollError('');
