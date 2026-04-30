@@ -130,6 +130,7 @@ export interface RoomRecord {
   stateRevision: number;
   hostPlayerId: string;
   players: Map<string, RoomPlayerRecord>;
+  lastActivityAt: number;
   status: RoomState['status'];
   settings: LobbySettings;
   match: MatchRecord | null;

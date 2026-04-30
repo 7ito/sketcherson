@@ -84,7 +84,19 @@ export class RoomStore {
   }
 
   public deleteRoom(code: string): void {
-    this.rooms.delete(normalizeRoomCode(code));
+    const normalizedCode = normalizeRoomCode(code);
+    const room = this.rooms.get(normalizedCode);
+
+    if (room) {
+      for (const player of room.players.values()) {
+        if (player.socketId) {
+          this.deleteConnection(player.socketId);
+        }
+        this.deleteSession(player.sessionToken);
+      }
+    }
+
+    this.rooms.delete(normalizedCode);
   }
 
   public createRoomCode(): string {

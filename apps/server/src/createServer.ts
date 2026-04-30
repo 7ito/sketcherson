@@ -20,6 +20,8 @@ interface ActionSuccess {
 }
 
 export const SOCKET_MAX_HTTP_BUFFER_SIZE_BYTES = 1_000_000;
+export const ROOM_IDLE_TTL_MS = 2 * 60 * 60 * 1000;
+export const ROOM_IDLE_CLEANUP_INTERVAL_MS = 5 * 60 * 1000;
 
 export interface GameServer {
   io: Server<RoomClientToServerSocketEvents, RoomServerToClientSocketEvents>;
@@ -40,6 +42,8 @@ export function createGameServer(options?: Partial<CreateGameServerOptions<any>>
   pauseCooldownMs?: number;
   roundDurationOverrideMs?: number;
   random?: () => number;
+  roomIdleTtlMs?: number;
+  roomIdleCleanupIntervalMs?: number;
   gameRuntime?: ServerGameRuntime<any>;
   gameDefinition?: GameDefinition;
   gamePack?: GamePack<any>;
@@ -55,6 +59,7 @@ export function createGameServer(options?: Partial<CreateGameServerOptions<any>>
     ?? (options?.gamePack ? createServerGameRuntime(options.gamePack) : undefined);
   const gameDefinition = gameRuntime?.definition ?? options?.gameDefinition;
   const httpServer = createHttpServer();
+  let idleCleanupTimer: ReturnType<typeof setInterval> | null = null;
   const io = new Server<RoomClientToServerSocketEvents, RoomServerToClientSocketEvents>(httpServer, {
     cors: {
       origin: corsOrigin,
@@ -412,6 +417,16 @@ export function createGameServer(options?: Partial<CreateGameServerOptions<any>>
         httpServer.listen(port, resolve);
       });
 
+      const roomIdleCleanupIntervalMs = options?.roomIdleCleanupIntervalMs ?? ROOM_IDLE_CLEANUP_INTERVAL_MS;
+      const roomIdleTtlMs = options?.roomIdleTtlMs ?? ROOM_IDLE_TTL_MS;
+      idleCleanupTimer = setInterval(() => {
+        const deletedRoomCodes = roomRuntime.deleteIdleRooms(roomIdleTtlMs);
+        for (const roomCode of deletedRoomCodes) {
+          logServerEvent('info', 'room.idle.deleted', { roomCode, idleTtlMs: roomIdleTtlMs });
+        }
+      }, roomIdleCleanupIntervalMs);
+      idleCleanupTimer.unref();
+
       const address = httpServer.address();
       if (address && typeof address === 'object') {
         logServerEvent('info', 'server.started', {
@@ -432,6 +447,10 @@ export function createGameServer(options?: Partial<CreateGameServerOptions<any>>
       return port;
     },
     stop: async () => {
+      if (idleCleanupTimer) {
+        clearInterval(idleCleanupTimer);
+        idleCleanupTimer = null;
+      }
       roomRuntime.destroy();
       await new Promise<void>((resolve) => {
         io.close(() => {

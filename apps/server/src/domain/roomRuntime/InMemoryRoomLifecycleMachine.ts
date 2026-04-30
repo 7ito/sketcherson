@@ -225,6 +225,7 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
       stateRevision: 1,
       hostPlayerId: playerId,
       players: new Map(),
+      lastActivityAt: this.now(),
       status: 'lobby',
       settings: this.gameRuntime.settings.defaults(),
       match: null,
@@ -870,6 +871,29 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
 
   private touchRoom(room: RoomRecord): void {
     room.stateRevision += 1;
+    room.lastActivityAt = this.now();
+  }
+
+  public deleteIdleRooms(idleMs: number): string[] {
+    const now = this.now();
+    const deletedRoomCodes: string[] = [];
+
+    for (const room of this.store.listRooms()) {
+      if (now - room.lastActivityAt < idleMs) {
+        continue;
+      }
+
+      this.scheduler.clearRoomTimers(room);
+      for (const player of room.players.values()) {
+        if (player.socketId) {
+          this.rateLimiter.clearActor(player.socketId);
+        }
+      }
+      this.store.deleteRoom(room.code);
+      deletedRoomCodes.push(room.code);
+    }
+
+    return deletedRoomCodes;
   }
 
   private notifyRoomChanged(roomCode: string): void {

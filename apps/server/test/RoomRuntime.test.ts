@@ -89,6 +89,10 @@ class RoomRuntimeTestDriver {
   public disconnect(connectionId: string) {
     return this.runtime.disconnect({ connectionId });
   }
+
+  public deleteIdleRooms(idleMs: number) {
+    return this.runtime.deleteIdleRooms(idleMs);
+  }
 }
 
 function createRoomRuntimeDriver(options?: Partial<RoomRuntimeOptions>): RoomRuntimeTestDriver {
@@ -161,6 +165,35 @@ function createManualScheduler() {
 }
 
 describe('RoomRuntime', () => {
+  it('deletes rooms that exceed the idle TTL and clears their session lookups', () => {
+    let now = 1_000;
+    const driver = createRoomRuntimeDriver({
+      now: () => now,
+      ids: createSequentialIds(['host-id', 'host-session', 'host-joined-feed']),
+    });
+
+    const created = driver.createRoom('Host', 'host-socket', 'origin');
+    expect(created.ok).toBe(true);
+    if (!created.ok) {
+      return;
+    }
+
+    now += 999;
+    expect(driver.deleteIdleRooms(1_000)).toEqual([]);
+    expect(driver.getRoomState(created.data.room.code, 'origin').ok).toBe(true);
+
+    now += 1;
+    expect(driver.deleteIdleRooms(1_000)).toEqual([created.data.room.code]);
+    expect(driver.getRoomState(created.data.room.code, 'origin')).toMatchObject({
+      ok: false,
+      error: { code: 'ROOM_NOT_FOUND' },
+    });
+    expect(driver.reclaimRoom(created.data.room.code, created.data.sessionToken, 'new-socket', 'origin')).toMatchObject({
+      ok: false,
+      error: { code: 'ROOM_NOT_FOUND' },
+    });
+  });
+
   it('uses game rules for player limits and reroll availability', () => {
     const gamePack = defineGamePack({
       definition: TEST_GAME_DEFINITION,

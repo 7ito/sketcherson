@@ -51,6 +51,14 @@ export class RoomRuntime {
     this.machine.destroy();
   }
 
+  public deleteIdleRooms(idleMs: number): string[] {
+    if (this.machine instanceof InMemoryRoomLifecycleMachine) {
+      return this.machine.deleteIdleRooms(idleMs);
+    }
+
+    return [];
+  }
+
   public createRoom(input: ConnectionInput & { nickname: string }): ApiResult<CreateRoomSuccess> {
     return this.dispatch<ApiResult<CreateRoomSuccess>>({ type: 'createRoom', ...input });
   }
