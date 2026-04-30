@@ -1,4 +1,6 @@
-export type GameSoundEffect = 'lobbyJoin' | 'turnStart' | 'correctGuess' | 'otherPlayerCorrectGuess';
+import roundWarningSoundUrl from '../assets/round-warning.wav';
+
+export type GameSoundEffect = 'lobbyJoin' | 'turnStart' | 'correctGuess' | 'otherPlayerCorrectGuess' | 'roundWarning';
 
 type OscillatorWaveform = OscillatorType;
 
@@ -53,6 +55,7 @@ class ProceduralSoundEffects {
   private noiseBuffer: AudioBuffer | null = null;
   private lastPlayedAtByEffect = new Map<GameSoundEffect, number>();
   private pendingGain: number | null = null;
+  private sampleVolume = MASTER_GAIN;
 
   public setVolume(normalizedVolume: number): void {
     const gain = Math.max(0, Math.min(1, normalizedVolume)) * MASTER_GAIN;
@@ -60,6 +63,7 @@ class ProceduralSoundEffects {
       this.masterGain.gain.value = gain;
     }
     this.pendingGain = gain;
+    this.sampleVolume = gain;
   }
 
   public async unlock(): Promise<void> {
@@ -112,6 +116,9 @@ class ProceduralSoundEffects {
         return;
       case 'otherPlayerCorrectGuess':
         this.playOtherPlayerCorrectGuess(startTime);
+        return;
+      case 'roundWarning':
+        void this.playSample(roundWarningSoundUrl);
         return;
     }
   }
@@ -223,6 +230,21 @@ class ProceduralSoundEffects {
     gainNode.connect(masterGain);
     source.start(layer.startTime);
     source.stop(layer.startTime + layer.durationSeconds + 0.03);
+  }
+
+  private async playSample(url: string): Promise<void> {
+    if (typeof Audio === 'undefined') {
+      return;
+    }
+
+    const audio = new Audio(url);
+    audio.volume = Math.max(0, Math.min(1, this.sampleVolume));
+
+    try {
+      await audio.play();
+    } catch {
+      // Ignore browsers that still require a direct user gesture.
+    }
   }
 
   private playLobbyJoin(startTime: number): void {

@@ -1720,6 +1720,98 @@ describe('RoomRuntime', () => {
     expect(watcherCorrectFeedItem).not.toHaveProperty('answer');
   });
 
+  it('preserves the lobby host during reconnect grace and lets them reclaim host controls', () => {
+    const service = createRoomRuntimeDriver();
+    const createResult = service.createRoom('Host', 'socket-1', 'https://sketcherson.example');
+
+    if (!createResult.ok) {
+      throw new Error('Expected room creation to succeed');
+    }
+
+    const joinResult = service.joinRoom(createResult.data.room.code, 'Guest', 'socket-2', 'https://sketcherson.example');
+
+    if (!joinResult.ok) {
+      throw new Error('Expected room join to succeed');
+    }
+
+    const disconnectedRoomCode = service.disconnect('socket-1');
+    expect(disconnectedRoomCode).toBe(createResult.data.room.code);
+
+    const postDisconnectState = service.getRoomState(createResult.data.room.code, 'https://sketcherson.example');
+    expect(postDisconnectState.ok).toBe(true);
+
+    if (!postDisconnectState.ok) {
+      return;
+    }
+
+    const disconnectedHost = postDisconnectState.data.room.players.find((player) => player.id === createResult.data.playerId);
+    const guestPlayer = postDisconnectState.data.room.players.find((player) => player.id === joinResult.data.playerId);
+
+    expect(postDisconnectState.data.room.status).toBe('lobby');
+    expect(disconnectedHost).toMatchObject({
+      connected: false,
+      isHost: true,
+    });
+    expect(disconnectedHost?.reconnectBy).not.toBeNull();
+    expect(guestPlayer?.isHost).toBe(false);
+
+    const reclaimResult = service.reclaimRoom(
+      createResult.data.room.code,
+      createResult.data.sessionToken,
+      'socket-3',
+      'https://sketcherson.example',
+    );
+
+    expect(reclaimResult.ok).toBe(true);
+
+    if (!reclaimResult.ok) {
+      return;
+    }
+
+    const reclaimedPlayer = reclaimResult.data.room.players.find((player) => player.id === createResult.data.playerId);
+    expect(reclaimedPlayer).toMatchObject({
+      nickname: 'Host',
+      connected: true,
+      reconnectBy: null,
+      isHost: true,
+    });
+  });
+
+  it('migrates the lobby host after reconnect grace expires', () => {
+    vi.useFakeTimers();
+
+    const service = createRoomRuntimeDriver({ reconnectGraceMs: 1_000 });
+    const createResult = service.createRoom('Host', 'socket-1', 'https://sketcherson.example');
+
+    if (!createResult.ok) {
+      throw new Error('Expected room creation to succeed');
+    }
+
+    const joinResult = service.joinRoom(createResult.data.room.code, 'Guest', 'socket-2', 'https://sketcherson.example');
+
+    if (!joinResult.ok) {
+      throw new Error('Expected room join to succeed');
+    }
+
+    const disconnectedRoomCode = service.disconnect('socket-1');
+    expect(disconnectedRoomCode).toBe(createResult.data.room.code);
+
+    vi.advanceTimersByTime(1_001);
+
+    const expiredState = service.getRoomState(createResult.data.room.code, 'https://sketcherson.example');
+    expect(expiredState.ok).toBe(true);
+
+    if (!expiredState.ok) {
+      return;
+    }
+
+    const expiredHost = expiredState.data.room.players.find((player) => player.id === createResult.data.playerId);
+    const migratedHost = expiredState.data.room.players.find((player) => player.id === joinResult.data.playerId);
+
+    expect(expiredHost).toBeUndefined();
+    expect(migratedHost?.isHost).toBe(true);
+  });
+
   it('reclaims the same seat after disconnect and migrates host during live play', () => {
     const service = createRoomRuntimeDriver();
     const createResult = service.createRoom('Host', 'socket-1', 'https://sketcherson.example');

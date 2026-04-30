@@ -138,7 +138,7 @@ export class ConnectionController {
       this.scheduleReconnectTimer(room.code, player);
     }
 
-    if (room.hostPlayerId === player.id && room.status !== 'paused') {
+    if (room.hostPlayerId === player.id && room.status !== 'paused' && room.status !== 'lobby') {
       this.migrateHost(room, player.id);
     }
 

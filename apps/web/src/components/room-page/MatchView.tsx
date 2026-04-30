@@ -3,6 +3,7 @@ import type { DrawingAction } from '@sketcherson/common/drawing';
 import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { formatShellCopy } from '@sketcherson/common/game';
 import { GAME_RUNTIME, GAME_WEB_CONFIG } from '../../game';
+import { soundEffects } from '../../lib/soundEffects';
 import { useUserSettings } from '../../lib/userSettings';
 import { useRoomDrawing } from '../../providers/RoomSessionProvider';
 import { DrawingCanvas } from '../DrawingCanvas';
@@ -72,6 +73,7 @@ export function MatchView({
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [kickError, setKickError] = useState('');
   const [kickingPlayerId, setKickingPlayerId] = useState<string | null>(null);
+  const roundWarningTurnRef = useRef<number | null>(null);
 
   const effectivePhase = room.status === 'paused' ? pauseState?.pausedPhase ?? null : room.status;
   const isViewerHost = room.players.some((player) => player.id === currentPlayerId && player.isHost);
@@ -122,6 +124,23 @@ export function MatchView({
   const canSendMessage = !(effectivePhase === 'round' && (hasGuessedCorrectly || isGuessingDelayActive));
 
   const timerPercent = secondsRemaining !== null ? Math.max(0, Math.min(100, (secondsRemaining / room.settings.roundTimerSeconds) * 100)) : 0;
+
+  useEffect(() => {
+    if (room.status !== 'round' || !currentTurn || secondsRemaining === null) {
+      return;
+    }
+
+    if (secondsRemaining > 10 || secondsRemaining <= 0) {
+      return;
+    }
+
+    if (roundWarningTurnRef.current === currentTurn.turnNumber) {
+      return;
+    }
+
+    roundWarningTurnRef.current = currentTurn.turnNumber;
+    void soundEffects.play('roundWarning');
+  }, [currentTurn, room.status, secondsRemaining]);
 
   const handleReroll = async () => {
     setRerollError('');
