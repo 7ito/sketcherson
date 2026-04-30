@@ -1,6 +1,6 @@
 import { MAX_CHAT_MESSAGE_LENGTH, type ApiResult, type DrawingActionSuccess, type RoomState } from '@sketcherson/common/room';
 import type { DrawingAction } from '@sketcherson/common/drawing';
-import { type FormEvent, useMemo, useRef, useState } from 'react';
+import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { formatShellCopy } from '@sketcherson/common/game';
 import { GAME_RUNTIME, GAME_WEB_CONFIG } from '../../game';
 import { useUserSettings } from '../../lib/userSettings';
@@ -177,6 +177,21 @@ export function MatchView({
     setKickingPlayerId(null);
     if (errorMessage) setKickError(errorMessage);
   };
+
+  useEffect(() => {
+    if (canDraw || !canSendMessage) return;
+
+    const handleTypingShortcut = (event: KeyboardEvent) => {
+      if (!isChatFocusShortcut(event)) return;
+
+      event.preventDefault();
+      chatInputRef.current?.focus();
+      setMessageDraft((draft) => (draft.length >= MAX_CHAT_MESSAGE_LENGTH ? draft : `${draft}${event.key}`));
+    };
+
+    window.addEventListener('keydown', handleTypingShortcut);
+    return () => window.removeEventListener('keydown', handleTypingShortcut);
+  }, [canDraw, canSendMessage]);
 
   const phaseLabel =
     room.status === 'paused'
@@ -510,4 +525,17 @@ export function MatchView({
       </div>
     </div>
   );
+}
+
+function isChatFocusShortcut(event: KeyboardEvent): boolean {
+  if (event.ctrlKey || event.metaKey || event.altKey || event.isComposing || event.key.length !== 1) {
+    return false;
+  }
+
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) {
+    return true;
+  }
+
+  return !(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement || target.isContentEditable);
 }
