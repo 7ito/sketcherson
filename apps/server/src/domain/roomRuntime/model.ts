@@ -73,6 +73,7 @@ export interface CorrectGuessFeedRecord extends BaseRoomFeedRecord {
 export type RoomFeedRecord = PlayerChatFeedRecord | SystemFeedRecord | RoundHeaderFeedRecord | CorrectGuessFeedRecord;
 
 export const ROOM_FEED_MAX_RECORDS = 200;
+export const COMPLETED_TURN_IMAGE_MAX_BYTES = 5_000_000;
 
 export function appendRoomFeedRecord(feed: RoomFeedRecord[], record: RoomFeedRecord): void {
   feed.push(record);
@@ -92,6 +93,22 @@ export interface CompletedTurnRecord {
   rerolledFrom: string | null;
   finalImageDataUrl: string | null;
   scoreChanges: RoundScoreChange[];
+}
+
+export function capCompletedTurnImageRetention(completedTurns: CompletedTurnRecord[]): void {
+  let retainedBytes = 0;
+
+  for (let index = completedTurns.length - 1; index >= 0; index -= 1) {
+    const completedTurn = completedTurns[index];
+    const imageBytes = completedTurn?.finalImageDataUrl ? Buffer.byteLength(completedTurn.finalImageDataUrl, 'utf8') : 0;
+
+    if (retainedBytes + imageBytes > COMPLETED_TURN_IMAGE_MAX_BYTES) {
+      completedTurn.finalImageDataUrl = null;
+      continue;
+    }
+
+    retainedBytes += imageBytes;
+  }
 }
 
 export interface MatchRecord {

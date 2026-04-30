@@ -4,7 +4,7 @@ import type { DrawingState } from '@sketcherson/common/drawing';
 import type { PromptEngine } from '@sketcherson/common/prompts';
 import { createDrawingState, finalizeDrawingState } from '../drawing';
 import { appendTailTurn, buildTurnPlan } from '../match';
-import { appendRoomFeedRecord, type ActiveTurnRecord, type MatchRecord, type RoomFeedRecord, type RoomPlayerRecord, type RoomRecord } from './model';
+import { appendRoomFeedRecord, capCompletedTurnImageRetention, type ActiveTurnRecord, type MatchRecord, type RoomFeedRecord, type RoomPlayerRecord, type RoomRecord } from './model';
 import type { RoomPhaseTimerKind } from './timers';
 
 export interface MatchControllerOptions {
@@ -260,6 +260,7 @@ export class MatchController {
     match.pause = null;
     match.phaseEndsAt = this.now() + this.revealMs;
     match.completedTurns = [...match.completedTurns, buildCompletedTurn(activeTurn)];
+    capCompletedTurnImageRetention(match.completedTurns);
 
     this.scheduleRoomPhaseKindTimer(room, this.revealMs, 'revealEnded');
 
@@ -283,6 +284,7 @@ export class MatchController {
     pause.phaseRemainingMs = this.revealMs;
     pause.roundElapsedMs = null;
     match.completedTurns = [...match.completedTurns, buildCompletedTurn(activeTurn)];
+    capCompletedTurnImageRetention(match.completedTurns);
 
     this.notifyRoomChanged(room.code);
   }
