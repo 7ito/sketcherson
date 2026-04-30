@@ -134,6 +134,7 @@ export interface CurrentTurnState {
 
 export interface CompletedTurnState {
   turnNumber: number;
+  roundNumber?: number;
   drawerPlayerId: string;
   drawerNickname: string;
   answer: string;

@@ -2,6 +2,7 @@ import { MAX_TOTAL_TURNS } from '@sketcherson/common/room';
 
 export interface PlannedTurn {
   turnNumber: number;
+  roundNumber: number;
   drawerPlayerId: string;
 }
 
@@ -22,6 +23,7 @@ export function buildTurnPlan(
 
       turnPlan.push({
         turnNumber: turnPlan.length + 1,
+        roundNumber: cycle + 1,
         drawerPlayerId,
       });
     }
@@ -34,6 +36,7 @@ export function appendTailTurn(
   turnPlan: PlannedTurn[],
   drawerPlayerId: string,
   maxTotalTurns = MAX_TOTAL_TURNS,
+  roundNumber = (turnPlan.at(-1)?.roundNumber ?? 0) + 1,
 ): PlannedTurn[] {
   if (turnPlan.length >= maxTotalTurns) {
     return turnPlan;
@@ -43,6 +46,7 @@ export function appendTailTurn(
     ...turnPlan,
     {
       turnNumber: turnPlan.length + 1,
+      roundNumber,
       drawerPlayerId,
     },
   ];

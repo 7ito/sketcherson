@@ -65,6 +65,7 @@ export class RoomProjector {
               : null,
             completedTurns: room.match.completedTurns.map((turn) => ({
               turnNumber: turn.turnNumber,
+              roundNumber: turn.roundNumber,
               drawerPlayerId: turn.drawerPlayerId,
               drawerNickname: turn.drawerNickname,
               answer: turn.answer,

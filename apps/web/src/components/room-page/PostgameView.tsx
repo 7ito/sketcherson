@@ -22,6 +22,50 @@ const SHELL_DRAWING_COPY = GAME_WEB_CONFIG.ui.copy.drawing;
 const SHELL_POSTGAME_COPY = GAME_WEB_CONFIG.ui.copy.postgame;
 const SHELL_SKIN_ICONS = GAME_WEB_CONFIG.ui.skin.tokens.icons;
 
+type PostgameRoundGroup = {
+  roundNumber: number;
+  turns: CompletedTurnState[];
+};
+
+export function groupCompletedTurnsForPostgame(
+  turns: CompletedTurnState[],
+  configuredRoundCount: number,
+): PostgameRoundGroup[] {
+  if (turns.length === 0) {
+    return [];
+  }
+
+  const allTurnsHaveRoundNumbers = turns.every(
+    (turn) => Number.isInteger(turn.roundNumber) && (turn.roundNumber ?? 0) > 0,
+  );
+
+  if (allTurnsHaveRoundNumbers) {
+    const roundsByNumber = new Map<number, CompletedTurnState[]>();
+
+    for (const turn of turns) {
+      const roundNumber = turn.roundNumber as number;
+      roundsByNumber.set(roundNumber, [...(roundsByNumber.get(roundNumber) ?? []), turn]);
+    }
+
+    return Array.from(roundsByNumber.entries())
+      .sort(([leftRoundNumber], [rightRoundNumber]) => leftRoundNumber - rightRoundNumber)
+      .map(([roundNumber, roundTurns]) => ({ roundNumber, turns: roundTurns }));
+  }
+
+  const fallbackRoundCount = Math.max(1, configuredRoundCount);
+  const turnsPerRound = Math.max(1, Math.ceil(turns.length / fallbackRoundCount));
+  const rounds: PostgameRoundGroup[] = [];
+
+  for (let index = 0; index < turns.length; index += turnsPerRound) {
+    rounds.push({
+      roundNumber: rounds.length + 1,
+      turns: turns.slice(index, index + turnsPerRound),
+    });
+  }
+
+  return rounds;
+}
+
 export function PostgameView({
   room,
   currentPlayerId,
@@ -237,17 +281,12 @@ export function PostgameView({
           </div>
           {(() => {
             const turns = room.match?.completedTurns ?? [];
-            const turnsPerRound = turns.length > 0 ? Math.round(turns.length / room.settings.turnsPerPlayer) : 0;
-            const totalRounds = room.settings.turnsPerPlayer;
-            const rounds: CompletedTurnState[][] = [];
-            for (let r = 0; r < totalRounds; r++) {
-              rounds.push(turns.slice(r * turnsPerRound, (r + 1) * turnsPerRound));
-            }
-            return rounds.map((roundTurns, roundIndex) => (
-              <div key={roundIndex} className="postgame-round-group">
-                <h2 className="postgame-round-heading">{formatShellCopy(SHELL_POSTGAME_COPY.roundHeading, { roundNumber: roundIndex + 1 })}</h2>
+            const rounds = groupCompletedTurnsForPostgame(turns, room.settings.turnsPerPlayer);
+            return rounds.map((round) => (
+              <div key={round.roundNumber} className="postgame-round-group">
+                <h2 className="postgame-round-heading">{formatShellCopy(SHELL_POSTGAME_COPY.roundHeading, { roundNumber: round.roundNumber })}</h2>
                 <div className="postgame-gallery-grid">
-                  {roundTurns.map((turn) => {
+                  {round.turns.map((turn) => {
                     const drawerColor = playerAccentColors.get(turn.drawerPlayerId) ?? GAME_WEB_CONFIG.ui.theme.colors.mutedText;
 
                     return (

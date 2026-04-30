@@ -25,6 +25,7 @@ describe('match planning', () => {
     const withSecondLateJoiner = appendTailTurn(withFirstLateJoiner, 'late-2', 3);
 
     expect(withFirstLateJoiner.map((turn) => turn.drawerPlayerId)).toEqual(['guest', 'host', 'late-1']);
+    expect(withFirstLateJoiner.map((turn) => turn.roundNumber)).toEqual([1, 1, 2]);
     expect(withSecondLateJoiner.map((turn) => turn.drawerPlayerId)).toEqual(['guest', 'host', 'late-1']);
     expect(withSecondLateJoiner.at(-1)?.turnNumber).toBe(3);
   });

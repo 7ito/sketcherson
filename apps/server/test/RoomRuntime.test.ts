@@ -2284,6 +2284,7 @@ describe('RoomRuntime', () => {
 
     expect(postgameState.data.room.status).toBe('postgame');
     expect(postgameState.data.room.match?.completedTurns).toHaveLength(3);
+    expect(postgameState.data.room.match?.completedTurns.map((turn) => turn.roundNumber)).toEqual([1, 1, 2]);
     expect(postgameState.data.room.match?.completedTurns.at(-1)?.drawerNickname).toBe('Late');
 
     service.disconnect('socket-2');

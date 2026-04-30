@@ -25,6 +25,7 @@ export interface PauseRecord {
 
 export interface ActiveTurnRecord {
   turnNumber: number;
+  roundNumber: number;
   drawerPlayerId: string;
   drawerNickname: string;
   promptId: string;
@@ -87,6 +88,7 @@ export interface ScoreRecord extends ScoreboardEntry {}
 
 export interface CompletedTurnRecord {
   turnNumber: number;
+  roundNumber: number;
   drawerPlayerId: string;
   drawerNickname: string;
   answer: string;

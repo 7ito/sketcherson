@@ -164,7 +164,12 @@ export class MatchController {
     });
 
     if (this.shouldGrantLateJoinTailTurn(room)) {
-      match.turnPlan = appendTailTurn(match.turnPlan, player.id);
+      match.turnPlan = appendTailTurn(
+        match.turnPlan,
+        player.id,
+        this.rules.limits.maxTotalTurns,
+        room.settings.turnsPerPlayer + 1,
+      );
     }
 
     appendRoomFeedRecord(match.feed, this.createSystemFeedItem(
@@ -198,6 +203,7 @@ export class MatchController {
     match.phaseEndsAt = this.now() + this.countdownMs;
     match.activeTurn = {
       turnNumber: plannedTurn.turnNumber,
+      roundNumber: plannedTurn.roundNumber,
       drawerPlayerId: plannedTurn.drawerPlayerId,
       drawerNickname,
       promptId: prompt.id,
@@ -212,11 +218,11 @@ export class MatchController {
     };
     match.usedPromptIds = promptAssignment.usedPromptIds;
 
-    const roundNumber = Math.floor((plannedTurn.turnNumber - 1) / match.playersPerRound) + 1;
-    const isNewRound = (plannedTurn.turnNumber - 1) % match.playersPerRound === 0 && roundNumber <= room.settings.turnsPerPlayer;
+    const previousPlannedTurn = match.turnPlan[match.currentTurnIndex - 1];
+    const isNewRound = !previousPlannedTurn || previousPlannedTurn.roundNumber !== plannedTurn.roundNumber;
 
     if (isNewRound) {
-      appendRoomFeedRecord(match.feed, this.createRoundHeaderFeedItem(roundNumber, plannedTurn.turnNumber, this.now()));
+      appendRoomFeedRecord(match.feed, this.createRoundHeaderFeedItem(plannedTurn.roundNumber, plannedTurn.turnNumber, this.now()));
     }
 
     appendRoomFeedRecord(match.feed, this.createSystemFeedItem({ type: 'drawerAssigned', drawerNickname }, plannedTurn.turnNumber, this.now()));
@@ -870,6 +876,7 @@ export class MatchController {
 function buildCompletedTurn(activeTurn: ActiveTurnRecord) {
   return {
     turnNumber: activeTurn.turnNumber,
+    roundNumber: activeTurn.roundNumber,
     drawerPlayerId: activeTurn.drawerPlayerId,
     drawerNickname: activeTurn.drawerNickname,
     answer: activeTurn.prompt,
