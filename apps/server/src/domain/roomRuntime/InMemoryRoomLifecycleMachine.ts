@@ -7,11 +7,7 @@ import { isNicknameValid, normalizeNickname, normalizeNicknameForComparison } fr
 import { containsProfanity } from '@sketcherson/common/moderation';
 import { randomUUID } from 'node:crypto';
 import { applyDrawingAction, createDrawingState } from '../drawing';
-import type {
-  ActiveTurnRecord,
-  RoomPlayerRecord,
-  RoomRecord,
-} from './model';
+import { appendRoomFeedRecord, type ActiveTurnRecord, type RoomPlayerRecord, type RoomRecord } from './model';
 import { ConnectionController } from './ConnectionController';
 import { DrawingController } from './DrawingController';
 import { MatchController } from './MatchController';
@@ -249,7 +245,7 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
       canGuessFromTurnNumber: null,
     };
 
-    room.lobbyFeed.push({
+    appendRoomFeedRecord(room.lobbyFeed, {
       id: this.ids.randomUUID(),
       type: 'system',
       event: { type: 'playerJoined', nickname: normalizedNicknameResult.nickname },
@@ -342,7 +338,7 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
     if (room.match) {
       this.matchController.addJoinedPlayer(room, player);
     } else {
-      room.lobbyFeed.push({
+      appendRoomFeedRecord(room.lobbyFeed, {
         id: this.ids.randomUUID(),
         type: 'system',
         event: { type: 'playerJoined', nickname: normalizedNicknameResult.nickname },
@@ -671,7 +667,7 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
     }
 
     if (currentRoom.status === 'lobby' || currentRoom.status === 'postgame') {
-      currentRoom.lobbyFeed.push({
+      appendRoomFeedRecord(currentRoom.lobbyFeed, {
         id: this.ids.randomUUID(),
         type: 'playerChat',
         senderPlayerId: player.id,

@@ -72,6 +72,16 @@ export interface CorrectGuessFeedRecord extends BaseRoomFeedRecord {
 
 export type RoomFeedRecord = PlayerChatFeedRecord | SystemFeedRecord | RoundHeaderFeedRecord | CorrectGuessFeedRecord;
 
+export const ROOM_FEED_MAX_RECORDS = 200;
+
+export function appendRoomFeedRecord(feed: RoomFeedRecord[], record: RoomFeedRecord): void {
+  feed.push(record);
+
+  if (feed.length > ROOM_FEED_MAX_RECORDS) {
+    feed.splice(0, feed.length - ROOM_FEED_MAX_RECORDS);
+  }
+}
+
 export interface ScoreRecord extends ScoreboardEntry {}
 
 export interface CompletedTurnRecord {

@@ -4,7 +4,7 @@ import type { DrawingState } from '@sketcherson/common/drawing';
 import type { PromptEngine } from '@sketcherson/common/prompts';
 import { createDrawingState, finalizeDrawingState } from '../drawing';
 import { appendTailTurn, buildTurnPlan } from '../match';
-import type { ActiveTurnRecord, MatchRecord, RoomFeedRecord, RoomPlayerRecord, RoomRecord } from './model';
+import { appendRoomFeedRecord, type ActiveTurnRecord, type MatchRecord, type RoomFeedRecord, type RoomPlayerRecord, type RoomRecord } from './model';
 import type { RoomPhaseTimerKind } from './timers';
 
 export interface MatchControllerOptions {
@@ -165,7 +165,7 @@ export class MatchController {
       match.turnPlan = appendTailTurn(match.turnPlan, player.id);
     }
 
-    match.feed.push(this.createSystemFeedItem(
+    appendRoomFeedRecord(match.feed, this.createSystemFeedItem(
       { type: 'playerJoined', nickname: player.nickname },
       match.activeTurn?.turnNumber ?? null,
       this.now(),
@@ -214,10 +214,10 @@ export class MatchController {
     const isNewRound = (plannedTurn.turnNumber - 1) % match.playersPerRound === 0 && roundNumber <= room.settings.turnsPerPlayer;
 
     if (isNewRound) {
-      match.feed.push(this.createRoundHeaderFeedItem(roundNumber, plannedTurn.turnNumber, this.now()));
+      appendRoomFeedRecord(match.feed, this.createRoundHeaderFeedItem(roundNumber, plannedTurn.turnNumber, this.now()));
     }
 
-    match.feed.push(this.createSystemFeedItem({ type: 'drawerAssigned', drawerNickname }, plannedTurn.turnNumber, this.now()));
+    appendRoomFeedRecord(match.feed, this.createSystemFeedItem({ type: 'drawerAssigned', drawerNickname }, plannedTurn.turnNumber, this.now()));
 
     this.scheduleRoomPhaseKindTimer(room, this.countdownMs, 'countdownEnded');
 
@@ -254,7 +254,7 @@ export class MatchController {
 
     finalizeDrawingState(activeTurn.drawing, this.renderDrawingSnapshot);
 
-    match.feed.push(this.createSystemFeedItem({ type: 'answerRevealed', answer: activeTurn.prompt }, activeTurn.turnNumber, this.now()));
+    appendRoomFeedRecord(match.feed, this.createSystemFeedItem({ type: 'answerRevealed', answer: activeTurn.prompt }, activeTurn.turnNumber, this.now()));
 
     room.status = 'reveal';
     match.pause = null;
@@ -359,7 +359,7 @@ export class MatchController {
       roundElapsedMs,
     };
 
-    match.feed.push(this.createSystemFeedItem({ type: 'gamePaused' }, match.activeTurn.turnNumber, this.now()));
+    appendRoomFeedRecord(match.feed, this.createSystemFeedItem({ type: 'gamePaused' }, match.activeTurn.turnNumber, this.now()));
 
     this.freezeReconnectTimers(room);
 
@@ -421,7 +421,7 @@ export class MatchController {
       return;
     }
 
-    match.feed.push(this.createSystemFeedItem({ type: 'gameResumed' }, match.activeTurn?.turnNumber ?? null, this.now()));
+    appendRoomFeedRecord(match.feed, this.createSystemFeedItem({ type: 'gameResumed' }, match.activeTurn?.turnNumber ?? null, this.now()));
 
     room.status = pause.pausedPhase;
     match.pause = null;
@@ -545,7 +545,7 @@ export class MatchController {
       }
     }
 
-    match.feed.push({
+    appendRoomFeedRecord(match.feed, {
       id: this.ids.randomUUID(),
       type: 'playerChat',
       senderPlayerId: input.player.id,
@@ -578,7 +578,7 @@ export class MatchController {
 
     const totalGuessers = this.getEligibleGuesserCount(room, activeTurn);
 
-    match.feed.push({
+    appendRoomFeedRecord(match.feed, {
       id: this.ids.randomUUID(),
       type: 'correctGuess',
       guesserPlayerId: playerId,
@@ -591,7 +591,7 @@ export class MatchController {
     });
 
     if (this.rules.scoring.endRoundWhenAllGuessersCorrect && this.haveAllEligibleGuessersGuessed(room, activeTurn)) {
-      match.feed.push(this.createSystemFeedItem({ type: 'allGuessersCorrect' }, activeTurn.turnNumber, this.now()));
+      appendRoomFeedRecord(match.feed, this.createSystemFeedItem({ type: 'allGuessersCorrect' }, activeTurn.turnNumber, this.now()));
       this.transitionToReveal(room, false);
       return;
     }
