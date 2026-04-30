@@ -2,7 +2,7 @@ import { type ApiError, type LiveRoomStatus, type RoomState, type RoundScoreChan
 import type { ResolvedDrawingGameRules } from '@sketcherson/common/game';
 import type { DrawingState } from '@sketcherson/common/drawing';
 import type { PromptEngine } from '@sketcherson/common/prompts';
-import { createDrawingState, finalizeDrawingState } from '../drawing';
+import { createAsyncSnapshotRenderer, createDrawingState, finalizeDrawingState, type AsyncSnapshotRenderer } from '../drawing';
 import { appendTailTurn, buildTurnPlan } from '../match';
 import { appendRoomFeedRecord, capCompletedTurnImageRetention, type ActiveTurnRecord, type MatchRecord, type RoomFeedRecord, type RoomPlayerRecord, type RoomRecord } from './model';
 import type { RoomPhaseTimerKind } from './timers';
@@ -34,6 +34,7 @@ export class MatchController {
   private readonly random: () => number;
   private readonly ids: { randomUUID(): string };
   private readonly renderDrawingSnapshot?: (drawing: DrawingState) => string | null;
+  private readonly asyncSnapshotRenderer: AsyncSnapshotRenderer;
   private readonly promptEngine: PromptEngine;
   private readonly rules: ResolvedDrawingGameRules;
   private readonly countdownMs: number;
@@ -54,6 +55,7 @@ export class MatchController {
     this.random = options.random;
     this.ids = options.ids;
     this.renderDrawingSnapshot = options.renderDrawingSnapshot;
+    this.asyncSnapshotRenderer = createAsyncSnapshotRenderer();
     this.promptEngine = options.promptEngine;
     this.rules = options.rules;
     this.countdownMs = options.countdownMs;
@@ -252,7 +254,12 @@ export class MatchController {
       return;
     }
 
-    finalizeDrawingState(activeTurn.drawing, this.renderDrawingSnapshot);
+    if (this.renderDrawingSnapshot) {
+      finalizeDrawingState(activeTurn.drawing, this.renderDrawingSnapshot);
+    } else {
+      finalizeDrawingState(activeTurn.drawing, () => null);
+      this.renderRevealSnapshotAsync(room.code, activeTurn.turnNumber, activeTurn.drawing);
+    }
 
     appendRoomFeedRecord(match.feed, this.createSystemFeedItem({ type: 'answerRevealed', answer: activeTurn.prompt }, activeTurn.turnNumber, this.now()));
 
@@ -278,7 +285,10 @@ export class MatchController {
       return;
     }
 
-    finalizeDrawingState(activeTurn.drawing);
+    finalizeDrawingState(activeTurn.drawing, this.renderDrawingSnapshot ?? (() => null));
+    if (!this.renderDrawingSnapshot) {
+      this.renderRevealSnapshotAsync(room.code, activeTurn.turnNumber, activeTurn.drawing);
+    }
 
     pause.pausedPhase = 'reveal';
     pause.phaseRemainingMs = this.revealMs;
@@ -817,6 +827,29 @@ export class MatchController {
       createdAt,
       turnNumber,
     };
+  }
+
+  private renderRevealSnapshotAsync(roomCode: string, turnNumber: number, drawing: DrawingState): void {
+    void this.asyncSnapshotRenderer.render(drawing).then((snapshotDataUrl) => {
+      if (!snapshotDataUrl) {
+        return;
+      }
+
+      const room = this.rooms.get(roomCode);
+      const match = room?.match;
+      const activeTurn = match?.activeTurn;
+      if (!room || !match || !activeTurn || activeTurn.turnNumber !== turnNumber) {
+        return;
+      }
+
+      activeTurn.drawing.snapshotDataUrl = snapshotDataUrl;
+      const completedTurn = match.completedTurns.find((turn) => turn.turnNumber === turnNumber);
+      if (completedTurn) {
+        completedTurn.finalImageDataUrl = snapshotDataUrl;
+        capCompletedTurnImageRetention(match.completedTurns);
+      }
+      this.notifyRoomChanged(roomCode);
+    });
   }
 
   private createRoundHeaderFeedItem(

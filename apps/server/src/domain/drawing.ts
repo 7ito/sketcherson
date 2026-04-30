@@ -1,4 +1,5 @@
 import { performance } from 'node:perf_hooks';
+import { Worker } from 'node:worker_threads';
 import { deflateSync } from 'node:zlib';
 import type { ApiResult } from '@sketcherson/common/room';
 import { DRAWING_BACKGROUND_COLOR, DRAWING_SNAPSHOT_HEIGHT, DRAWING_SNAPSHOT_WIDTH, type DrawingAction, type DrawingState } from '@sketcherson/common/drawing';
@@ -25,7 +26,78 @@ export function finalizeDrawingState(
   });
 }
 
-function renderSnapshotDataUrl(drawing: DrawingState): string {
+export interface AsyncSnapshotRenderer {
+  render(drawing: DrawingState): Promise<string | null>;
+}
+
+export function createAsyncSnapshotRenderer(options?: { timeoutMs?: number; maxQueueDepth?: number }): AsyncSnapshotRenderer {
+  const timeoutMs = options?.timeoutMs ?? 2_000;
+  const maxQueueDepth = options?.maxQueueDepth ?? 8;
+  let nextId = 1;
+  let worker: Worker | null = null;
+  const pending = new Map<number, { startedAt: number; queuedAt: number; resolve: (value: string | null) => void; timeout: NodeJS.Timeout }>();
+
+  function getWorker(): Worker {
+    if (worker) {
+      return worker;
+    }
+
+    const workerPath = import.meta.url.endsWith('.ts') ? './drawingSnapshotWorker.ts' : './domain/drawingSnapshotWorker.js';
+    worker = new Worker(new URL(workerPath, import.meta.url));
+    worker.unref();
+    worker.on('message', (message: { id: number; dataUrl?: string; error?: string }) => {
+      const request = pending.get(message.id);
+      if (!request) {
+        return;
+      }
+
+      clearTimeout(request.timeout);
+      pending.delete(message.id);
+      logDrawingTransportMetric(message.error ? 'drawing.snapshot.failed' : 'drawing.snapshot.rendered', {
+        durationMs: Math.round((performance.now() - request.startedAt) * 100) / 100,
+        queueWaitMs: Math.round((request.startedAt - request.queuedAt) * 100) / 100,
+        outputBytes: message.dataUrl ? Buffer.byteLength(message.dataUrl, 'utf8') : 0,
+        queueDepth: pending.size,
+      });
+      request.resolve(message.error ? null : message.dataUrl ?? null);
+    });
+    worker.on('error', () => {
+      for (const [id, request] of pending) {
+        clearTimeout(request.timeout);
+        pending.delete(id);
+        request.resolve(null);
+      }
+      worker = null;
+    });
+
+    return worker;
+  }
+
+  return {
+    render(drawing: DrawingState): Promise<string | null> {
+      if (pending.size >= maxQueueDepth) {
+        logDrawingTransportMetric('drawing.snapshot.queue_rejected', { queueDepth: pending.size });
+        return Promise.resolve(null);
+      }
+
+      const id = nextId;
+      nextId += 1;
+      const queuedAt = performance.now();
+      return new Promise((resolve) => {
+        const timeout = setTimeout(() => {
+          pending.delete(id);
+          logDrawingTransportMetric('drawing.snapshot.timeout', { queueDepth: pending.size, timeoutMs });
+          resolve(null);
+        }, timeoutMs);
+        timeout.unref();
+        pending.set(id, { startedAt: performance.now(), queuedAt, resolve, timeout });
+        getWorker().postMessage({ id, drawing });
+      });
+    },
+  };
+}
+
+export function renderSnapshotDataUrl(drawing: DrawingState): string {
   const startedAt = performance.now();
   const raster = rasterizeDrawingState(drawing, {
     outputWidth: DRAWING_SNAPSHOT_WIDTH,

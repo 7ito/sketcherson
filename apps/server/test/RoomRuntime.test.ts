@@ -4,6 +4,7 @@ import { defineGamePack, defineDrawingGameRules } from '@sketcherson/common/game
 import { TEST_GAME_DEFINITION } from '@sketcherson/common/testing/testGame';
 import { DEMO_GAME_DEFINITION, DEMO_GAME_PACK } from '@sketcherson/demo-game';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { renderSnapshotDataUrl } from '../src/domain/drawing';
 import { RoomRuntime, type RoomRuntimeOptions } from '../src/domain/roomRuntime';
 
 afterEach(() => {
@@ -98,6 +99,7 @@ class RoomRuntimeTestDriver {
 function createRoomRuntimeDriver(options?: Partial<RoomRuntimeOptions>): RoomRuntimeTestDriver {
   return new RoomRuntimeTestDriver(new RoomRuntime({
     ...(options?.gameDefinition && !options.gamePack ? {} : { gamePack: DEMO_GAME_PACK }),
+    renderDrawingSnapshot: renderSnapshotDataUrl,
     ...options,
   }));
 }
