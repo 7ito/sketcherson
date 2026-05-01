@@ -1,6 +1,8 @@
 {
   "name": "@sketcherson/web",
   "version": "0.0.0",
+  "description": "Reusable React shell for Sketcherson games.",
+  "license": "MIT",
   "private": false,
   "type": "module",
   "scripts": {
@@ -40,5 +42,8 @@
   },
   "files": [
     "dist"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }
