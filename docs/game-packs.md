@@ -35,10 +35,17 @@ export const EVERYDAY_OBJECTS_GAME = defineAudienceGame({
     publicBasePath: '/object-assets/',
     iconFileName: 'icon.svg',
   },
+  ui: {
+    skin: {
+      cssHref: '/object-assets/skin.css',
+    },
+  },
 });
 ```
 
 Defaults include `storageNamespace` from `id`, logo words from `title`, fallback prompt from the first enabled prompt, and prompt art URLs from `publicBasePath` plus `prompt.artFileName`.
+
+Game-pack asset directories can include image files and CSS skins. Files referenced by `ui.skin.cssHref` are served from the same `publicBasePath` with a `text/css` content type in dev and after production asset copy.
 
 ## Included demo game
 

@@ -274,6 +274,10 @@ export function getShellStaticAssetContentType(filePath: string): string {
     return 'image/svg+xml';
   }
 
+  if (lowerPath.endsWith('.css')) {
+    return 'text/css';
+  }
+
   return 'application/octet-stream';
 }
 

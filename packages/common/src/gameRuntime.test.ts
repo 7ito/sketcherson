@@ -137,6 +137,7 @@ describe('server game runtime', () => {
     expect(getShellStaticAssetContentType('photo.jpeg')).toBe('image/jpeg');
     expect(getShellStaticAssetContentType('sprite.webp')).toBe('image/webp');
     expect(getShellStaticAssetContentType('icon.svg')).toBe('image/svg+xml');
+    expect(getShellStaticAssetContentType('skin.css')).toBe('text/css');
     expect(getShellStaticAssetContentType('data.bin')).toBe('application/octet-stream');
   });
 
@@ -263,6 +264,11 @@ describe('browser game runtime manifest', () => {
       kind: 'asset',
       relativePath: 'Knight.png',
       contentType: 'image/png',
+    });
+    expect(resolveShellStaticAssetRequest(mount, '/assets/skins/poke.css')).toEqual({
+      kind: 'asset',
+      relativePath: 'skins/poke.css',
+      contentType: 'text/css',
     });
     expect(resolveShellStaticAssetRequest(mount, '/assets/../secret.txt')).toEqual({ kind: 'forbidden' });
   });
