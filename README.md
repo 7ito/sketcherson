@@ -28,9 +28,10 @@ npm run build
 ## Documentation
 
 1. [Game packs](docs/game-packs.md)
-2. [Release reference](docs/releases.md)
-3. [Publishing Sketcherson packages](docs/package-publication.md)
-4. [Updating downstream games](docs/downstream-updates.md)
+2. [Starter game template](docs/starter-template.md)
+3. [Release reference](docs/releases.md)
+4. [Publishing Sketcherson packages](docs/package-publication.md)
+5. [Updating downstream games](docs/downstream-updates.md)
 
 ## Replace the game pack
 
@@ -50,4 +51,4 @@ export default defineShellApp({
 });
 ```
 
-See `docs/game-packs.md` and `packages/demo-game` for a complete template with prompt collections, aliases, runtime-safe asset URLs, and build-only local asset wiring.
+See `docs/game-packs.md`, `docs/starter-template.md`, and `packages/demo-game` for templates with prompt collections, aliases, runtime-safe asset URLs, and build-only local asset wiring.

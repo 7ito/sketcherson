@@ -89,7 +89,7 @@ If a downstream update fails, classify the failure before changing code.
 2. If the failure is caused by game-specific behavior that required a copied shell edit, create or update an upstream Sketcherson extension issue.
 3. If the failure is caused by package metadata or exports, fix the package publication issue in Sketcherson first.
 
-Do not patch copied generic framework files in the downstream repo. That recreates the mirroring problem.
+Do not patch copied generic framework files in the downstream repo. That recreates the mirroring problem. For a new package-based downstream game, start from the [starter game template](starter-template.md).
 
 ## Local testing with unpublished Sketcherson changes
 
