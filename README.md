@@ -25,6 +25,10 @@ npm test
 npm run build
 ```
 
+## Releases
+
+Public packages are versioned with Changesets. See `docs/releases.md` for changeset, versioning, publishing, and prerelease instructions.
+
 ## Replace the game pack
 
 Create a package under `packages/your-game`, export an authored game from `defineAudienceGame()`, then update `shell.config.ts`:
