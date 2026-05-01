@@ -1,4 +1,4 @@
-import type { PromptEngine } from '@sketcherson/common/prompts';
+import type { PromptDisplayMetadata, PromptEngine } from '@sketcherson/common/prompts';
 import { buildShareUrl, type LiveRoomStatus, type RoomPlayer, type RoomState, type ScoreboardEntry } from '@sketcherson/common/room';
 import type { DrawingState } from '@sketcherson/common/drawing';
 import type { ResolvedDrawingGameRules } from '@sketcherson/common/game';
@@ -112,6 +112,7 @@ export class RoomProjector {
       drawerNickname: activeTurn.drawerNickname,
       prompt: this.resolvePromptForViewer(room, activeTurn, viewerPlayerId),
       promptVisibility: this.getPromptVisibility(room, activeTurn, viewerPlayerId),
+      promptDisplayMetadata: this.resolvePromptDisplayMetadataForViewer(room, activeTurn, viewerPlayerId),
       referenceArtUrl,
       rerollsRemaining: activeTurn.rerollsRemaining,
       rerolledFrom: this.resolveRerolledFromForViewer(room, activeTurn, viewerPlayerId),
@@ -147,6 +148,22 @@ export class RoomProjector {
 
     if (viewerPlayerId && viewerPlayerId === activeTurn.drawerPlayerId) {
       return activeTurn.prompt;
+    }
+
+    return null;
+  }
+
+  private resolvePromptDisplayMetadataForViewer(
+    room: RoomRecord,
+    activeTurn: ActiveTurnRecord,
+    viewerPlayerId: string | undefined,
+  ): PromptDisplayMetadata | null {
+    if (this.getEffectiveMatchPhase(room) === 'reveal') {
+      return this.promptEngine.getDisplayMetadata(activeTurn.promptId);
+    }
+
+    if (viewerPlayerId && viewerPlayerId === activeTurn.drawerPlayerId) {
+      return this.promptEngine.getDisplayMetadata(activeTurn.promptId);
     }
 
     return null;

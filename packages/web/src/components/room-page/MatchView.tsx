@@ -1,4 +1,4 @@
-import { MAX_CHAT_MESSAGE_LENGTH, type ApiResult, type DrawingActionSuccess, type RoomState } from '@sketcherson/common/room';
+import { MAX_CHAT_MESSAGE_LENGTH, type ApiResult, type CurrentTurnState, type DrawingActionSuccess, type RoomState } from '@sketcherson/common/room';
 import type { DrawingAction } from '@sketcherson/common/drawing';
 import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { formatShellCopy } from '@sketcherson/common/game';
@@ -369,6 +369,7 @@ export function MatchView({
                   </div>
                 )}
                 <div className="prompt-ref-name">{currentTurn.prompt ?? '???'}</div>
+                <PromptDisplayMetadata metadata={currentTurn.promptDisplayMetadata} />
               </div>
               <div className="prompt-ref-hint">{SHELL_MATCH_COPY.promptOnlyYouCanSee}</div>
               <div className="prompt-ref-actions">
@@ -413,6 +414,7 @@ export function MatchView({
                   </div>
                 )}
                 <div className="prompt-ref-name">{currentTurn.prompt ?? '???'}</div>
+                <PromptDisplayMetadata metadata={currentTurn.promptDisplayMetadata} />
               </div>
             </div>
             )
@@ -559,6 +561,37 @@ export function MatchView({
           ) : null}
         </div>
       </div>
+    </div>
+  );
+}
+
+function PromptDisplayMetadata({ metadata }: { metadata: CurrentTurnState['promptDisplayMetadata'] }) {
+  const badges = metadata?.badges ?? [];
+  const tags = metadata?.tags ?? [];
+
+  const subtitle = metadata?.subtitle ?? null;
+
+  if (!subtitle && badges.length === 0 && tags.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="prompt-ref-metadata">
+      {subtitle ? <div className="prompt-ref-subtitle">{subtitle}</div> : null}
+      {badges.length ? (
+        <div className="prompt-ref-badges" aria-label="Prompt metadata">
+          {badges.map((badge, index) => (
+            <span key={`${badge.label}-${badge.value ?? index}`} className={`prompt-ref-badge prompt-ref-badge-${badge.tone ?? 'neutral'}`}>
+              {badge.label}{badge.value ? `: ${badge.value}` : ''}
+            </span>
+          ))}
+        </div>
+      ) : null}
+      {tags.length ? (
+        <div className="prompt-ref-tags">
+          {tags.map((tag) => <span key={tag} className="prompt-ref-tag">#{tag}</span>)}
+        </div>
+      ) : null}
     </div>
   );
 }

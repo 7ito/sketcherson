@@ -117,6 +117,31 @@ describe('prompt engine', () => {
     expect(engine.evaluateGuess('dragon', '149')).toMatchObject({ correct: true, matchedBy: 'custom' });
   });
 
+  it('resolves browser-safe prompt display metadata through game-pack rules', () => {
+    const engine = createPromptEngine(defineGamePack<TestGamePrompt>({
+      definition: TEST_GAME_DEFINITION,
+      promptRules: {
+        resolveDisplayMetadata: (prompt) => prompt.id === 'dragon'
+          ? {
+              subtitle: 'Legendary creature',
+              badges: [{ label: 'Type', value: 'Fire', tone: 'accent' }],
+              tags: ['flying'],
+              custom: { generation: 1 },
+            }
+          : null,
+      },
+    }));
+
+    expect(engine.getDisplayMetadata('dragon')).toEqual({
+      subtitle: 'Legendary creature',
+      badges: [{ label: 'Type', value: 'Fire', tone: 'accent' }],
+      tags: ['flying'],
+      custom: { generation: 1 },
+    });
+    expect(engine.getDisplayMetadata('robot')).toBeNull();
+    expect(engine.getDisplayMetadata('missing')).toBeNull();
+  });
+
   it('resolves reference art through game-pack assets', () => {
     const engine = createPromptEngine(defineGamePack<TestGamePrompt>({
       definition: TEST_GAME_DEFINITION,

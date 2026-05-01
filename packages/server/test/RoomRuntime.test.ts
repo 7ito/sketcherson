@@ -947,6 +947,52 @@ describe('RoomRuntime', () => {
     expect(rerollResult.data.room.match.currentTurn.drawing.operations).toHaveLength(0);
   });
 
+  it('projects prompt metadata only to the drawer until reveal', () => {
+    const service = createRoomRuntimeDriver({
+      random: () => 0,
+      gamePack: defineGamePack({
+        definition: DEMO_GAME_DEFINITION,
+        promptRules: {
+          resolveDisplayMetadata: (prompt) => ({
+            badges: [{ label: 'Kind', value: prompt.id, tone: 'accent' }],
+          }),
+        },
+      }),
+    });
+    const createResult = service.createRoom('Host', 'socket-1', 'https://sketcherson.example');
+    if (!createResult.ok) {
+      throw new Error('Expected room creation to succeed');
+    }
+    const joinResult = service.joinRoom(createResult.data.room.code, 'Guest', 'socket-2', 'https://sketcherson.example');
+    if (!joinResult.ok) {
+      throw new Error('Expected room join to succeed');
+    }
+
+    const startResult = service.startRoom('socket-1', 'https://sketcherson.example');
+    expect(startResult.ok).toBe(true);
+    if (!startResult.ok || !startResult.data.room.match?.currentTurn) {
+      return;
+    }
+
+    const drawerSocketId = startResult.data.room.match.currentTurn.drawerPlayerId === createResult.data.playerId ? 'socket-1' : 'socket-2';
+    const drawerState = service.getRoomStateForSocket(drawerSocketId, createResult.data.room.code, 'https://sketcherson.example');
+    expect(drawerState.ok).toBe(true);
+    if (!drawerState.ok || !drawerState.data.room.match?.currentTurn) {
+      return;
+    }
+
+    expect(drawerState.data.room.match.currentTurn.promptDisplayMetadata).toEqual({ badges: [{ label: 'Kind', value: 'archer', tone: 'accent' }] });
+
+    const guesserState = service.getRoomState(createResult.data.room.code, 'https://sketcherson.example');
+    expect(guesserState.ok).toBe(true);
+    if (!guesserState.ok || !guesserState.data.room.match?.currentTurn) {
+      return;
+    }
+
+    expect(guesserState.data.room.match.currentTurn.prompt).toBeNull();
+    expect(guesserState.data.room.match.currentTurn.promptDisplayMetadata).toBeNull();
+  });
+
   it('limits prompt selection to the enabled collections in lobby settings', () => {
     const service = createRoomRuntimeDriver({ random: () => 0 });
     const createResult = service.createRoom('Host', 'socket-1', 'https://sketcherson.example');

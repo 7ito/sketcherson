@@ -19,6 +19,19 @@ export interface PromptGuessEvaluation {
   normalizedGuess: string;
 }
 
+export interface PromptDisplayBadge {
+  label: string;
+  value?: string;
+  tone?: 'neutral' | 'accent' | 'success' | 'warning' | 'danger';
+}
+
+export interface PromptDisplayMetadata {
+  subtitle?: string;
+  badges?: PromptDisplayBadge[];
+  tags?: string[];
+  custom?: Record<string, string | number | boolean | null>;
+}
+
 export interface PromptRules<TPrompt extends PromptEntry = PromptEntry> {
   normalizeGuess?: (guess: string) => string;
   evaluateGuess?: (input: {
@@ -33,6 +46,7 @@ export interface PromptRules<TPrompt extends PromptEntry = PromptEntry> {
     random: () => number;
     defaultSelect: () => TPrompt | null;
   }) => TPrompt | null;
+  resolveDisplayMetadata?: (prompt: TPrompt) => PromptDisplayMetadata | null | undefined;
 }
 
 export interface PromptAssignment<TPrompt extends PromptEntry = PromptEntry> {
@@ -72,6 +86,7 @@ export interface PromptEngine<TPrompt extends PromptEntry = PromptEntry> {
   evaluateGuess(promptId: string, guess: string): PromptGuessEvaluation;
   isCorrectGuess(promptId: string, guess: string): boolean;
   getReferenceArtUrl(promptId: string): string | null;
+  getDisplayMetadata(promptId: string): PromptDisplayMetadata | null;
   getPublicPrompt(promptId: string): PublicPrompt | null;
 }
 
@@ -207,6 +222,14 @@ export function createPromptEngine<TPrompt extends PromptEntry>(gamePack: GamePa
       const prompt = getPromptEntryById(catalog, promptId);
       return resolveGamePackPromptArtUrl(gamePack, prompt);
     },
+    getDisplayMetadata(promptId) {
+      const prompt = getPromptEntryById(catalog, promptId);
+      if (!prompt || !rules?.resolveDisplayMetadata) {
+        return null;
+      }
+
+      return sanitizePromptDisplayMetadata(rules.resolveDisplayMetadata(prompt));
+    },
     getPublicPrompt(promptId) {
       const prompt = getPromptEntryById(catalog, promptId);
       if (!prompt) {
@@ -224,6 +247,27 @@ export function createPromptEngine<TPrompt extends PromptEntry>(gamePack: GamePa
 
 export function getDefaultPromptCollectionIds<TPrompt extends PromptEntry>(gamePack: GamePack<TPrompt>): string[] {
   return getDefaultEnabledCollectionIds(gamePack.definition.promptCatalog);
+}
+
+function sanitizePromptDisplayMetadata(metadata: PromptDisplayMetadata | null | undefined): PromptDisplayMetadata | null {
+  if (!metadata) {
+    return null;
+  }
+
+  return {
+    ...(metadata.subtitle ? { subtitle: String(metadata.subtitle) } : {}),
+    ...(metadata.badges?.length
+      ? {
+          badges: metadata.badges.map((badge) => ({
+            label: String(badge.label),
+            ...(badge.value === undefined ? {} : { value: String(badge.value) }),
+            ...(badge.tone ? { tone: badge.tone } : {}),
+          })),
+        }
+      : {}),
+    ...(metadata.tags?.length ? { tags: metadata.tags.map(String) } : {}),
+    ...(metadata.custom ? { custom: { ...metadata.custom } } : {}),
+  };
 }
 
 const QWERTY_ROWS = [

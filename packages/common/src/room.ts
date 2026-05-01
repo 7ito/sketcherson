@@ -1,4 +1,5 @@
 import type { DrawingAction, DrawingState } from './drawing';
+import type { PromptDisplayMetadata } from './promptEngine';
 
 export type { ApiError, ApiResult } from './apiResult';
 export { buildShareUrl, normalizeRoomCode } from './roomRules';
@@ -124,6 +125,7 @@ export interface CurrentTurnState {
   drawerNickname: string;
   prompt: string | null;
   promptVisibility: PromptVisibility;
+  promptDisplayMetadata?: PromptDisplayMetadata | null;
   referenceArtUrl?: string | null;
   rerollsRemaining: number;
   rerolledFrom: string | null;
