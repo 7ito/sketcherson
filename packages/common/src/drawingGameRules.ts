@@ -48,6 +48,7 @@ export interface DrawingGameRulesConfig {
     lobbyDrawing?: boolean;
     referenceArt?: 'drawer-and-reveal' | 'drawer-only' | 'disabled';
     pause?: boolean;
+    closeGuessFeedback?: boolean;
   };
 }
 
@@ -91,6 +92,7 @@ export interface ResolvedDrawingGameRules {
     referenceArt: 'drawer-and-reveal' | 'drawer-only' | 'disabled';
     pause: boolean;
     reroll: boolean;
+    closeGuessFeedback: boolean;
   };
 }
 
@@ -147,6 +149,7 @@ export function resolveDrawingGameRules(config: DrawingGameRulesConfig = {}): Re
       referenceArt: config.features?.referenceArt ?? 'drawer-and-reveal',
       pause: config.features?.pause ?? true,
       reroll: rerollsPerTurn > 0,
+      closeGuessFeedback: config.features?.closeGuessFeedback ?? false,
     },
   };
 }

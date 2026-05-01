@@ -43,6 +43,7 @@ export interface BaseRoomFeedRecord {
   id: string;
   createdAt: number;
   turnNumber: number | null;
+  audiencePlayerIds?: string[];
 }
 
 export interface PlayerChatFeedRecord extends BaseRoomFeedRecord {

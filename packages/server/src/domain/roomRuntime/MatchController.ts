@@ -551,15 +551,38 @@ export class MatchController {
         };
       }
 
+      const guessEvaluation = this.promptEngine.evaluateGuess(activeTurn.promptId, input.text);
+
       if (
         input.room.status === 'round' &&
         input.player.id !== activeTurn.drawerPlayerId &&
         this.canPlayerGuessOnTurn(input.player, activeTurn.turnNumber) &&
-        this.promptEngine.isCorrectGuess(activeTurn.promptId, input.text)
+        guessEvaluation.correct
       ) {
         this.recordCorrectGuess(input.room, match, activeTurn, input.player.id, input.player.nickname);
 
         return { ok: true };
+      }
+
+      if (
+        input.room.status === 'round' &&
+        input.player.id !== activeTurn.drawerPlayerId &&
+        this.canPlayerGuessOnTurn(input.player, activeTurn.turnNumber) &&
+        this.rules.features.closeGuessFeedback &&
+        guessEvaluation.closeGuess
+      ) {
+        if (input.room.settings.showCloseGuessAlerts ?? true) {
+          appendRoomFeedRecord(match.feed, this.createSystemFeedItem(
+            { type: 'closeGuess', guesserNickname: input.player.nickname, message: guessEvaluation.closeGuess.message },
+            activeTurn.turnNumber,
+            this.now(),
+            [input.player.id],
+          ));
+        }
+
+        if (input.room.settings.hideCloseGuesses) {
+          return { ok: true };
+        }
       }
     }
 
@@ -825,6 +848,7 @@ export class MatchController {
     event: Extract<RoomFeedRecord, { type: 'system' }>['event'],
     turnNumber: number | null,
     createdAt: number,
+    audiencePlayerIds?: string[],
   ): Extract<RoomFeedRecord, { type: 'system' }> {
     return {
       id: this.ids.randomUUID(),
@@ -832,6 +856,7 @@ export class MatchController {
       event,
       createdAt,
       turnNumber,
+      audiencePlayerIds,
     };
   }
 

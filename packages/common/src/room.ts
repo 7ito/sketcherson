@@ -31,6 +31,8 @@ export interface LobbySettings {
   roundTimerSeconds: RoundTimerPreset;
   firstCorrectGuessTimeCapSeconds: FirstCorrectGuessTimeCapPreset;
   guessingDelaySeconds?: GuessingDelayPreset;
+  hideCloseGuesses?: boolean;
+  showCloseGuessAlerts?: boolean;
   turnsPerPlayer: TurnsPerPlayerPreset;
   artEnabled: boolean;
   enabledCollectionIds?: string[];
@@ -89,6 +91,7 @@ export interface SystemFeedItem extends BaseRoomFeedItem {
     | { type: 'drawerAssigned'; drawerNickname: string }
     | { type: 'answerRevealed'; answer: string }
     | { type: 'allGuessersCorrect' }
+    | { type: 'closeGuess'; guesserNickname: string; message?: string }
     | { type: 'gamePaused' }
     | { type: 'gameResumed' };
 }

@@ -174,6 +174,30 @@ export function SharedSettingsFields({
           </label>
         </div>
 
+        {GAME_RUNTIME.rules.features.closeGuessFeedback ? (
+          <div className="lobby-settings-row">
+            <label className="lobby-toggle-row">
+              <input
+                type="checkbox"
+                checked={settings.hideCloseGuesses ?? false}
+                disabled={disabled}
+                onChange={(event) => onChange({ ...settings, hideCloseGuesses: event.target.checked })}
+              />
+              <span>Hide close guesses from other players</span>
+            </label>
+
+            <label className="lobby-toggle-row">
+              <input
+                type="checkbox"
+                checked={settings.showCloseGuessAlerts ?? true}
+                disabled={disabled}
+                onChange={(event) => onChange({ ...settings, showCloseGuessAlerts: event.target.checked })}
+              />
+              <span>Show close guess alerts</span>
+            </label>
+          </div>
+        ) : null}
+
         <label className="lobby-toggle-row">
           <input
             type="checkbox"

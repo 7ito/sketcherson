@@ -61,6 +61,7 @@ export function renderRoomFeedItem(item: RoomFeedItem, playerAccentColors: Map<s
       if (item.event.type === 'drawerAssigned') return formatFeedCopy(feedCopy.drawerAssigned, { drawerNickname: item.event.drawerNickname });
       if (item.event.type === 'answerRevealed') return formatFeedCopy(feedCopy.answerRevealed, { answer: item.event.answer });
       if (item.event.type === 'allGuessersCorrect') return formatFeedCopy(feedCopy.allGuessersCorrect, {});
+      if (item.event.type === 'closeGuess') return formatFeedCopy(feedCopy.closeGuess, { nickname: item.event.guesserNickname, message: item.event.message ?? 'Try again.' });
       if (item.event.type === 'gamePaused') return formatFeedCopy(feedCopy.gamePaused, {});
       return formatFeedCopy(feedCopy.gameResumed, {});
     })();

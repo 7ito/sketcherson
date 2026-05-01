@@ -47,6 +47,22 @@ describe('RoomFeedProjector', () => {
     expect(JSON.stringify(projector.projectMatchFeed({ records }))).not.toContain('joined the lobby');
   });
 
+  it('filters audience-targeted feed records at the server boundary', () => {
+    const records: RoomFeedRecord[] = [
+      {
+        id: 'close-1',
+        type: 'system',
+        event: { type: 'closeGuess', guesserNickname: 'Guesser', message: 'One letter off.' },
+        createdAt: 150,
+        turnNumber: 2,
+        audiencePlayerIds: ['player-2'],
+      },
+    ];
+
+    expect(projector.projectMatchFeed({ records, viewerPlayerId: 'player-2' })).toHaveLength(1);
+    expect(projector.projectMatchFeed({ records, viewerPlayerId: 'player-3' })).toEqual([]);
+  });
+
   it('projects correct guesses with viewer-specific answer privacy', () => {
     const records: RoomFeedRecord[] = [
       {

@@ -11,7 +11,10 @@ export function normalizeLobbySettingsForGame(gameDefinition: GameDefinition, se
     firstCorrectGuessTimeCapSeconds: rules.settings.firstCorrectGuessTimeCapSeconds.default,
     guessingDelaySeconds: rules.settings.guessingDelaySeconds.default,
     turnsPerPlayer: rules.settings.turnsPerPlayer.default,
-  }, settings, {
+  }, rules.features.closeGuessFeedback ? {
+    hideCloseGuesses: false,
+    showCloseGuessAlerts: true,
+  } : {}, settings, {
     enabledCollectionIds:
       settings.enabledCollectionIds === undefined
         ? defaultEnabledCollectionIds
@@ -26,6 +29,8 @@ export function areLobbySettingsValidForGame(gameDefinition: GameDefinition, set
     rules.settings.roundTimerSeconds.options.includes(normalizedSettings.roundTimerSeconds) &&
     getFirstCorrectGuessTimeCapPresets(normalizedSettings.roundTimerSeconds, rules).includes(normalizedSettings.firstCorrectGuessTimeCapSeconds) &&
     rules.settings.guessingDelaySeconds.options.includes(normalizedSettings.guessingDelaySeconds ?? 0) &&
+    (!normalizedSettings.hideCloseGuesses || rules.features.closeGuessFeedback) &&
+    (!normalizedSettings.showCloseGuessAlerts || rules.features.closeGuessFeedback) &&
     rules.settings.turnsPerPlayer.options.includes(normalizedSettings.turnsPerPlayer) &&
     createPromptEngine({ definition: gameDefinition }).areCollectionIdsValid(settings.enabledCollectionIds ?? normalizedSettings.enabledCollectionIds)
   );

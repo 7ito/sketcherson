@@ -19,11 +19,19 @@ export function createRoomFeedProjector(): RoomFeedProjector {
 
 class SemanticRoomFeedProjector implements RoomFeedProjector {
   public projectLobbyFeed(input: { records: readonly RoomFeedRecord[]; viewerPlayerId?: string }): RoomFeedItem[] {
-    return input.records.map((item) => this.projectFeedItemForViewer(item, input.viewerPlayerId));
+    return input.records
+      .filter((item) => this.isVisibleToViewer(item, input.viewerPlayerId))
+      .map((item) => this.projectFeedItemForViewer(item, input.viewerPlayerId));
   }
 
   public projectMatchFeed(input: { records: readonly RoomFeedRecord[]; viewerPlayerId?: string }): RoomFeedItem[] {
-    return input.records.map((item) => this.projectFeedItemForViewer(item, input.viewerPlayerId));
+    return input.records
+      .filter((item) => this.isVisibleToViewer(item, input.viewerPlayerId))
+      .map((item) => this.projectFeedItemForViewer(item, input.viewerPlayerId));
+  }
+
+  private isVisibleToViewer(item: RoomFeedRecord, viewerPlayerId: string | undefined): boolean {
+    return !item.audiencePlayerIds || (viewerPlayerId !== undefined && item.audiencePlayerIds.includes(viewerPlayerId));
   }
 
   private projectFeedItemForViewer(item: RoomFeedRecord, viewerPlayerId: string | undefined): RoomFeedItem {

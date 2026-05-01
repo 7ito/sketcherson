@@ -248,6 +248,7 @@ export interface FeedCopy {
   drawerAssigned: string;
   answerRevealed: string;
   allGuessersCorrect: string;
+  closeGuess: string;
   gamePaused: string;
   gameResumed: string;
   correctGuessSelf: string;
@@ -664,6 +665,7 @@ export function resolveShellUiConfig<TPrompt extends PromptEntry>(gamePack: Game
         drawerAssigned: feedCopy.drawerAssigned ?? '{drawerNickname} is now drawing.',
         answerRevealed: feedCopy.answerRevealed ?? 'The {promptNoun} was {answer}.',
         allGuessersCorrect: feedCopy.allGuessersCorrect ?? 'Everyone guessed the {promptNoun}.',
+        closeGuess: feedCopy.closeGuess ?? '{nickname} is close. {message}',
         gamePaused: feedCopy.gamePaused ?? 'The game has been paused.',
         gameResumed: feedCopy.gameResumed ?? 'The game has been unpaused.',
         correctGuessSelf: feedCopy.correctGuessSelf ?? 'You were correct! The {promptNoun} was {answer}.',

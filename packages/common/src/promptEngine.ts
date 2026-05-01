@@ -17,6 +17,9 @@ export interface PromptGuessEvaluation {
   correct: boolean;
   matchedBy: PromptGuessMatchKind | null;
   normalizedGuess: string;
+  closeGuess?: {
+    message?: string;
+  } | null;
 }
 
 export interface PromptDisplayBadge {
