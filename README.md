@@ -25,9 +25,12 @@ npm test
 npm run build
 ```
 
-## Releases
+## Documentation
 
-Public packages are versioned with Changesets. See `docs/releases.md` for changeset, versioning, publishing, and prerelease instructions.
+1. [Game packs](docs/game-packs.md)
+2. [Release reference](docs/releases.md)
+3. [Publishing Sketcherson packages](docs/package-publication.md)
+4. [Updating downstream games](docs/downstream-updates.md)
 
 ## Replace the game pack
 
