@@ -1,5 +1,5 @@
 {
-  "name": "@sketcherson/web",
+  "name": "@sketcherson/web-app",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -13,7 +13,8 @@
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.5.3",
-    "socket.io-client": "^4.8.1"
+    "socket.io-client": "^4.8.1",
+    "@sketcherson/web": "*"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",

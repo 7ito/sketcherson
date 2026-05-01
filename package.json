@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "dev": "concurrently -n server,web -c cyan,magenta \"npm run dev -w @sketcherson/server-app -- --host 0.0.0.0\" \"npm run dev -w @sketcherson/web -- --host 0.0.0.0\"",
-    "build": "npm run build -w @sketcherson/common && npm run build -w @sketcherson/demo-game && npm run build -w @sketcherson/server && npm run build -w @sketcherson/server-app && npm run build -w @sketcherson/web",
+    "build": "npm run build -w @sketcherson/common && npm run build -w @sketcherson/demo-game && npm run build -w @sketcherson/server && npm run build -w @sketcherson/server-app && npm run build -w @sketcherson/web && npm run build -w @sketcherson/web-app",
     "test": "npm run test -w @sketcherson/common && npm run test -w @sketcherson/demo-game && npm run test -w @sketcherson/server && npm run test -w @sketcherson/web",
     "changeset": "changeset",
     "version-packages": "changeset version",
