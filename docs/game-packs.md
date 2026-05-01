@@ -86,6 +86,27 @@ export default defineShellApp({
 
 Keep manual `GamePack` values browser-safe. They must not include local filesystem paths.
 
+## Web extension slots
+
+Game-specific React UI can be injected without forking `@sketcherson/web` by passing typed slots into `SketchersonWebApp` or `App`.
+
+```tsx
+import { SketchersonWebApp, type SketchersonWebSlots } from '@sketcherson/web';
+
+const slots: SketchersonWebSlots = {
+  homePageAddon: () => <p>Custom event rules</p>,
+  promptReferencePanel: ({ visibility, room }) => (
+    <aside>{visibility === 'drawer' ? room.match?.currentTurn?.prompt : 'Answer reveal'}</aside>
+  ),
+};
+
+export function GameApp() {
+  return <SketchersonWebApp slots={slots} />;
+}
+```
+
+The default UI is used when a slot is omitted. The first supported slots are the home page addon and the prompt reference panel shown to the drawer or during reveal.
+
 ## Migration note
 
 Existing callers that already pass `game: MY_GAME.pack` and `build: MY_GAME.build` can keep using that shape. New game packages should export the authored audience game and pass it directly as `game: MY_GAME`, which keeps runtime and build asset wiring selected together.

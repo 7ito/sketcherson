@@ -6,6 +6,7 @@ import { GameLogo } from './GameLogo';
 import { PREFERRED_NICKNAME_MAX_LENGTH, readPreferredNickname } from '../lib/preferredNickname';
 import { useRoomSession } from '../providers/RoomSessionProvider';
 import { GAME_DEFINITION, GAME_WEB_CONFIG } from '../game';
+import { useWebExtensionSlots } from './WebExtensionSlots';
 
 type ModalMode = 'create' | 'join';
 
@@ -21,6 +22,7 @@ export function HomePage() {
   const [roomCode, setRoomCode] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const slots = useWebExtensionSlots();
   const uiConfig = GAME_WEB_CONFIG.ui;
   const homeCopy = uiConfig.copy.home;
   const skinIcons = uiConfig.skin.tokens.icons;
@@ -84,6 +86,8 @@ export function HomePage() {
             />
           ) : null}
         </div>
+
+        {slots.homePageAddon ? <div className="home-extension-slot">{slots.homePageAddon()}</div> : null}
 
         <div className="home-action-card">
           <button type="button" className="action-primary" onClick={() => openModal('create')}>

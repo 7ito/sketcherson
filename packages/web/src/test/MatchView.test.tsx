@@ -11,6 +11,7 @@ vi.mock('../lib/soundEffects', () => ({
 }));
 
 import { MatchView } from '../components/room-page/MatchView';
+import { WebExtensionSlotsProvider, type SketchersonWebSlots } from '../components/WebExtensionSlots';
 
 function buildDrawingState(): DrawingState {
   return {
@@ -64,9 +65,10 @@ function buildRoom(overrides: Partial<RoomState> = {}): RoomState {
   };
 }
 
-function renderMatchView(room: RoomState, currentPlayerId = 'guest-1') {
+function renderMatchView(room: RoomState, currentPlayerId = 'guest-1', slots?: SketchersonWebSlots) {
   return render(
-    <MatchView
+    <WebExtensionSlotsProvider slots={slots}>
+      <MatchView
       room={room}
       currentPlayerId={currentPlayerId}
       connectionNotice={null}
@@ -76,10 +78,35 @@ function renderMatchView(room: RoomState, currentPlayerId = 'guest-1') {
       onKickPlayer={vi.fn()}
       onSubmitDrawingAction={vi.fn<(action: unknown) => Promise<ApiResult<DrawingActionSuccess>>>()}
       onSubmitMessage={vi.fn()}
-      onOpenSettings={vi.fn()}
-    />,
+        onOpenSettings={vi.fn()}
+      />
+    </WebExtensionSlotsProvider>,
   );
 }
+
+describe('MatchView extension slots', () => {
+  it('renders an injected prompt reference panel for the drawer', () => {
+    const room = buildRoom({
+      match: {
+        ...buildRoom().match!,
+        currentTurn: {
+          ...buildRoom().match!.currentTurn!,
+          prompt: 'Dragon',
+          promptVisibility: 'visible',
+        },
+      },
+    });
+
+    renderMatchView(room, 'host-1', {
+      promptReferencePanel: ({ visibility, room: slotRoom }) => (
+        <aside>Injected {visibility} panel for {slotRoom.match?.currentTurn?.prompt}</aside>
+      ),
+    });
+
+    expect(screen.getByText('Injected drawer panel for Dragon')).toBeInTheDocument();
+    expect(screen.queryByText('Only you can see this prompt')).not.toBeInTheDocument();
+  });
+});
 
 describe('MatchView round warning audio', () => {
   afterEach(() => {

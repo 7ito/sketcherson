@@ -20,6 +20,7 @@ import {
 } from './helpers';
 import { legacyChatMessagesToRoomFeed, renderStructuredRoomFeed } from './roomFeed';
 import { SettingsGearButton } from './RoomShell';
+import { useWebExtensionSlots } from '../WebExtensionSlots';
 
 const SHELL_COMMON_COPY = GAME_WEB_CONFIG.ui.copy.common;
 const SHELL_ROOM_COPY = GAME_WEB_CONFIG.ui.copy.room;
@@ -50,6 +51,7 @@ export function MatchView({
   onSubmitMessage: (text: string) => Promise<string | null>;
   onOpenSettings: () => void;
 }) {
+  const slots = useWebExtensionSlots();
   const matchDrawing = useRoomDrawing('match', room);
   const [userSettings] = useUserSettings();
   const currentTurn = room.match?.currentTurn ?? null;
@@ -348,6 +350,9 @@ export function MatchView({
 
           {/* Prompt reference, drawer only */}
           {isCurrentDrawer && currentTurn && currentTurn.promptVisibility !== 'hidden' ? (
+            slots.promptReferencePanel ? (
+              slots.promptReferencePanel({ room, currentPlayerId, visibility: 'drawer' })
+            ) : (
             <div className="prompt-ref">
               <div className="prompt-ref-header">{formatShellCopy(SHELL_MATCH_COPY.promptHeader, { promptNoun: GAME_TERMINOLOGY.promptNoun })}</div>
               <div className="prompt-ref-frame">
@@ -384,10 +389,14 @@ export function MatchView({
                 {rerollError ? <p className="error-text" style={{ fontSize: '0.72rem' }}>{rerollError}</p> : null}
               </div>
             </div>
+            )
           ) : null}
 
           {/* Non-drawer: show prompt during reveal */}
           {!isCurrentDrawer && effectivePhase === 'reveal' && currentTurn && currentTurn.promptVisibility === 'revealed' ? (
+            slots.promptReferencePanel ? (
+              slots.promptReferencePanel({ room, currentPlayerId, visibility: 'reveal' })
+            ) : (
             <div className="prompt-ref">
               <div className="prompt-ref-header">{GAME_TERMINOLOGY.answerLabel}</div>
               <div className="prompt-ref-frame">
@@ -406,6 +415,7 @@ export function MatchView({
                 <div className="prompt-ref-name">{currentTurn.prompt ?? '???'}</div>
               </div>
             </div>
+            )
           ) : null}
         </div>
 

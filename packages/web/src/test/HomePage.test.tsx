@@ -3,13 +3,15 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { HomePage } from '../components/HomePage';
 import { FanProjectNotice } from '../components/FanProjectNotice';
+import { WebExtensionSlotsProvider } from '../components/WebExtensionSlots';
 import { RoomSessionContext } from '../providers/RoomSessionProvider';
 import { GAME_DEFINITION, GAME_WEB_CONFIG } from '../game';
 
 function renderHomePage() {
   return render(
     <MemoryRouter>
-      <RoomSessionContext.Provider
+      <WebExtensionSlotsProvider>
+        <RoomSessionContext.Provider
         value={{
           activeRoom: null,
           joinedSession: null,
@@ -32,7 +34,8 @@ function renderHomePage() {
         }}
       >
         <HomePage />
-      </RoomSessionContext.Provider>
+        </RoomSessionContext.Provider>
+      </WebExtensionSlotsProvider>
     </MemoryRouter>,
   );
 }
@@ -73,6 +76,41 @@ describe('HomePage game definition copy', () => {
       GAME_WEB_CONFIG.ui.skin.tokens.icons.close,
     );
     expect(screen.getByLabelText(GAME_WEB_CONFIG.ui.copy.home.nicknameLabel)).toBeInTheDocument();
+  });
+
+  it('renders an injected home page addon slot', () => {
+    render(
+      <MemoryRouter>
+        <WebExtensionSlotsProvider slots={{ homePageAddon: () => <aside>Injected home addon</aside> }}>
+          <RoomSessionContext.Provider
+            value={{
+              activeRoom: null,
+              joinedSession: null,
+              sessionRecoveryError: null,
+              roomExitNotice: null,
+              connectionNotice: null,
+              createRoom: vi.fn<() => Promise<ApiResult<CreateRoomSuccess>>>(),
+              joinRoom: vi.fn<() => Promise<ApiResult<JoinRoomSuccess>>>(),
+              reclaimStoredSession: vi.fn<() => Promise<ApiResult<ReclaimRoomSuccess> | null>>(),
+              lookupRoom: vi.fn<() => Promise<ApiResult<RoomStateSuccess>>>(),
+              updateLobbySettings: vi.fn<() => Promise<ApiResult<UpdateLobbySettingsSuccess>>>(),
+              startRoom: vi.fn<() => Promise<ApiResult<StartRoomSuccess>>>(),
+              pauseRoom: vi.fn(),
+              resumeRoom: vi.fn(),
+              kickPlayer: vi.fn(),
+              rerollTurn: vi.fn<() => Promise<ApiResult<RerollTurnSuccess>>>(),
+              submitDrawingAction: vi.fn<() => Promise<ApiResult<DrawingActionSuccess>>>(),
+              submitLobbyDrawingAction: vi.fn<() => Promise<ApiResult<LobbyDrawingActionSuccess>>>(),
+              submitRoomMessage: vi.fn<() => Promise<ApiResult<SubmitMessageSuccess>>>(),
+            }}
+          >
+            <HomePage />
+          </RoomSessionContext.Provider>
+        </WebExtensionSlotsProvider>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText('Injected home addon')).toBeInTheDocument();
   });
 });
 

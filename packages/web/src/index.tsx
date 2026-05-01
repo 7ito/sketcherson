@@ -7,6 +7,8 @@ import { GAME_DEFINITION, GAME_WEB_CONFIG } from './game';
 import './styles.css';
 
 export { App } from './App';
+export type { AppProps } from './App';
+export type { PromptReferenceSlotProps, SketchersonWebSlots } from './components/WebExtensionSlots';
 
 export function applySketchersonDocumentMetadata(documentRef: Document = document): void {
   documentRef.title = GAME_DEFINITION.title;
@@ -25,14 +27,14 @@ export function applySketchersonDocumentMetadata(documentRef: Document = documen
   iconLink.href = iconHref;
 }
 
-export function SketchersonWebApp() {
+export function SketchersonWebApp({ slots }: { slots?: import('./components/WebExtensionSlots').SketchersonWebSlots } = {}) {
   applySketchersonDocumentMetadata();
 
   return (
     <BrowserRouter>
       <AppErrorBoundary>
         <RoomSessionProvider>
-          <App />
+          <App slots={slots} />
         </RoomSessionProvider>
       </AppErrorBoundary>
     </BrowserRouter>
