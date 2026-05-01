@@ -6,7 +6,7 @@ import { createPromptEngine, normalizeGuessText } from './prompts';
 import { calculateGuesserScore } from './scoring';
 import { areLobbySettingsValidForGame, getFirstCorrectGuessTimeCapPresets } from './settings';
 import { buildGameCookieName, buildGameStorageKey } from './storage';
-import { TEST_GAME_DEFINITION } from '@sketcherson/common/testing/testGame';
+import { TEST_GAME_DEFINITION } from './games/testGame';
 import { describe, expect, it } from 'vitest';
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
