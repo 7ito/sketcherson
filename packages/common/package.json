@@ -1,101 +1,110 @@
 {
   "name": "@sketcherson/common",
   "version": "0.0.0",
-  "private": true,
+  "description": "Shared engine, game definition, room, drawing, and Vite utilities for Sketcherson games.",
+  "license": "MIT",
   "type": "module",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     ".": {
-      "types": "./src/index.ts",
-      "default": "./src/index.ts"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     },
     "./game": {
-      "types": "./src/game.ts",
-      "default": "./src/game.ts"
+      "types": "./dist/game.d.ts",
+      "default": "./dist/game.js"
     },
     "./vite": {
-      "types": "./src/vite.ts",
-      "default": "./src/vite.ts"
+      "types": "./dist/vite.d.ts",
+      "default": "./dist/vite.js"
     },
     "./gamePack": {
-      "types": "./src/gamePack.ts",
-      "default": "./src/gamePack.ts"
+      "types": "./dist/gamePack.d.ts",
+      "default": "./dist/gamePack.js"
     },
     "./gameRuntime": {
-      "types": "./src/gameRuntime.ts",
-      "default": "./src/gameRuntime.ts"
+      "types": "./dist/gameRuntime.d.ts",
+      "default": "./dist/gameRuntime.js"
     },
     "./gameAuthoring": {
-      "types": "./src/gameAuthoring.ts",
-      "default": "./src/gameAuthoring.ts"
+      "types": "./dist/gameAuthoring.d.ts",
+      "default": "./dist/gameAuthoring.js"
     },
     "./gameDefinition": {
-      "types": "./src/gameDefinition.ts",
-      "default": "./src/gameDefinition.ts"
+      "types": "./dist/gameDefinition.d.ts",
+      "default": "./dist/gameDefinition.js"
     },
     "./prompts": {
-      "types": "./src/prompts.ts",
-      "default": "./src/prompts.ts"
+      "types": "./dist/prompts.d.ts",
+      "default": "./dist/prompts.js"
     },
     "./settings": {
-      "types": "./src/settings.ts",
-      "default": "./src/settings.ts"
+      "types": "./dist/settings.d.ts",
+      "default": "./dist/settings.js"
     },
     "./room": {
-      "types": "./src/room.ts",
-      "default": "./src/room.ts"
+      "types": "./dist/room.d.ts",
+      "default": "./dist/room.js"
     },
     "./roomEvents": {
-      "types": "./src/roomEvents.ts",
-      "default": "./src/roomEvents.ts"
+      "types": "./dist/roomEvents.d.ts",
+      "default": "./dist/roomEvents.js"
     },
     "./drawing": {
-      "types": "./src/drawing.ts",
-      "default": "./src/drawing.ts"
+      "types": "./dist/drawing.d.ts",
+      "default": "./dist/drawing.js"
     },
     "./drawingProtocol": {
-      "types": "./src/drawingProtocol.ts",
-      "default": "./src/drawingProtocol.ts"
+      "types": "./dist/drawingProtocol.d.ts",
+      "default": "./dist/drawingProtocol.js"
     },
     "./drawingRealtime": {
-      "types": "./src/drawingRealtime.ts",
-      "default": "./src/drawingRealtime.ts"
+      "types": "./dist/drawingRealtime.d.ts",
+      "default": "./dist/drawingRealtime.js"
     },
     "./drawingRaster": {
-      "types": "./src/drawingRaster.ts",
-      "default": "./src/drawingRaster.ts"
+      "types": "./dist/drawingRaster.d.ts",
+      "default": "./dist/drawingRaster.js"
     },
     "./identity": {
-      "types": "./src/identity.ts",
-      "default": "./src/identity.ts"
+      "types": "./dist/identity.d.ts",
+      "default": "./dist/identity.js"
     },
     "./moderation": {
-      "types": "./src/moderation.ts",
-      "default": "./src/moderation.ts"
+      "types": "./dist/moderation.d.ts",
+      "default": "./dist/moderation.js"
     },
     "./scoring": {
-      "types": "./src/scoring.ts",
-      "default": "./src/scoring.ts"
+      "types": "./dist/scoring.d.ts",
+      "default": "./dist/scoring.js"
     },
     "./storage": {
-      "types": "./src/storage.ts",
-      "default": "./src/storage.ts"
+      "types": "./dist/storage.d.ts",
+      "default": "./dist/storage.js"
     },
     "./testing/testGame": {
-      "types": "./src/games/testGame/index.ts",
-      "default": "./src/games/testGame/index.ts"
+      "types": "./dist/games/testGame/index.d.ts",
+      "default": "./dist/games/testGame/index.js"
     },
     "./games/testGame": {
-      "types": "./src/games/testGame/index.ts",
-      "default": "./src/games/testGame/index.ts"
+      "types": "./dist/games/testGame/index.d.ts",
+      "default": "./dist/games/testGame/index.js"
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "test": "vitest run --passWithNoTests"
+    "build": "tsup && npm run validate:exports",
+    "test": "vitest run --passWithNoTests",
+    "validate:exports": "node scripts/validate-exports.mjs"
   },
   "devDependencies": {
+    "tsup": "^8.5.0",
     "vite": "^6.3.5",
     "vitest": "^3.1.2"
   }
