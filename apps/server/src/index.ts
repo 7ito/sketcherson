@@ -1,7 +1,6 @@
 import { createSketchersonApp } from '@sketcherson/common/game';
+import { createGameServer, logServerError, logServerEvent } from '@sketcherson/server';
 import shellConfig from '../../../shell.config';
-import { createGameServer } from './createServer';
-import { logServerError, logServerEvent } from './logger';
 
 const app = createSketchersonApp(shellConfig);
 const server = createGameServer(app.server.options({

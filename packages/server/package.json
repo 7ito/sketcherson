@@ -1,0 +1,35 @@
+{
+  "name": "@sketcherson/server",
+  "version": "0.0.0",
+  "description": "Reusable Socket.IO server runtime for Sketcherson games.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts src/domain/drawingSnapshotWorker.ts --format esm --dts --out-dir dist --clean",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@sketcherson/common": "*",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "socket.io-client": "^4.8.1",
+    "tsup": "^8.5.0",
+    "vitest": "^3.1.2"
+  }
+}

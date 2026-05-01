@@ -1,5 +1,5 @@
 import type { ActorInput, BroadcastTarget, ConnectionInput, EmptyActorInput, KickPlayerResult } from './transport';
-import type { ApiResult, CreateRoomSuccess, DrawingActionSuccess, JoinRoomSuccess, LobbyDrawingActionSuccess, LobbySettings, PauseRoomSuccess, ReclaimRoomSuccess, ResumeRoomSuccess, RerollTurnSuccess, RoomStateSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@sketcherson/common/room';
+import type { ApiResult, CreateRoomSuccess, DrawingActionSuccess, JoinRoomSuccess, KickPlayerSuccess, LobbyDrawingActionSuccess, LobbySettings, PauseRoomSuccess, ReclaimRoomSuccess, ResumeRoomSuccess, RerollTurnSuccess, RoomStateSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@sketcherson/common/room';
 import type { DrawingAction, DrawingActionAppliedEvent } from '@sketcherson/common/drawing';
 import { InMemoryRoomLifecycleMachine, type InMemoryRoomLifecycleMachineOptions } from './InMemoryRoomLifecycleMachine';
 import type { RoomCommand, RoomCommandResult, RoomLifecycleMachine, RoomQuery, RoomQueryResult } from './RoomLifecycleMachine';

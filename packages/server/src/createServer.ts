@@ -90,7 +90,7 @@ export function createGameServer(options?: Partial<CreateGameServerOptions<any>>
           io.sockets.sockets.get(effect.connectionId)?.leave(effect.roomCode);
           break;
         case 'emit':
-          io.to(effect.connectionId).emit(effect.event as never, effect.payload as never);
+          (io.to(effect.connectionId).emit as (event: string, payload: unknown) => boolean)(effect.event, effect.payload);
           break;
         case 'broadcastRoomState':
           for (const target of effect.targets) {
@@ -132,7 +132,7 @@ export function createGameServer(options?: Partial<CreateGameServerOptions<any>>
         skipBroadcastToSender?: boolean;
       },
     ) => {
-      socket.on(eventName, (payload: RoomRequest<E>, ack?: (result: RoomResponse<E>) => void) => {
+      (socket.on as (event: string, listener: (...args: any[]) => void) => void)(eventName, (payload: RoomRequest<E>, ack?: (result: RoomResponse<E>) => void) => {
         const result = run(payload);
 
         if (!result.ok) {
@@ -401,7 +401,7 @@ export function createGameServer(options?: Partial<CreateGameServerOptions<any>>
 
       logServerEvent('info', 'socket.disconnected', {
         socketId: socket.id,
-        roomCode: outcome.response.data,
+        roomCode: outcome.response.ok ? outcome.response.data : null,
       });
 
       applyRoomRuntimeEffects(outcome.effects);
