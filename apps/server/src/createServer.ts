@@ -27,7 +27,7 @@ export interface GameServer {
   io: Server<RoomClientToServerSocketEvents, RoomServerToClientSocketEvents>;
   httpServer: ReturnType<typeof createHttpServer>;
   roomRuntime: RoomRuntime;
-  start: (port?: number) => Promise<number>;
+  start: (port?: number, host?: string) => Promise<number>;
   stop: () => Promise<void>;
 }
 
@@ -412,9 +412,9 @@ export function createGameServer(options?: Partial<CreateGameServerOptions<any>>
     io,
     httpServer,
     roomRuntime,
-    start: async (port = Number(process.env.PORT ?? 3001)) => {
+    start: async (port = Number(process.env.PORT ?? 3001), host = process.env.HOST) => {
       await new Promise<void>((resolve) => {
-        httpServer.listen(port, resolve);
+        httpServer.listen(port, host, resolve);
       });
 
       const roomIdleCleanupIntervalMs = options?.roomIdleCleanupIntervalMs ?? ROOM_IDLE_CLEANUP_INTERVAL_MS;
@@ -431,6 +431,7 @@ export function createGameServer(options?: Partial<CreateGameServerOptions<any>>
       if (address && typeof address === 'object') {
         logServerEvent('info', 'server.started', {
           port: address.port,
+          host: address.address,
           appOrigin,
           corsOrigin,
           referenceArtEnabled,
@@ -440,6 +441,7 @@ export function createGameServer(options?: Partial<CreateGameServerOptions<any>>
 
       logServerEvent('info', 'server.started', {
         port,
+        host,
         appOrigin,
         corsOrigin,
         referenceArtEnabled,

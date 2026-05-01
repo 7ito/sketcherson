@@ -10,7 +10,7 @@ const server = createGameServer(app.server.options({
 }));
 
 server
-  .start()
+  .start(undefined, readHostArg(process.argv))
   .then((port) => {
     logServerEvent('info', 'server.ready', {
       port,
@@ -20,3 +20,12 @@ server
     logServerError('server.start_failed', error);
     process.exitCode = 1;
   });
+
+function readHostArg(argv: string[]): string | undefined {
+  const hostIndex = argv.indexOf('--host');
+  if (hostIndex === -1) {
+    return undefined;
+  }
+
+  return argv[hostIndex + 1];
+}
