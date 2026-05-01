@@ -1,6 +1,9 @@
-import { createBrowserGameRuntimeManifest, hydrateBrowserGameRuntime } from '@sketcherson/common/game';
-import { DEMO_GAME_PACK } from '@sketcherson/demo-game';
+import {
+  GAME_DEFINITION as runtimeDefinition,
+  GAME_RUNTIME as runtime,
+  GAME_WEB_CONFIG as runtimeWebConfig,
+} from 'virtual:shell-runtime-config';
 
-export const GAME_RUNTIME = hydrateBrowserGameRuntime(createBrowserGameRuntimeManifest(DEMO_GAME_PACK));
-export const GAME_DEFINITION = GAME_RUNTIME.definition;
-export const GAME_WEB_CONFIG = { iconHref: GAME_RUNTIME.assets.iconHref, ui: GAME_RUNTIME.ui };
+export const GAME_RUNTIME = runtime;
+export const GAME_DEFINITION = runtimeDefinition;
+export const GAME_WEB_CONFIG = runtimeWebConfig;

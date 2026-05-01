@@ -23,7 +23,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@sketcherson/common": "*",
+    "@sketcherson/common": "^0.0.0",
     "socket.io": "^4.8.1"
   },
   "devDependencies": {

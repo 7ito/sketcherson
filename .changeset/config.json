@@ -8,8 +8,6 @@
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
   "ignore": [
-    "@sketcherson/demo-game",
-    "@sketcherson/server",
-    "@sketcherson/web"
+    "@sketcherson/demo-game"
   ]
 }
