@@ -1,4 +1,4 @@
-import type { ResolvedShellUiConfig } from '@sketcherson/common/game';
+import type { ResolvedShellUiConfig } from '@7ito/sketcherson-common/game';
 import { GAME_WEB_CONFIG } from '../game';
 
 export function GameLogo({

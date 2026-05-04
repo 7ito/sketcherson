@@ -1,5 +1,5 @@
-import { normalizeRoomCode, type ApiResult, type DrawingActionSuccess, type LobbyDrawingActionSuccess, type LobbySettings, type RoomState } from '@sketcherson/common/room';
-import type { DrawingAction } from '@sketcherson/common/drawing';
+import { normalizeRoomCode, type ApiResult, type DrawingActionSuccess, type LobbyDrawingActionSuccess, type LobbySettings, type RoomState } from '@7ito/sketcherson-common/room';
+import type { DrawingAction } from '@7ito/sketcherson-common/drawing';
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { readPreferredNickname } from '../lib/preferredNickname';
 import type { RoomSessionContextValue } from '../providers/RoomSessionProvider';

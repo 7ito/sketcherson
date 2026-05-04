@@ -1,6 +1,6 @@
-import { applyDrawingActionToState, type DrawingActionAppliedEvent } from '@sketcherson/common/drawing';
-import { createServerGameRuntime } from '@sketcherson/common/game';
-import type { ApiResult, CreateRoomSuccess, DrawingActionSuccess, JoinRoomSuccess, ReclaimRoomSuccess, RoomState, RerollTurnSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@sketcherson/common/room';
+import { applyDrawingActionToState, type DrawingActionAppliedEvent } from '@7ito/sketcherson-common/drawing';
+import { createServerGameRuntime } from '@7ito/sketcherson-common/game';
+import type { ApiResult, CreateRoomSuccess, DrawingActionSuccess, JoinRoomSuccess, ReclaimRoomSuccess, RoomState, RerollTurnSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@7ito/sketcherson-common/room';
 import { io as ioClient, type Socket } from 'socket.io-client';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createGameServer, type GameServer } from '../src/createServer';

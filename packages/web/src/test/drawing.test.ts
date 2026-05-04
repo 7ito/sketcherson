@@ -1,4 +1,4 @@
-import type { DrawingState, DrawingStrokeOperation } from '@sketcherson/common/drawing';
+import type { DrawingState, DrawingStrokeOperation } from '@7ito/sketcherson-common/drawing';
 import { describe, expect, it } from 'vitest';
 import { getIncrementalDrawingUpdate } from '../lib/drawing';
 

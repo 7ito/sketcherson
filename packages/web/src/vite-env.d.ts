@@ -2,7 +2,7 @@ declare module 'virtual:shell-runtime-config' {
   import type {
     BrowserGameRuntime,
     BrowserGameRuntimeManifestJson,
-  } from '@sketcherson/common/gameRuntime';
+  } from '@7ito/sketcherson-common/gameRuntime';
 
   export const GAME_RUNTIME: BrowserGameRuntime;
   export const GAME_DEFINITION: BrowserGameRuntimeManifestJson['definition'];

@@ -66,6 +66,11 @@ export interface ChatMessage {
   turnNumber?: number | null;
 }
 
+export type RoomFeedAudience =
+  | { type: 'room' }
+  | { type: 'player'; playerId: string }
+  | { type: 'players'; playerIds: string[] };
+
 export interface BaseRoomFeedItem {
   id: string;
   createdAt: number;
@@ -91,7 +96,7 @@ export interface SystemFeedItem extends BaseRoomFeedItem {
     | { type: 'drawerAssigned'; drawerNickname: string }
     | { type: 'answerRevealed'; answer: string }
     | { type: 'allGuessersCorrect' }
-    | { type: 'closeGuess'; guesserNickname: string; message?: string }
+    | { type: 'closeGuess'; guesserNickname: string; kind?: string; message?: string }
     | { type: 'gamePaused' }
     | { type: 'gameResumed' };
 }

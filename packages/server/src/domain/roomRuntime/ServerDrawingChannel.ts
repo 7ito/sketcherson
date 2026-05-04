@@ -1,6 +1,6 @@
-import type { DrawingTarget } from '@sketcherson/common/drawingRealtime';
-import type { DrawingAction, DrawingActionAppliedEvent, DrawingState } from '@sketcherson/common/drawing';
-import type { ApiResult } from '@sketcherson/common/room';
+import type { DrawingTarget } from '@7ito/sketcherson-common/drawingRealtime';
+import type { DrawingAction, DrawingActionAppliedEvent, DrawingState } from '@7ito/sketcherson-common/drawing';
+import type { ApiResult } from '@7ito/sketcherson-common/room';
 import { estimateSerializedPayloadBytes, logDrawingTransportMetric } from '../../drawingMetrics';
 import type { RoomRecord } from './model';
 

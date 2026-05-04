@@ -1,5 +1,5 @@
-import { defineAudienceGame } from '@sketcherson/common/gameAuthoring';
-import type { GameDefinition } from '@sketcherson/common/gameDefinition';
+import { defineAudienceGame } from '@7ito/sketcherson-common/gameAuthoring';
+import type { GameDefinition } from '@7ito/sketcherson-common/gameDefinition';
 import { DEMO_ASSET_PUBLIC_BASE_PATH, DEMO_PROMPT_CATALOG, type DemoPrompt } from './prompts';
 
 export const DEMO_GAME = defineAudienceGame<DemoPrompt>({

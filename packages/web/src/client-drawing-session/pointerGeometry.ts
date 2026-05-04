@@ -1,4 +1,4 @@
-import type { DrawingPoint, DrawingState } from '@sketcherson/common/drawing';
+import type { DrawingPoint, DrawingState } from '@7ito/sketcherson-common/drawing';
 
 export interface CanvasPointerLike {
   clientX: number;

@@ -1,6 +1,6 @@
-import type { GameDefinition } from '@sketcherson/common/game';
-import { createPromptEngine, type PromptEntry } from '@sketcherson/common/prompts';
-import type { LobbySettings } from '@sketcherson/common/room';
+import type { GameDefinition } from '@7ito/sketcherson-common/game';
+import { createPromptEngine, type PromptEntry } from '@7ito/sketcherson-common/prompts';
+import type { LobbySettings } from '@7ito/sketcherson-common/room';
 
 export { appendTailTurn, buildTurnPlan, type PlannedTurn } from './roomRuntime/turnPlan';
 

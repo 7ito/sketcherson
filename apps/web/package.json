@@ -1,5 +1,5 @@
 {
-  "name": "@sketcherson/web-app",
+  "name": "@7ito/sketcherson-web-app",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -9,12 +9,12 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@sketcherson/common": "*",
+    "@7ito/sketcherson-common": "*",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.5.3",
     "socket.io-client": "^4.8.1",
-    "@sketcherson/web": "*"
+    "@7ito/sketcherson-web": "*"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",

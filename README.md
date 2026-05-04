@@ -38,7 +38,7 @@ npm run build
 Create a package under `packages/your-game`, export an authored game from `defineAudienceGame()`, then update `shell.config.ts`:
 
 ```ts
-import { defineShellApp } from '@sketcherson/common/game';
+import { defineShellApp } from '@7ito/sketcherson-common/game';
 import YOUR_GAME from '@your-scope/your-game';
 
 export default defineShellApp({

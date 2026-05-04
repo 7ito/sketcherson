@@ -1,5 +1,5 @@
-import type { ApiResult, DrawingActionSuccess, LobbyDrawingActionSuccess } from '@sketcherson/common/room';
-import { DRAWING_COLORS, type DrawingAction, type DrawingPoint, type DrawingTool } from '@sketcherson/common/drawing';
+import type { ApiResult, DrawingActionSuccess, LobbyDrawingActionSuccess } from '@7ito/sketcherson-common/room';
+import { DRAWING_COLORS, type DrawingAction, type DrawingPoint, type DrawingTool } from '@7ito/sketcherson-common/drawing';
 import { createStrokeId, type OptimisticStroke } from './optimisticStroke';
 import { DrawingSessionController, type DrawingSessionControllerOptions, type DrawingSessionExtendAck, type DrawingSessionExtendBatch, type ExtendBatchSuccess } from './DrawingSessionController';
 

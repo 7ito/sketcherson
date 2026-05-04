@@ -1,10 +1,10 @@
-import type { GameDefinition, GamePack, ServerGameRuntime } from '@sketcherson/common/game';
-import { createServerGameRuntime } from '@sketcherson/common/game';
-import { createPromptEngine, type PromptEngine } from '@sketcherson/common/prompts';
-import { MAX_CHAT_MESSAGE_LENGTH, PAUSE_MAX_DURATION_SECONDS, PAUSE_REPAUSE_COOLDOWN_SECONDS, PRE_ROUND_COUNTDOWN_SECONDS, RECONNECT_GRACE_PERIOD_SECONDS, REVEAL_DURATION_SECONDS, normalizeRoomCode, type ApiResult, type CreateRoomSuccess, type DrawingActionSuccess, type LobbyDrawingActionSuccess, type JoinRoomSuccess, type LiveRoomStatus, type LobbySettings, type ReclaimRoomSuccess, type RoomState, type RoomStateSuccess, type PauseRoomSuccess, type ResumeRoomSuccess, type RerollTurnSuccess, type ScoreboardEntry, type StartRoomSuccess, type SubmitMessageSuccess, type UpdateLobbySettingsSuccess } from '@sketcherson/common/room';
-import type { DrawingAction, DrawingState } from '@sketcherson/common/drawing';
-import { isNicknameValid, normalizeNickname, normalizeNicknameForComparison } from '@sketcherson/common/identity';
-import { containsProfanity } from '@sketcherson/common/moderation';
+import type { GameDefinition, GamePack, ServerGameRuntime } from '@7ito/sketcherson-common/game';
+import { createServerGameRuntime } from '@7ito/sketcherson-common/game';
+import { createPromptEngine, type PromptEngine } from '@7ito/sketcherson-common/prompts';
+import { MAX_CHAT_MESSAGE_LENGTH, PAUSE_MAX_DURATION_SECONDS, PAUSE_REPAUSE_COOLDOWN_SECONDS, PRE_ROUND_COUNTDOWN_SECONDS, RECONNECT_GRACE_PERIOD_SECONDS, REVEAL_DURATION_SECONDS, normalizeRoomCode, type ApiResult, type CreateRoomSuccess, type DrawingActionSuccess, type LobbyDrawingActionSuccess, type JoinRoomSuccess, type LiveRoomStatus, type LobbySettings, type ReclaimRoomSuccess, type RoomState, type RoomStateSuccess, type PauseRoomSuccess, type ResumeRoomSuccess, type RerollTurnSuccess, type ScoreboardEntry, type StartRoomSuccess, type SubmitMessageSuccess, type UpdateLobbySettingsSuccess } from '@7ito/sketcherson-common/room';
+import type { DrawingAction, DrawingState } from '@7ito/sketcherson-common/drawing';
+import { isNicknameValid, normalizeNickname, normalizeNicknameForComparison } from '@7ito/sketcherson-common/identity';
+import { containsProfanity } from '@7ito/sketcherson-common/moderation';
 import { randomUUID } from 'node:crypto';
 import { applyDrawingAction, createDrawingState } from '../drawing';
 import { appendRoomFeedRecord, type ActiveTurnRecord, type RoomPlayerRecord, type RoomRecord } from './model';

@@ -1,5 +1,5 @@
-import type { ApiResult, DrawingActionSuccess, LobbyDrawingActionSuccess } from '@sketcherson/common/room';
-import type { DrawingAction, DrawingState } from '@sketcherson/common/drawing';
+import type { ApiResult, DrawingActionSuccess, LobbyDrawingActionSuccess } from '@7ito/sketcherson-common/room';
+import type { DrawingAction, DrawingState } from '@7ito/sketcherson-common/drawing';
 import type { RoomRecord } from './model';
 import { ServerDrawingChannel, type DrawingChannelServer } from './ServerDrawingChannel';
 

@@ -1,7 +1,7 @@
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { createSketchersonApp } from '@sketcherson/common/gameRuntime';
-import { sketchersonVitePlugin } from '@sketcherson/common/vite';
+import { createSketchersonApp } from '@7ito/sketcherson-common/gameRuntime';
+import { sketchersonVitePlugin } from '@7ito/sketcherson-common/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import shellConfig from '../../shell.config';

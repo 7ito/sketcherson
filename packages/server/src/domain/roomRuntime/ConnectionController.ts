@@ -1,4 +1,4 @@
-import { normalizeRoomCode, type ApiError } from '@sketcherson/common/room';
+import { normalizeRoomCode, type ApiError } from '@7ito/sketcherson-common/room';
 import type { MatchRecord, RoomPlayerRecord, RoomRecord } from './model';
 import type { RateLimiter } from './RateLimiter';
 import type { RoomScheduler } from './RoomScheduler';

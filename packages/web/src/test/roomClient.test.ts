@@ -1,6 +1,6 @@
-import type { RoomState } from '@sketcherson/common/room';
-import type { DrawingActionAppliedEvent, DrawingState } from '@sketcherson/common/drawing';
-import type { RoomClientEventName, RoomRequest, RoomResponse, RoomServerEventName, RoomServerPayload } from '@sketcherson/common/roomEvents';
+import type { RoomState } from '@7ito/sketcherson-common/room';
+import type { DrawingActionAppliedEvent, DrawingState } from '@7ito/sketcherson-common/drawing';
+import type { RoomClientEventName, RoomRequest, RoomResponse, RoomServerEventName, RoomServerPayload } from '@7ito/sketcherson-common/roomEvents';
 import { createRoomClient, type JoinedSession, type JoinedSessionStore, type PreferredNicknameStore, type RoomTransport } from '../client-room-runtime';
 import type { RoomConnectionEvents } from '../client-room-runtime';
 

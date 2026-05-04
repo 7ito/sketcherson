@@ -1,4 +1,4 @@
-import type { ApiResult } from '@sketcherson/common/room';
+import type { ApiResult } from '@7ito/sketcherson-common/room';
 
 export type RateLimitScope = 'chat' | 'drawing' | 'join';
 

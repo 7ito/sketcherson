@@ -1,5 +1,5 @@
-import type { ApiResult, DrawingActionSuccess, LobbyDrawingActionSuccess, RoomStatus } from '@sketcherson/common/room';
-import { DRAWING_CANVAS_WIDTH, type DrawingAction, type DrawingState } from '@sketcherson/common/drawing';
+import type { ApiResult, DrawingActionSuccess, LobbyDrawingActionSuccess, RoomStatus } from '@7ito/sketcherson-common/room';
+import { DRAWING_CANVAS_WIDTH, type DrawingAction, type DrawingState } from '@7ito/sketcherson-common/drawing';
 import { useEffect, useRef, type PointerEvent as ReactPointerEvent, type RefObject, type WheelEvent as ReactWheelEvent } from 'react';
 import { renderDrawingStateToCanvas } from '../lib/drawing';
 import {

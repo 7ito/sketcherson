@@ -1,4 +1,4 @@
-import type { ShellNoticeConfig } from '@sketcherson/common/game';
+import type { ShellNoticeConfig } from '@7ito/sketcherson-common/game';
 import { GAME_WEB_CONFIG } from '../game';
 
 export type ShellNoticePlacement = NonNullable<ShellNoticeConfig['placements']>[number];

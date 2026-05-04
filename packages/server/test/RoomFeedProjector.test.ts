@@ -52,15 +52,55 @@ describe('RoomFeedProjector', () => {
       {
         id: 'close-1',
         type: 'system',
-        event: { type: 'closeGuess', guesserNickname: 'Guesser', message: 'One letter off.' },
+        event: { type: 'closeGuess', guesserNickname: 'Guesser', kind: 'evolutionFamily', message: 'One letter off.' },
         createdAt: 150,
         turnNumber: 2,
+        audience: { type: 'player', playerId: 'player-2' },
+      },
+    ];
+
+    expect(projector.projectMatchFeed({ records, viewerPlayerId: 'player-2' })).toEqual([
+      {
+        id: 'close-1',
+        type: 'system',
+        event: { type: 'closeGuess', guesserNickname: 'Guesser', kind: 'evolutionFamily', message: 'One letter off.' },
+        createdAt: 150,
+        turnNumber: 2,
+      },
+    ]);
+    expect(projector.projectMatchFeed({ records, viewerPlayerId: 'player-3' })).toEqual([]);
+  });
+
+  it('supports room, players, and legacy player id audiences', () => {
+    const records: RoomFeedRecord[] = [
+      {
+        id: 'room',
+        type: 'system',
+        event: { type: 'gamePaused' },
+        createdAt: 1,
+        turnNumber: null,
+        audience: { type: 'room' },
+      },
+      {
+        id: 'players',
+        type: 'system',
+        event: { type: 'gameResumed' },
+        createdAt: 2,
+        turnNumber: null,
+        audience: { type: 'players', playerIds: ['player-1', 'player-2'] },
+      },
+      {
+        id: 'legacy',
+        type: 'system',
+        event: { type: 'gamePaused' },
+        createdAt: 3,
+        turnNumber: null,
         audiencePlayerIds: ['player-2'],
       },
     ];
 
-    expect(projector.projectMatchFeed({ records, viewerPlayerId: 'player-2' })).toHaveLength(1);
-    expect(projector.projectMatchFeed({ records, viewerPlayerId: 'player-3' })).toEqual([]);
+    expect(projector.projectMatchFeed({ records, viewerPlayerId: 'player-2' }).map((item) => item.id)).toEqual(['room', 'players', 'legacy']);
+    expect(projector.projectMatchFeed({ records, viewerPlayerId: 'player-3' }).map((item) => item.id)).toEqual(['room']);
   });
 
   it('projects correct guesses with viewer-specific answer privacy', () => {

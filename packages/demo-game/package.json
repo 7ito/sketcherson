@@ -28,7 +28,7 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@sketcherson/common": "*"
+    "@7ito/sketcherson-common": "*"
   },
   "devDependencies": {
     "vitest": "^3.1.2"

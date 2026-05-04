@@ -1,5 +1,5 @@
-import { createSketchersonApp } from '@sketcherson/common/game';
-import { createGameServer, logServerError, logServerEvent } from '@sketcherson/server';
+import { createSketchersonApp } from '@7ito/sketcherson-common/game';
+import { createGameServer, logServerError, logServerEvent } from '@7ito/sketcherson-server';
 import shellConfig from '../../../shell.config';
 
 const app = createSketchersonApp(shellConfig);

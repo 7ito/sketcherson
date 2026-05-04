@@ -1,4 +1,4 @@
-import { DRAWING_BACKGROUND_COLOR, type DrawingPoint, type DrawingState, type DrawingTool } from '@sketcherson/common/drawing';
+import { DRAWING_BACKGROUND_COLOR, type DrawingPoint, type DrawingState, type DrawingTool } from '@7ito/sketcherson-common/drawing';
 
 export interface OptimisticStroke {
   id: string;

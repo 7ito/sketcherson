@@ -1,5 +1,5 @@
-import type { ApiResult, DrawingActionSuccess } from '@sketcherson/common/room';
-import type { DrawingAction, DrawingState } from '@sketcherson/common/drawing';
+import type { ApiResult, DrawingActionSuccess } from '@7ito/sketcherson-common/room';
+import type { DrawingAction, DrawingState } from '@7ito/sketcherson-common/drawing';
 import { act, renderHook } from '@testing-library/react';
 import { useDrawingSession } from '../client-drawing-session';
 

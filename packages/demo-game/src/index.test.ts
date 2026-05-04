@@ -1,8 +1,8 @@
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { compileShellApp, defineShellApp, resolveShellUiConfig } from '@sketcherson/common/game';
-import { createPromptEngine } from '@sketcherson/common/prompts';
-import { buildGameCookieName, buildGameStorageKey } from '@sketcherson/common/storage';
+import { compileShellApp, defineShellApp, resolveShellUiConfig } from '@7ito/sketcherson-common/game';
+import { createPromptEngine } from '@7ito/sketcherson-common/prompts';
+import { buildGameCookieName, buildGameStorageKey } from '@7ito/sketcherson-common/storage';
 import {
   DEMO_PROMPT_CATALOG,
   DEMO_PROMPTS,

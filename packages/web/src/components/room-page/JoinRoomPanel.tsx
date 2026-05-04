@@ -1,6 +1,6 @@
 import { type FormEvent } from 'react';
-import type { RoomState } from '@sketcherson/common/room';
-import { formatShellCopy } from '@sketcherson/common/game';
+import type { RoomState } from '@7ito/sketcherson-common/room';
+import { formatShellCopy } from '@7ito/sketcherson-common/game';
 import { PREFERRED_NICKNAME_MAX_LENGTH } from '../../lib/preferredNickname';
 import { GAME_WEB_CONFIG } from '../../game';
 

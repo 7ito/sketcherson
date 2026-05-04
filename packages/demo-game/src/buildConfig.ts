@@ -1,4 +1,4 @@
-import type { GameBuildConfig } from '@sketcherson/common/game';
+import type { GameBuildConfig } from '@7ito/sketcherson-common/game';
 import { DEMO_GAME } from './gameDefinition';
 
 if (!DEMO_GAME.build) {

@@ -1,5 +1,5 @@
-import { normalizeLobbySettingsForGame } from '@sketcherson/common/settings';
-import type { LobbySettings } from '@sketcherson/common/room';
+import { normalizeLobbySettingsForGame } from '@7ito/sketcherson-common/settings';
+import type { LobbySettings } from '@7ito/sketcherson-common/room';
 import { GAME_DEFINITION, GAME_RUNTIME, GAME_WEB_CONFIG } from '../../game';
 import {
   capitalizeFirst,
@@ -183,7 +183,7 @@ export function SharedSettingsFields({
                 disabled={disabled}
                 onChange={(event) => onChange({ ...settings, hideCloseGuesses: event.target.checked })}
               />
-              <span>Hide close guesses from other players</span>
+              <span>{SHELL_SETTINGS_COPY.hideCloseGuessesFromOtherPlayersLabel}</span>
             </label>
 
             <label className="lobby-toggle-row">
@@ -193,7 +193,7 @@ export function SharedSettingsFields({
                 disabled={disabled}
                 onChange={(event) => onChange({ ...settings, showCloseGuessAlerts: event.target.checked })}
               />
-              <span>Show close guess alerts</span>
+              <span>{SHELL_SETTINGS_COPY.showCloseGuessAlertsLabel}</span>
             </label>
           </div>
         ) : null}

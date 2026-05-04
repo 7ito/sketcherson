@@ -1,5 +1,5 @@
-import type { ApiResult, DrawingActionSuccess, JoinRoomSuccess, ReclaimRoomSuccess, RerollTurnSuccess, RoomStateSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@sketcherson/common/room';
-import type { DrawingState } from '@sketcherson/common/drawing';
+import type { ApiResult, DrawingActionSuccess, JoinRoomSuccess, ReclaimRoomSuccess, RerollTurnSuccess, RoomStateSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@7ito/sketcherson-common/room';
+import type { DrawingState } from '@7ito/sketcherson-common/drawing';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { RoomPage } from '../components/RoomPage';

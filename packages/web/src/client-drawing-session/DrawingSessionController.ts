@@ -1,5 +1,5 @@
-import type { ApiResult } from '@sketcherson/common/room';
-import type { DrawingPoint } from '@sketcherson/common/drawing';
+import type { ApiResult } from '@7ito/sketcherson-common/room';
+import type { DrawingPoint } from '@7ito/sketcherson-common/drawing';
 import {
   getBaseExtendFlushIntervalMs,
   getScheduledExtendFlushIntervalMs,

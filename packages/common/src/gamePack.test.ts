@@ -141,6 +141,8 @@ describe('shell app config', () => {
         },
         settings: {
           firstCorrectGuessTimeCapLabel: 'First Guess Time Reduction',
+          hideCloseGuessesFromOtherPlayersLabel: 'Hide close guesses from other players',
+          showCloseGuessAlertsLabel: 'Show close guess alerts',
           referenceArtToggleLabel: 'reference image',
         },
         join: {
@@ -353,6 +355,10 @@ describe('shell app config', () => {
             chatPlaceholderGuesser: 'Name that Pokémon…',
             drawerTag: '{drawerIcon} {drawerNickname} is sketching',
           },
+          settings: {
+            hideCloseGuessesFromOtherPlayersLabel: 'Hide private close guesses',
+            showCloseGuessAlertsLabel: 'Show private close alerts',
+          },
           drawing: {
             referenceImagePlaceholder: 'Reference sprite goes here',
           },
@@ -399,6 +405,10 @@ describe('shell app config', () => {
           drawerTag: '{drawerIcon} {drawerNickname} is sketching',
           phaseCountdown: 'Countdown',
           hostControlsHeader: 'Host controls',
+        },
+        settings: {
+          hideCloseGuessesFromOtherPlayersLabel: 'Hide private close guesses',
+          showCloseGuessAlertsLabel: 'Show private close alerts',
         },
         drawing: {
           referenceImagePlaceholder: 'Reference sprite goes here',

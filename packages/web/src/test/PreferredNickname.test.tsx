@@ -1,4 +1,4 @@
-import type { ApiResult, DrawingActionSuccess, JoinRoomSuccess, ReclaimRoomSuccess, RerollTurnSuccess, RoomState, RoomStateSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@sketcherson/common/room';
+import type { ApiResult, DrawingActionSuccess, JoinRoomSuccess, ReclaimRoomSuccess, RerollTurnSuccess, RoomState, RoomStateSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@7ito/sketcherson-common/room';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ContextType } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';

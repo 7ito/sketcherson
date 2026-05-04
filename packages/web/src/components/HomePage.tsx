@@ -1,4 +1,4 @@
-import { normalizeRoomCode } from '@sketcherson/common/room';
+import { normalizeRoomCode } from '@7ito/sketcherson-common/room';
 import { FormEvent, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ConnectionStatusBanner } from './ConnectionStatusBanner';

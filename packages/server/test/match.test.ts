@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { defaultLobbySettingsForGame } from '@sketcherson/common/settings';
-import { MAX_TOTAL_TURNS } from '@sketcherson/common/room';
+import { defaultLobbySettingsForGame } from '@7ito/sketcherson-common/settings';
+import { MAX_TOTAL_TURNS } from '@7ito/sketcherson-common/room';
 import { DEMO_GAME_DEFINITION } from '@sketcherson/demo-game';
 import { appendTailTurn, buildTurnPlan, pickRandomGamePrompt } from '../src/domain/match';
 

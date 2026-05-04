@@ -1,7 +1,7 @@
-import { MAX_PLAYERS_PER_ROOM, type LobbySettings } from '@sketcherson/common/room';
-import type { DrawingAction } from '@sketcherson/common/drawing';
-import { defineGamePack, defineDrawingGameRules } from '@sketcherson/common/game';
-import { TEST_GAME_DEFINITION } from '@sketcherson/common/testing/testGame';
+import { MAX_PLAYERS_PER_ROOM, type LobbySettings } from '@7ito/sketcherson-common/room';
+import type { DrawingAction } from '@7ito/sketcherson-common/drawing';
+import { defineGamePack, defineDrawingGameRules } from '@7ito/sketcherson-common/game';
+import { TEST_GAME_DEFINITION } from '@7ito/sketcherson-common/testing/testGame';
 import { DEMO_GAME_DEFINITION, DEMO_GAME_PACK } from '@sketcherson/demo-game';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderSnapshotDataUrl } from '../src/domain/drawing';

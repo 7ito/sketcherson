@@ -1,8 +1,8 @@
-import { DRAWING_BACKGROUND_COLOR, type DrawingFillOperation, type DrawingOperation, type DrawingPoint, type DrawingState, type DrawingStrokeOperation } from '@sketcherson/common/drawing';
+import { DRAWING_BACKGROUND_COLOR, type DrawingFillOperation, type DrawingOperation, type DrawingPoint, type DrawingState, type DrawingStrokeOperation } from '@7ito/sketcherson-common/drawing';
 import {
   getIncrementalDrawingUpdate as getProtocolIncrementalDrawingUpdate,
   type DrawingIncrementalUpdate,
-} from '@sketcherson/common/drawingProtocol';
+} from '@7ito/sketcherson-common/drawingProtocol';
 
 interface DrawingRenderCache {
   renderCanvas: HTMLCanvasElement;

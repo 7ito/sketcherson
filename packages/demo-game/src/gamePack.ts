@@ -1,4 +1,4 @@
-import type { GamePack } from '@sketcherson/common/game';
+import type { GamePack } from '@7ito/sketcherson-common/game';
 import { DEMO_GAME } from './gameDefinition';
 import type { DemoPrompt } from './prompts';
 

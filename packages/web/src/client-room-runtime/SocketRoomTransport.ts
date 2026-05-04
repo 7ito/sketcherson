@@ -1,4 +1,4 @@
-import type { RoomClientEventName, RoomRequest, RoomResponse, RoomServerEventName, RoomServerPayload } from '@sketcherson/common/roomEvents';
+import type { RoomClientEventName, RoomRequest, RoomResponse, RoomServerEventName, RoomServerPayload } from '@7ito/sketcherson-common/roomEvents';
 import type { RoomConnectionEvents, RoomTransport, RoomTransportUnsubscribe } from './RoomTransport';
 
 interface SocketLike {

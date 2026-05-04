@@ -1,5 +1,5 @@
-import { DRAWING_BRUSH_SIZES, DRAWING_COLORS, DRAWING_ERASER_SIZE, type DrawingAction, type DrawingTool } from '@sketcherson/common/drawing';
-import type { ApiResult } from '@sketcherson/common/room';
+import { DRAWING_BRUSH_SIZES, DRAWING_COLORS, DRAWING_ERASER_SIZE, type DrawingAction, type DrawingTool } from '@7ito/sketcherson-common/drawing';
+import type { ApiResult } from '@7ito/sketcherson-common/room';
 import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 import { getAdjustedBrushSize } from './brushControls';
 

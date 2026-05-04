@@ -1,5 +1,5 @@
-import type { ApiResult, DrawingActionSuccess } from '@sketcherson/common/room';
-import type { DrawingAction, DrawingPoint } from '@sketcherson/common/drawing';
+import type { ApiResult, DrawingActionSuccess } from '@7ito/sketcherson-common/room';
+import type { DrawingAction, DrawingPoint } from '@7ito/sketcherson-common/drawing';
 import { createDrawingInputSession } from '../client-drawing-session';
 
 function ok(revision: number): ApiResult<DrawingActionSuccess> {

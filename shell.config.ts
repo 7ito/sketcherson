@@ -1,4 +1,4 @@
-import { defineShellApp } from '@sketcherson/common/gamePack';
+import { defineShellApp } from '@7ito/sketcherson-common/gamePack';
 import DEMO_GAME from './packages/demo-game/src';
 
 const shellConfig = defineShellApp({

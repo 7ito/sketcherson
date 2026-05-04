@@ -5,8 +5,8 @@ Sketcherson uses Changesets to version and publish public packages.
 ## Package policy
 
 - Public packages use independent semantic versions.
-- `@sketcherson/common` is currently publishable.
-- `@sketcherson/server` and `@sketcherson/web` are private until their extraction issues are complete.
+- `@7ito/sketcherson-common` is currently publishable.
+- `@7ito/sketcherson-server` and `@7ito/sketcherson-web` are private until their extraction issues are complete.
 - `@sketcherson/demo-game` stays private unless it becomes a supported template package.
 - Internal workspace dependency ranges are updated as patch changes by Changesets.
 
@@ -55,5 +55,5 @@ npx changeset pre exit
 Downstream repos can then install the prerelease tag, for example:
 
 ```sh
-npm install @sketcherson/common@next
+npm install @7ito/sketcherson-common@next
 ```

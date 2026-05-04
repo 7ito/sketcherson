@@ -147,6 +147,8 @@ export interface ShellCopyOverrides {
     firstCorrectGuessTimeCapLabel: string;
     guessingDelayLabel: string;
     turnsPerPlayerLabel: string;
+    hideCloseGuessesFromOtherPlayersLabel: string;
+    showCloseGuessAlertsLabel: string;
     referenceArtToggleLabel: string;
   }>;
   drawing?: Partial<{
@@ -567,6 +569,8 @@ export function resolveShellUiConfig<TPrompt extends PromptEntry>(gamePack: Game
         firstCorrectGuessTimeCapLabel: settingsCopy.firstCorrectGuessTimeCapLabel ?? 'First Guess Time Reduction',
         guessingDelayLabel: settingsCopy.guessingDelayLabel ?? 'Guessing delay',
         turnsPerPlayerLabel: settingsCopy.turnsPerPlayerLabel ?? 'Turns per player',
+        hideCloseGuessesFromOtherPlayersLabel: settingsCopy.hideCloseGuessesFromOtherPlayersLabel ?? 'Hide close guesses from other players',
+        showCloseGuessAlertsLabel: settingsCopy.showCloseGuessAlertsLabel ?? 'Show close guess alerts',
         referenceArtToggleLabel: settingsCopy.referenceArtToggleLabel ?? definition.terminology.referenceArtLabel,
       },
       drawing: {

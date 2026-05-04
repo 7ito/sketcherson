@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { defineGamePack } from './gamePack';
-import { createPromptEngine } from './promptEngine';
+import { createPromptEngine, isAcceptedFuzzyGuess } from './promptEngine';
 import { TEST_GAME_DEFINITION, type TestGamePrompt } from './games/testGame';
 
 const TEST_GAME_PACK = defineGamePack<TestGamePrompt>({
@@ -95,6 +95,11 @@ describe('prompt engine', () => {
     expect(engine.isCorrectGuess('robot', 'bot')).toBe(true);
   });
 
+  it('exports the fuzzy guess helper for game packs', () => {
+    expect(isAcceptedFuzzyGuess('charizard', 'charizrd')).toBe(true);
+    expect(isAcceptedFuzzyGuess('mew', 'mewtwo')).toBe(false);
+  });
+
   it('supports game-pack custom guess rules', () => {
     const engine = createPromptEngine(defineGamePack<TestGamePrompt>({
       definition: TEST_GAME_DEFINITION,
@@ -109,12 +114,20 @@ describe('prompt engine', () => {
             return { correct: true, matchedBy: 'custom', normalizedGuess };
           }
 
+          if (prompt.id === 'dragon' && normalizedGuess === 'lizard') {
+            return { ...defaultResult, closeGuess: { kind: 'taxonomy', message: 'Same family.' } };
+          }
+
           return defaultResult;
         },
       },
     }));
 
     expect(engine.evaluateGuess('dragon', '149')).toMatchObject({ correct: true, matchedBy: 'custom' });
+    expect(engine.evaluateGuess('dragon', 'lizard')).toMatchObject({
+      correct: false,
+      closeGuess: { kind: 'taxonomy', message: 'Same family.' },
+    });
   });
 
   it('resolves browser-safe prompt display metadata through game-pack rules', () => {
@@ -124,7 +137,10 @@ describe('prompt engine', () => {
         resolveDisplayMetadata: (prompt) => prompt.id === 'dragon'
           ? {
               subtitle: 'Legendary creature',
-              badges: [{ label: 'Type', value: 'Fire', tone: 'accent' }],
+              badges: [
+                { label: 'Type', value: 'Fire', tone: 'accent' },
+                { label: 'Unsafe', tone: 'invalid' as never },
+              ],
               tags: ['flying'],
               custom: { generation: 1 },
             }
@@ -134,7 +150,10 @@ describe('prompt engine', () => {
 
     expect(engine.getDisplayMetadata('dragon')).toEqual({
       subtitle: 'Legendary creature',
-      badges: [{ label: 'Type', value: 'Fire', tone: 'accent' }],
+      badges: [
+        { label: 'Type', value: 'Fire', tone: 'accent' },
+        { label: 'Unsafe' },
+      ],
       tags: ['flying'],
       custom: { generation: 1 },
     });

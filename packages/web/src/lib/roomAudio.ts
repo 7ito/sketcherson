@@ -1,4 +1,4 @@
-import type { RoomState } from '@sketcherson/common/room';
+import type { RoomState } from '@7ito/sketcherson-common/room';
 import { useEffect, useRef } from 'react';
 import { soundEffects, type GameSoundEffect } from './soundEffects';
 

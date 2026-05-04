@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { CompletedTurnState } from '@sketcherson/common/room';
+import type { CompletedTurnState } from '@7ito/sketcherson-common/room';
 import { groupCompletedTurnsForPostgame } from '../components/room-page/PostgameView';
 
 const buildTurn = (turnNumber: number, drawerNickname = `Player ${turnNumber}`): CompletedTurnState => ({

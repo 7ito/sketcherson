@@ -7,16 +7,16 @@ This process releases changes from the public Sketcherson repo so downstream gam
 Sketcherson packages are versioned with Changesets.
 
 ```txt
-@sketcherson/common
-@sketcherson/server
-@sketcherson/web
+@7ito/sketcherson-common
+@7ito/sketcherson-server
+@7ito/sketcherson-web
 ```
 
 The demo app packages remain private app entrypoints unless they intentionally become template packages.
 
 ```txt
-@sketcherson/server-app
-@sketcherson/web-app
+@7ito/sketcherson-server-app
+@7ito/sketcherson-web-app
 ```
 
 ## Release workflow
@@ -42,9 +42,9 @@ Use `patch` for compatible fixes, `minor` for new backwards-compatible APIs, and
 Example package selections:
 
 ```txt
-@sketcherson/common patch
-@sketcherson/server patch
-@sketcherson/web minor
+@7ito/sketcherson-common patch
+@7ito/sketcherson-server patch
+@7ito/sketcherson-web minor
 ```
 
 5. Commit the code change and generated `.changeset` file.
@@ -82,9 +82,9 @@ The publish script runs the workspace build and test commands before `changeset 
 The registry receives new package versions, for example:
 
 ```txt
-@sketcherson/common@0.1.4
-@sketcherson/server@0.1.4
-@sketcherson/web@0.1.4
+@7ito/sketcherson-common@0.1.4
+@7ito/sketcherson-server@0.1.4
+@7ito/sketcherson-web@0.1.4
 ```
 
 Downstream projects can then update dependency versions instead of receiving mirrored source edits.
@@ -104,7 +104,7 @@ npx changeset pre exit
 Downstream repos can install the prerelease tag:
 
 ```sh
-npm install @sketcherson/common@next @sketcherson/server@next @sketcherson/web@next
+npm install @7ito/sketcherson-common@next @7ito/sketcherson-server@next @7ito/sketcherson-web@next
 ```
 
 ## Local unpublished testing
@@ -129,7 +129,7 @@ yalc publish packages/web
 Then add those local snapshots in a downstream repo:
 
 ```sh
-yalc add @sketcherson/common @sketcherson/server @sketcherson/web
+yalc add @7ito/sketcherson-common @7ito/sketcherson-server @7ito/sketcherson-web
 npm install
 npm test
 npm run build
@@ -140,6 +140,6 @@ After validation, publish real package versions from Sketcherson and move the do
 ## Notes
 
 1. Publish built package outputs, not TypeScript source paths.
-2. Keep package exports stable because downstream games import subpaths such as `@sketcherson/common/game`.
+2. Keep package exports stable because downstream games import subpaths such as `@7ito/sketcherson-common/game`.
 3. Update package versions through Changesets rather than manually editing versions.
 4. Run downstream game test suites before treating a Sketcherson release as safe for production games.

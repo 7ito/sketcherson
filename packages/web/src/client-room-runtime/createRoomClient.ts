@@ -1,6 +1,6 @@
-import type { ApiError, ApiResult, CreateRoomSuccess, JoinRoomSuccess, KickPlayerSuccess, PauseRoomSuccess, ReclaimRoomSuccess, ResumeRoomSuccess, RoomState, RoomStateSuccess, RerollTurnSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@sketcherson/common/room';
-import type { DrawingActionAppliedEvent } from '@sketcherson/common/drawing';
-import type { RoomClientEventName, RoomRequest, RoomResponse } from '@sketcherson/common/roomEvents';
+import type { ApiError, ApiResult, CreateRoomSuccess, JoinRoomSuccess, KickPlayerSuccess, PauseRoomSuccess, ReclaimRoomSuccess, ResumeRoomSuccess, RoomState, RoomStateSuccess, RerollTurnSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@7ito/sketcherson-common/room';
+import type { DrawingActionAppliedEvent } from '@7ito/sketcherson-common/drawing';
+import type { RoomClientEventName, RoomRequest, RoomResponse } from '@7ito/sketcherson-common/roomEvents';
 import {
   estimateSerializedPayloadBytes,
   recordDrawingAck,

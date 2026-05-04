@@ -1,4 +1,4 @@
-import type { RoomFeedItem } from '@sketcherson/common/room';
+import type { RoomFeedItem } from '@7ito/sketcherson-common/room';
 import type { RoomFeedRecord } from './model';
 
 export interface RoomFeedProjector {
@@ -31,7 +31,17 @@ class SemanticRoomFeedProjector implements RoomFeedProjector {
   }
 
   private isVisibleToViewer(item: RoomFeedRecord, viewerPlayerId: string | undefined): boolean {
-    return !item.audiencePlayerIds || (viewerPlayerId !== undefined && item.audiencePlayerIds.includes(viewerPlayerId));
+    const audience = item.audience ?? (item.audiencePlayerIds ? { type: 'players' as const, playerIds: item.audiencePlayerIds } : { type: 'room' as const });
+
+    if (audience.type === 'room') {
+      return true;
+    }
+
+    if (audience.type === 'player') {
+      return viewerPlayerId === audience.playerId;
+    }
+
+    return viewerPlayerId !== undefined && audience.playerIds.includes(viewerPlayerId);
   }
 
   private projectFeedItemForViewer(item: RoomFeedRecord, viewerPlayerId: string | undefined): RoomFeedItem {

@@ -13,13 +13,16 @@ import {
 
 export type PromptGuessMatchKind = 'name' | 'alias' | 'fuzzy' | 'custom';
 
+export interface PromptCloseGuess {
+  kind?: string;
+  message?: string;
+}
+
 export interface PromptGuessEvaluation {
   correct: boolean;
   matchedBy: PromptGuessMatchKind | null;
   normalizedGuess: string;
-  closeGuess?: {
-    message?: string;
-  } | null;
+  closeGuess?: PromptCloseGuess | null;
 }
 
 export interface PromptDisplayBadge {
@@ -252,6 +255,8 @@ export function getDefaultPromptCollectionIds<TPrompt extends PromptEntry>(gameP
   return getDefaultEnabledCollectionIds(gamePack.definition.promptCatalog);
 }
 
+const PROMPT_DISPLAY_BADGE_TONES = new Set(['neutral', 'accent', 'success', 'warning', 'danger']);
+
 function sanitizePromptDisplayMetadata(metadata: PromptDisplayMetadata | null | undefined): PromptDisplayMetadata | null {
   if (!metadata) {
     return null;
@@ -261,11 +266,15 @@ function sanitizePromptDisplayMetadata(metadata: PromptDisplayMetadata | null | 
     ...(metadata.subtitle ? { subtitle: String(metadata.subtitle) } : {}),
     ...(metadata.badges?.length
       ? {
-          badges: metadata.badges.map((badge) => ({
-            label: String(badge.label),
-            ...(badge.value === undefined ? {} : { value: String(badge.value) }),
-            ...(badge.tone ? { tone: badge.tone } : {}),
-          })),
+          badges: metadata.badges.map((badge) => {
+            const tone = badge.tone && PROMPT_DISPLAY_BADGE_TONES.has(String(badge.tone)) ? badge.tone : undefined;
+
+            return {
+              label: String(badge.label),
+              ...(badge.value === undefined ? {} : { value: String(badge.value) }),
+              ...(tone ? { tone } : {}),
+            };
+          }),
         }
       : {}),
     ...(metadata.tags?.length ? { tags: metadata.tags.map(String) } : {}),
@@ -316,7 +325,7 @@ function buildQwertyAdjacentKeyMap(): Map<string, Set<string>> {
   return adjacentKeys;
 }
 
-function isAcceptedFuzzyGuess(answer: string, guess: string): boolean {
+export function isAcceptedFuzzyGuess(answer: string, guess: string): boolean {
   if (answer.length < 5) {
     return false;
   }

@@ -1,6 +1,6 @@
-import { formatShellCopy } from '@sketcherson/common/game';
-import { censorProfanity } from '@sketcherson/common/moderation';
-import type { ChatMessage, RoomFeedItem } from '@sketcherson/common/room';
+import { formatShellCopy } from '@7ito/sketcherson-common/game';
+import { censorProfanity } from '@7ito/sketcherson-common/moderation';
+import type { ChatMessage, RoomFeedItem } from '@7ito/sketcherson-common/room';
 import type { ReactNode } from 'react';
 import { GAME_DEFINITION, GAME_WEB_CONFIG } from '../../game';
 import { getPlayerAccentStyle } from './helpers';

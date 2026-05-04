@@ -1,5 +1,5 @@
-import type { ApiResult, CreateRoomSuccess, DrawingActionSuccess, JoinRoomSuccess, LobbyDrawingActionSuccess, LobbySettings, PauseRoomSuccess, ReclaimRoomSuccess, ResumeRoomSuccess, RerollTurnSuccess, RoomStateSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@sketcherson/common/room';
-import type { DrawingAction } from '@sketcherson/common/drawing';
+import type { ApiResult, CreateRoomSuccess, DrawingActionSuccess, JoinRoomSuccess, LobbyDrawingActionSuccess, LobbySettings, PauseRoomSuccess, ReclaimRoomSuccess, ResumeRoomSuccess, RerollTurnSuccess, RoomStateSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@7ito/sketcherson-common/room';
+import type { DrawingAction } from '@7ito/sketcherson-common/drawing';
 import { InMemoryRoomLifecycleMachine, type InMemoryRoomLifecycleMachineOptions } from './roomRuntime/InMemoryRoomLifecycleMachine';
 import type { RoomLifecycleMachine } from './roomRuntime/RoomLifecycleMachine';
 import type { RoomTimerFiredInput } from './roomRuntime/timers';

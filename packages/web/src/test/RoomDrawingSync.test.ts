@@ -1,5 +1,5 @@
-import type { RoomState } from '@sketcherson/common/room';
-import { applyDrawingActionToState, type DrawingActionAppliedEvent, type DrawingState } from '@sketcherson/common/drawing';
+import type { RoomState } from '@7ito/sketcherson-common/room';
+import { applyDrawingActionToState, type DrawingActionAppliedEvent, type DrawingState } from '@7ito/sketcherson-common/drawing';
 import { describe, expect, it } from 'vitest';
 import { createRoomDrawingSync } from '../client-room-runtime/RoomDrawingSync';
 

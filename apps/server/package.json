@@ -1,5 +1,5 @@
 {
-  "name": "@sketcherson/server-app",
+  "name": "@7ito/sketcherson-server-app",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -8,9 +8,9 @@
     "build": "tsup src/index.ts --format esm --out-dir dist --clean"
   },
   "dependencies": {
-    "@sketcherson/common": "*",
+    "@7ito/sketcherson-common": "*",
     "@sketcherson/demo-game": "*",
-    "@sketcherson/server": "*"
+    "@7ito/sketcherson-server": "*"
   },
   "devDependencies": {
     "@types/node": "^22.15.3",

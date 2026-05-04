@@ -7,7 +7,7 @@ A game pack keeps audience-specific prompt data, copy, terminology, and asset UR
 Use `defineAudienceGame()` for new games. It creates the runtime `GamePack` and optional build config from one browser-safe authoring boundary. Local asset paths only flow into `build`, not into the runtime pack.
 
 ```ts
-import { defineAudienceGame } from '@sketcherson/common/game';
+import { defineAudienceGame } from '@7ito/sketcherson-common/game';
 import { OBJECT_COLLECTIONS, OBJECT_PROMPTS } from './prompts';
 
 export const EVERYDAY_OBJECTS_GAME = defineAudienceGame({
@@ -39,6 +39,12 @@ export const EVERYDAY_OBJECTS_GAME = defineAudienceGame({
     skin: {
       cssHref: '/object-assets/skin.css',
     },
+    copy: {
+      settings: {
+        hideCloseGuessesFromOtherPlayersLabel: 'Hide close hints from other players',
+        showCloseGuessAlertsLabel: 'Show close hint alerts',
+      },
+    },
   },
 });
 ```
@@ -54,7 +60,7 @@ The repo includes `packages/demo-game` as the default selectable game pack. It u
 Use it as a template for a new audience game package:
 
 ```ts
-import { defineShellApp } from '@sketcherson/common/game';
+import { defineShellApp } from '@7ito/sketcherson-common/game';
 import DEMO_GAME from '@sketcherson/demo-game';
 
 export default defineShellApp({
@@ -67,7 +73,7 @@ export default defineShellApp({
 Point the root shell config at the authored audience game. The shell compiler uses its runtime pack and build config together.
 
 ```ts
-import { defineShellApp } from '@sketcherson/common/game';
+import { defineShellApp } from '@7ito/sketcherson-common/game';
 import { EVERYDAY_OBJECTS_GAME } from './packages/everyday-objects-game/src';
 
 export default defineShellApp({
@@ -93,12 +99,48 @@ export default defineShellApp({
 
 Keep manual `GamePack` values browser-safe. They must not include local filesystem paths.
 
+## Prompt display metadata
+
+Prompt rules can provide stable browser-safe metadata for the drawer and reveal prompt panels. Use this for game-specific attributes such as types, generation, difficulty, or form labels.
+
+```ts
+export const EVERYDAY_OBJECTS_GAME = defineAudienceGame({
+  // ...
+  promptRules: {
+    resolveDisplayMetadata: (prompt) => ({
+      subtitle: 'Generation 1',
+      badges: [{ label: 'fire', tone: 'warning' }],
+      tags: ['starter'],
+    }),
+  },
+});
+```
+
+Supported badge tones are `neutral`, `accent`, `success`, `warning`, and `danger`. Metadata is sanitized before it is exposed to clients.
+
+## Close guess feedback
+
+Games can mark an incorrect guess as close from `promptRules.evaluateGuess` by returning `closeGuess`. The optional `kind` lets downstream games classify why a guess is close. The optional `message` can be rendered in feed copy.
+
+```ts
+return {
+  ...defaultResult,
+  closeGuess: { kind: 'evolutionFamily', message: 'Same evolution family.' },
+};
+```
+
+When close guess feedback is enabled, the shell exposes lobby settings for hiding close guesses from other players and showing close guess alerts. Override the labels with `ui.copy.settings.hideCloseGuessesFromOtherPlayersLabel` and `ui.copy.settings.showCloseGuessAlertsLabel`.
+
+## Fuzzy guess helper
+
+`isAcceptedFuzzyGuess(answer, guess)` is exported from `@7ito/sketcherson-common/prompts` for game packs that need to apply the shell's default fuzzy matching to custom prompt aliases or domain-specific guess resolution.
+
 ## Web extension slots
 
-Game-specific React UI can be injected without forking `@sketcherson/web` by passing typed slots into `SketchersonWebApp` or `App`.
+Game-specific React UI can be injected without forking `@7ito/sketcherson-web` by passing typed slots into `SketchersonWebApp` or `App`.
 
 ```tsx
-import { SketchersonWebApp, type SketchersonWebSlots } from '@sketcherson/web';
+import { SketchersonWebApp, type SketchersonWebSlots } from '@7ito/sketcherson-web';
 
 const slots: SketchersonWebSlots = {
   homePageAddon: () => <p>Custom event rules</p>,

@@ -1,13 +1,13 @@
-import type { CreateGameServerOptions, GameDefinition, GamePack, ServerGameRuntime } from '@sketcherson/common/game';
-import { createServerGameRuntime } from '@sketcherson/common/game';
-import type { PromptEngine } from '@sketcherson/common/prompts';
+import type { CreateGameServerOptions, GameDefinition, GamePack, ServerGameRuntime } from '@7ito/sketcherson-common/game';
+import { createServerGameRuntime } from '@7ito/sketcherson-common/game';
+import type { PromptEngine } from '@7ito/sketcherson-common/prompts';
 import type {
   RoomClientEventName,
   RoomClientToServerSocketEvents,
   RoomRequest,
   RoomResponse,
   RoomServerToClientSocketEvents,
-} from '@sketcherson/common/roomEvents';
+} from '@7ito/sketcherson-common/roomEvents';
 import { createServer as createHttpServer } from 'node:http';
 import { Server } from 'socket.io';
 import { estimateSerializedPayloadBytes, logDrawingTransportMetric } from './drawingMetrics';

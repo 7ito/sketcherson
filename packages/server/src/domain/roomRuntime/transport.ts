@@ -1,4 +1,4 @@
-import type { ApiError, KickPlayerSuccess, RoomState } from '@sketcherson/common/room';
+import type { ApiError, KickPlayerSuccess, RoomState } from '@7ito/sketcherson-common/room';
 
 export interface ConnectionInput {
   connectionId: string;

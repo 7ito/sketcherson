@@ -1,7 +1,7 @@
-import { type ApiError, type LiveRoomStatus, type RoomState, type RoundScoreChange } from '@sketcherson/common/room';
-import type { ResolvedDrawingGameRules } from '@sketcherson/common/game';
-import type { DrawingState } from '@sketcherson/common/drawing';
-import type { PromptEngine } from '@sketcherson/common/prompts';
+import { type ApiError, type LiveRoomStatus, type RoomState, type RoundScoreChange } from '@7ito/sketcherson-common/room';
+import type { ResolvedDrawingGameRules } from '@7ito/sketcherson-common/game';
+import type { DrawingState } from '@7ito/sketcherson-common/drawing';
+import type { PromptEngine } from '@7ito/sketcherson-common/prompts';
 import { createAsyncSnapshotRenderer, createDrawingState, finalizeDrawingState, type AsyncSnapshotRenderer } from '../drawing';
 import { appendTailTurn, buildTurnPlan } from '../match';
 import { appendRoomFeedRecord, capCompletedTurnImageRetention, type ActiveTurnRecord, type MatchRecord, type RoomFeedRecord, type RoomPlayerRecord, type RoomRecord } from './model';
@@ -573,10 +573,10 @@ export class MatchController {
       ) {
         if (input.room.settings.showCloseGuessAlerts ?? true) {
           appendRoomFeedRecord(match.feed, this.createSystemFeedItem(
-            { type: 'closeGuess', guesserNickname: input.player.nickname, message: guessEvaluation.closeGuess.message },
+            { type: 'closeGuess', guesserNickname: input.player.nickname, kind: guessEvaluation.closeGuess.kind, message: guessEvaluation.closeGuess.message },
             activeTurn.turnNumber,
             this.now(),
-            [input.player.id],
+            { type: 'player', playerId: input.player.id },
           ));
         }
 
@@ -848,7 +848,7 @@ export class MatchController {
     event: Extract<RoomFeedRecord, { type: 'system' }>['event'],
     turnNumber: number | null,
     createdAt: number,
-    audiencePlayerIds?: string[],
+    audience?: RoomFeedRecord['audience'],
   ): Extract<RoomFeedRecord, { type: 'system' }> {
     return {
       id: this.ids.randomUUID(),
@@ -856,7 +856,7 @@ export class MatchController {
       event,
       createdAt,
       turnNumber,
-      audiencePlayerIds,
+      audience,
     };
   }
 

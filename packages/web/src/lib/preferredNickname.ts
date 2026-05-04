@@ -1,4 +1,4 @@
-import { isNicknameValid, normalizeNickname } from '@sketcherson/common/identity';
+import { isNicknameValid, normalizeNickname } from '@7ito/sketcherson-common/identity';
 import { PREFERRED_NICKNAME_COOKIE_NAME } from './gameKeys';
 
 export { PREFERRED_NICKNAME_COOKIE_NAME } from './gameKeys';

@@ -1,6 +1,6 @@
-import type { DrawingActionAppliedEvent, DrawingState } from '@sketcherson/common/drawing';
-import { createDrawingRealtimeCore, type DrawingTarget } from '@sketcherson/common/drawingRealtime';
-import type { RoomState } from '@sketcherson/common/room';
+import type { DrawingActionAppliedEvent, DrawingState } from '@7ito/sketcherson-common/drawing';
+import { createDrawingRealtimeCore, type DrawingTarget } from '@7ito/sketcherson-common/drawingRealtime';
+import type { RoomState } from '@7ito/sketcherson-common/room';
 
 export interface RoomDrawingView {
   room: RoomState | null;

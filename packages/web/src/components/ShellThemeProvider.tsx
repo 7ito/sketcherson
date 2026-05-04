@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
-import type { ResolvedShellSkinConfig, ResolvedShellUiConfig } from '@sketcherson/common/game';
+import type { ResolvedShellSkinConfig, ResolvedShellUiConfig } from '@7ito/sketcherson-common/game';
 import { GAME_WEB_CONFIG } from '../game';
 
 type ShellThemeStyle = CSSProperties & Record<`--shell-${string}`, string>;

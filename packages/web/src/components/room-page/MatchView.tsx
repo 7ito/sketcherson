@@ -1,7 +1,7 @@
-import { MAX_CHAT_MESSAGE_LENGTH, type ApiResult, type CurrentTurnState, type DrawingActionSuccess, type RoomState } from '@sketcherson/common/room';
-import type { DrawingAction } from '@sketcherson/common/drawing';
+import { MAX_CHAT_MESSAGE_LENGTH, type ApiResult, type CurrentTurnState, type DrawingActionSuccess, type RoomState } from '@7ito/sketcherson-common/room';
+import type { DrawingAction } from '@7ito/sketcherson-common/drawing';
 import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { formatShellCopy } from '@sketcherson/common/game';
+import { formatShellCopy } from '@7ito/sketcherson-common/game';
 import { GAME_RUNTIME, GAME_WEB_CONFIG } from '../../game';
 import { soundEffects } from '../../lib/soundEffects';
 import { useUserSettings } from '../../lib/userSettings';

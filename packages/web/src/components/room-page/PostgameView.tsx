@@ -1,6 +1,6 @@
-import { normalizeLobbySettingsForGame } from '@sketcherson/common/settings';
-import { formatShellCopy } from '@sketcherson/common/game';
-import { MAX_CHAT_MESSAGE_LENGTH, MIN_PLAYERS_TO_START, type CompletedTurnState, type LobbySettings, type RoomState } from '@sketcherson/common/room';
+import { normalizeLobbySettingsForGame } from '@7ito/sketcherson-common/settings';
+import { formatShellCopy } from '@7ito/sketcherson-common/game';
+import { MAX_CHAT_MESSAGE_LENGTH, MIN_PLAYERS_TO_START, type CompletedTurnState, type LobbySettings, type RoomState } from '@7ito/sketcherson-common/room';
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { GAME_DEFINITION, GAME_WEB_CONFIG } from '../../game';
 import { useUserSettings } from '../../lib/userSettings';

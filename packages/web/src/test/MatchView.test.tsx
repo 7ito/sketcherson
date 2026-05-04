@@ -1,5 +1,5 @@
-import type { DrawingState } from '@sketcherson/common/drawing';
-import type { ApiResult, DrawingActionSuccess, RoomState } from '@sketcherson/common/room';
+import type { DrawingState } from '@7ito/sketcherson-common/drawing';
+import type { ApiResult, DrawingActionSuccess, RoomState } from '@7ito/sketcherson-common/room';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 
 const soundEffectsPlay = vi.hoisted(() => vi.fn());

@@ -1,6 +1,6 @@
-import type { PromptCollection } from '@sketcherson/common/prompts';
-import { normalizeLobbySettingsForGame } from '@sketcherson/common/settings';
-import type { CurrentTurnState, FirstCorrectGuessTimeCapPreset, LobbySettings, RoomPlayer, RoomState, RoundTimerPreset } from '@sketcherson/common/room';
+import type { PromptCollection } from '@7ito/sketcherson-common/prompts';
+import { normalizeLobbySettingsForGame } from '@7ito/sketcherson-common/settings';
+import type { CurrentTurnState, FirstCorrectGuessTimeCapPreset, LobbySettings, RoomPlayer, RoomState, RoundTimerPreset } from '@7ito/sketcherson-common/room';
 import { useEffect, useRef, useState } from 'react';
 import { GAME_DEFINITION, GAME_RUNTIME, GAME_WEB_CONFIG } from '../../game';
 

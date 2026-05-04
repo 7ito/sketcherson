@@ -1,4 +1,4 @@
-import type { ApiResult } from '@sketcherson/common/room';
+import type { ApiResult } from '@7ito/sketcherson-common/room';
 import { DrawingSessionController, type DrawingSessionExtendBatch } from '../client-drawing-session';
 
 function ok(): ApiResult<{ revision: number }> {

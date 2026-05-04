@@ -1,4 +1,4 @@
-import { DRAWING_BRUSH_SIZES, type DrawingState } from '@sketcherson/common/drawing';
+import { DRAWING_BRUSH_SIZES, type DrawingState } from '@7ito/sketcherson-common/drawing';
 import { getAdjustedBrushSize, getCanvasPoint } from '../client-drawing-session';
 
 function buildDrawingState(overrides?: Partial<DrawingState>): DrawingState {

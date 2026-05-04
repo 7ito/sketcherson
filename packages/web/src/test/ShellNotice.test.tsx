@@ -1,4 +1,4 @@
-import type { ShellNoticeConfig } from '@sketcherson/common/game';
+import type { ShellNoticeConfig } from '@7ito/sketcherson-common/game';
 import { render, screen } from '@testing-library/react';
 import { ShellNotice, selectShellNoticesByPlacement } from '../components/ShellNotice';
 

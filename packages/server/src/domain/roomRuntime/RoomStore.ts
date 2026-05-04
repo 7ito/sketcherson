@@ -1,4 +1,4 @@
-import { ROOM_CODE_LENGTH, normalizeRoomCode } from '@sketcherson/common/room';
+import { ROOM_CODE_LENGTH, normalizeRoomCode } from '@7ito/sketcherson-common/room';
 import type { RoomPlayerRecord, RoomRecord } from './model';
 
 export interface RoomMembership {

@@ -1,4 +1,4 @@
-import type { ApiResult, CreateRoomSuccess, JoinRoomSuccess, RoomState, RoomStateSuccess } from '@sketcherson/common/room';
+import type { ApiResult, CreateRoomSuccess, JoinRoomSuccess, RoomState, RoomStateSuccess } from '@7ito/sketcherson-common/room';
 import { StrictMode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';

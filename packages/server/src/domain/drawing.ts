@@ -1,14 +1,14 @@
 import { performance } from 'node:perf_hooks';
 import { Worker } from 'node:worker_threads';
 import { deflateSync } from 'node:zlib';
-import type { ApiResult } from '@sketcherson/common/room';
-import { DRAWING_BACKGROUND_COLOR, DRAWING_SNAPSHOT_HEIGHT, DRAWING_SNAPSHOT_WIDTH, type DrawingAction, type DrawingState } from '@sketcherson/common/drawing';
-import { rasterizeDrawingState } from '@sketcherson/common/drawingRaster';
+import type { ApiResult } from '@7ito/sketcherson-common/room';
+import { DRAWING_BACKGROUND_COLOR, DRAWING_SNAPSHOT_HEIGHT, DRAWING_SNAPSHOT_WIDTH, type DrawingAction, type DrawingState } from '@7ito/sketcherson-common/drawing';
+import { rasterizeDrawingState } from '@7ito/sketcherson-common/drawingRaster';
 import {
   applyDrawingActionMutable,
   createDrawingState,
   finalizeDrawingStateMutable,
-} from '@sketcherson/common/drawingProtocol';
+} from '@7ito/sketcherson-common/drawingProtocol';
 import { logDrawingTransportMetric } from '../drawingMetrics';
 
 export { createDrawingState };

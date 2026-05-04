@@ -1,7 +1,7 @@
 import { parentPort } from 'node:worker_threads';
 import { deflateSync } from 'node:zlib';
-import { DRAWING_BACKGROUND_COLOR, DRAWING_SNAPSHOT_HEIGHT, DRAWING_SNAPSHOT_WIDTH, type DrawingState } from '@sketcherson/common/drawing';
-import { rasterizeDrawingState } from '@sketcherson/common/drawingRaster';
+import { DRAWING_BACKGROUND_COLOR, DRAWING_SNAPSHOT_HEIGHT, DRAWING_SNAPSHOT_WIDTH, type DrawingState } from '@7ito/sketcherson-common/drawing';
+import { rasterizeDrawingState } from '@7ito/sketcherson-common/drawingRaster';
 
 interface SnapshotRequest {
   id: number;

@@ -1,4 +1,4 @@
-import { DRAWING_BRUSH_SIZES, type DrawingBrushSize } from '@sketcherson/common/drawing';
+import { DRAWING_BRUSH_SIZES, type DrawingBrushSize } from '@7ito/sketcherson-common/drawing';
 
 export function getAdjustedBrushSize(currentSize: number, step: -1 | 1): DrawingBrushSize {
   const index = DRAWING_BRUSH_SIZES.indexOf(currentSize as DrawingBrushSize);

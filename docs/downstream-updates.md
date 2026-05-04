@@ -20,9 +20,9 @@ The generic framework should come from package dependencies:
 ```json
 {
   "dependencies": {
-    "@sketcherson/common": "^0.1.4",
-    "@sketcherson/server": "^0.1.4",
-    "@sketcherson/web": "^0.1.4"
+    "@7ito/sketcherson-common": "^0.1.4",
+    "@7ito/sketcherson-server": "^0.1.4",
+    "@7ito/sketcherson-web": "^0.1.4"
   }
 }
 ```
@@ -44,7 +44,7 @@ cd /path/to/downstream-game-b
 2. Update Sketcherson packages.
 
 ```sh
-npm update @sketcherson/common @sketcherson/server @sketcherson/web
+npm update @7ito/sketcherson-common @7ito/sketcherson-server @7ito/sketcherson-web
 ```
 
 3. Validate the downstream game.
@@ -74,9 +74,9 @@ Use Renovate or Dependabot in downstream repos.
 The bot should open pull requests when packages such as these receive new versions:
 
 ```txt
-@sketcherson/common
-@sketcherson/server
-@sketcherson/web
+@7ito/sketcherson-common
+@7ito/sketcherson-server
+@7ito/sketcherson-web
 ```
 
 A normal bot PR should contain only dependency version and lockfile changes. CI should run the downstream test and build commands.
@@ -107,7 +107,7 @@ yalc publish packages/web
 From the downstream repo:
 
 ```sh
-yalc add @sketcherson/common @sketcherson/server @sketcherson/web
+yalc add @7ito/sketcherson-common @7ito/sketcherson-server @7ito/sketcherson-web
 npm install
 npm test
 npm run build

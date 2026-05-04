@@ -31,7 +31,7 @@ Only `packages/my-game` should contain game-specific prompts, aliases, reference
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "dependencies": {
-    "@sketcherson/common": "^0.1.0"
+    "@7ito/sketcherson-common": "^0.1.0"
   }
 }
 ```
@@ -39,7 +39,7 @@ Only `packages/my-game` should contain game-specific prompts, aliases, reference
 `packages/my-game/src/index.ts`:
 
 ```ts
-import { defineAudienceGame, resolveShellAssetSource } from '@sketcherson/common/game';
+import { defineAudienceGame, resolveShellAssetSource } from '@7ito/sketcherson-common/game';
 
 const assetBaseUrl = '/my-game-assets/';
 
@@ -85,7 +85,7 @@ export default defineAudienceGame({
 `shell.config.ts`:
 
 ```ts
-import { defineShellApp } from '@sketcherson/common/game';
+import { defineShellApp } from '@7ito/sketcherson-common/game';
 import MY_GAME from './packages/my-game/src';
 
 export default defineShellApp({
@@ -105,9 +105,9 @@ Downstream app packages should depend on Sketcherson packages rather than copied
 ```json
 {
   "dependencies": {
-    "@sketcherson/common": "^0.1.0",
-    "@sketcherson/server": "^0.1.0",
-    "@sketcherson/web": "^0.1.0",
+    "@7ito/sketcherson-common": "^0.1.0",
+    "@7ito/sketcherson-server": "^0.1.0",
+    "@7ito/sketcherson-web": "^0.1.0",
     "@my-scope/my-game": "*"
   }
 }

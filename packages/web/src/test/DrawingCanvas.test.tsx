@@ -1,5 +1,5 @@
-import type { ApiResult, DrawingActionSuccess } from '@sketcherson/common/room';
-import { DRAWING_BRUSH_SIZES, type DrawingAction, type DrawingState } from '@sketcherson/common/drawing';
+import type { ApiResult, DrawingActionSuccess } from '@7ito/sketcherson-common/room';
+import { DRAWING_BRUSH_SIZES, type DrawingAction, type DrawingState } from '@7ito/sketcherson-common/drawing';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { DrawingCanvas } from '../components/DrawingCanvas';
 

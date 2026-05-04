@@ -1,5 +1,5 @@
-import type { ApiResult, CreateRoomSuccess, DrawingActionSuccess, JoinRoomSuccess, KickPlayerSuccess, LobbyDrawingActionSuccess, LobbySettings, PauseRoomSuccess, ReclaimRoomSuccess, ResumeRoomSuccess, RoomState, RoomStateSuccess, RerollTurnSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@sketcherson/common/room';
-import type { DrawingAction, DrawingState } from '@sketcherson/common/drawing';
+import type { ApiResult, CreateRoomSuccess, DrawingActionSuccess, JoinRoomSuccess, KickPlayerSuccess, LobbyDrawingActionSuccess, LobbySettings, PauseRoomSuccess, ReclaimRoomSuccess, ResumeRoomSuccess, RoomState, RoomStateSuccess, RerollTurnSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@7ito/sketcherson-common/room';
+import type { DrawingAction, DrawingState } from '@7ito/sketcherson-common/drawing';
 import { createContext, useContext, useEffect, useMemo, useRef, useSyncExternalStore, type ReactNode } from 'react';
 import {
   createBrowserJoinedSessionStore,

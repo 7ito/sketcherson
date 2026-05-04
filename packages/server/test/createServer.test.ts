@@ -1,4 +1,4 @@
-import { TEST_GAME_DEFINITION } from '@sketcherson/common/testing/testGame';
+import { TEST_GAME_DEFINITION } from '@7ito/sketcherson-common/testing/testGame';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createGameServer, SOCKET_MAX_HTTP_BUFFER_SIZE_BYTES, type GameServer } from '../src/createServer';
 

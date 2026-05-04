@@ -1,4 +1,4 @@
-import { MAX_TOTAL_TURNS } from '@sketcherson/common/room';
+import { MAX_TOTAL_TURNS } from '@7ito/sketcherson-common/room';
 
 export interface PlannedTurn {
   turnNumber: number;

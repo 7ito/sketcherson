@@ -1,4 +1,4 @@
-import type { PromptCatalog, PromptCollection, PromptEntry } from '@sketcherson/common/prompts';
+import type { PromptCatalog, PromptCollection, PromptEntry } from '@7ito/sketcherson-common/prompts';
 
 export type DemoPromptKind = 'character' | 'prop' | 'quick-mark';
 

@@ -1,7 +1,7 @@
-import type { PromptDisplayMetadata, PromptEngine } from '@sketcherson/common/prompts';
-import { buildShareUrl, type LiveRoomStatus, type RoomPlayer, type RoomState, type ScoreboardEntry } from '@sketcherson/common/room';
-import type { DrawingState } from '@sketcherson/common/drawing';
-import type { ResolvedDrawingGameRules } from '@sketcherson/common/game';
+import type { PromptDisplayMetadata, PromptEngine } from '@7ito/sketcherson-common/prompts';
+import { buildShareUrl, type LiveRoomStatus, type RoomPlayer, type RoomState, type ScoreboardEntry } from '@7ito/sketcherson-common/room';
+import type { DrawingState } from '@7ito/sketcherson-common/drawing';
+import type { ResolvedDrawingGameRules } from '@7ito/sketcherson-common/game';
 import type { ActiveTurnRecord, MatchRecord, RoomPlayerRecord, RoomRecord } from './model';
 import { createRoomFeedProjector, type RoomFeedProjector } from './RoomFeedProjector';
 

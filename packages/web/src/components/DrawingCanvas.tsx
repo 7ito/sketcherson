@@ -1,6 +1,6 @@
-import type { ApiResult, RoomStatus } from '@sketcherson/common/room';
-import { formatShellCopy } from '@sketcherson/common/game';
-import { DRAWING_BRUSH_SIZES, DRAWING_CANVAS_HEIGHT, DRAWING_CANVAS_WIDTH, DRAWING_COLORS, type DrawingAction, type DrawingState } from '@sketcherson/common/drawing';
+import type { ApiResult, RoomStatus } from '@7ito/sketcherson-common/room';
+import { formatShellCopy } from '@7ito/sketcherson-common/game';
+import { DRAWING_BRUSH_SIZES, DRAWING_CANVAS_HEIGHT, DRAWING_CANVAS_WIDTH, DRAWING_COLORS, type DrawingAction, type DrawingState } from '@7ito/sketcherson-common/drawing';
 import { useDrawingSession, type DrawingSessionActionSuccess, type DrawingSessionTarget } from '../client-drawing-session';
 import { GAME_WEB_CONFIG } from '../game';
 import { Toast } from './Toast';

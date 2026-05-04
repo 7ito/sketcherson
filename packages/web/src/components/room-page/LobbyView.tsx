@@ -1,8 +1,8 @@
-import { normalizeLobbySettingsForGame } from '@sketcherson/common/settings';
-import { buildShareUrl, MAX_CHAT_MESSAGE_LENGTH, MIN_PLAYERS_TO_START, type ApiResult, type LobbyDrawingActionSuccess, type LobbySettings, type RoomState } from '@sketcherson/common/room';
-import type { DrawingAction } from '@sketcherson/common/drawing';
+import { normalizeLobbySettingsForGame } from '@7ito/sketcherson-common/settings';
+import { buildShareUrl, MAX_CHAT_MESSAGE_LENGTH, MIN_PLAYERS_TO_START, type ApiResult, type LobbyDrawingActionSuccess, type LobbySettings, type RoomState } from '@7ito/sketcherson-common/room';
+import type { DrawingAction } from '@7ito/sketcherson-common/drawing';
 import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { formatShellCopy } from '@sketcherson/common/game';
+import { formatShellCopy } from '@7ito/sketcherson-common/game';
 import { GAME_DEFINITION, GAME_WEB_CONFIG } from '../../game';
 import { useUserSettings } from '../../lib/userSettings';
 import { useRoomDrawing } from '../../providers/RoomSessionProvider';

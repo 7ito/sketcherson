@@ -1,5 +1,5 @@
-import type { LiveRoomStatus, LobbySettings, RoomState, RoundScoreChange, ScoreboardEntry, SystemFeedItem } from '@sketcherson/common/room';
-import type { DrawingState } from '@sketcherson/common/drawing';
+import type { LiveRoomStatus, LobbySettings, RoomFeedAudience, RoomState, RoundScoreChange, ScoreboardEntry, SystemFeedItem } from '@7ito/sketcherson-common/room';
+import type { DrawingState } from '@7ito/sketcherson-common/drawing';
 import type { PlannedTurn } from './turnPlan';
 
 export interface RoomPlayerRecord {
@@ -43,6 +43,8 @@ export interface BaseRoomFeedRecord {
   id: string;
   createdAt: number;
   turnNumber: number | null;
+  audience?: RoomFeedAudience;
+  /** @deprecated Use audience. */
   audiencePlayerIds?: string[];
 }
 
