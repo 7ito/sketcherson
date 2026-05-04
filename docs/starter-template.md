@@ -98,6 +98,25 @@ export default defineShellApp({
 });
 ```
 
+## Web Vite config
+
+Use `sketchersonVitePlugin(app)` in downstream web apps. The plugin serves game assets, injects runtime config, renders shell HTML metadata, and configures Vite dependency optimization for `@7ito/sketcherson-web`.
+
+```ts
+import { createSketchersonApp } from '@7ito/sketcherson-common/game';
+import { sketchersonVitePlugin } from '@7ito/sketcherson-common/vite';
+import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
+import shellConfig from '../../shell.config';
+
+const app = createSketchersonApp(shellConfig, { relativeSourceBaseUrl: new URL('../../', import.meta.url) });
+
+export default defineConfig({
+  plugins: [react(), ...sketchersonVitePlugin(app)],
+  publicDir: false,
+});
+```
+
 ## App dependencies
 
 Downstream app packages should depend on Sketcherson packages rather than copied source files:

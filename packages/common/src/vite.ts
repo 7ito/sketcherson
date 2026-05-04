@@ -11,7 +11,7 @@ const SHELL_RUNTIME_CONFIG_MODULE_ID = 'virtual:shell-runtime-config';
 const RESOLVED_SHELL_RUNTIME_CONFIG_MODULE_ID = `\0${SHELL_RUNTIME_CONFIG_MODULE_ID}`;
 
 export function sketchersonVitePlugin(app: CompiledShellApp): Plugin[] {
-  return [shellGameAssetsPlugin(app), shellRuntimeConfigPlugin(app), shellHtmlPlugin(app)];
+  return [shellGameAssetsPlugin(app), shellRuntimeConfigPlugin(app), shellWebDependencyOptimizationPlugin(), shellHtmlPlugin(app)];
 }
 
 function shellRuntimeConfigPlugin(app: CompiledShellApp): Plugin {
@@ -26,6 +26,20 @@ function shellRuntimeConfigPlugin(app: CompiledShellApp): Plugin {
       }
 
       return app.browser.runtimeModuleCode;
+    },
+  };
+}
+
+function shellWebDependencyOptimizationPlugin(): Plugin {
+  return {
+    name: 'shell-web-dependency-optimization',
+    config() {
+      return {
+        optimizeDeps: {
+          exclude: ['@7ito/sketcherson-web'],
+          include: ['react-router-dom'],
+        },
+      };
     },
   };
 }

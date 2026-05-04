@@ -1,5 +1,13 @@
 # @7ito/sketcherson-server
 
+## 0.1.2
+
+### Patch Changes
+
+- Keep idle lobbies alive while players are connected or within reconnect grace so solo hosts can refresh back into their lobby.
+- Updated dependencies
+  - @7ito/sketcherson-common@0.1.2
+
 ## 0.1.0
 
 ### Minor Changes
