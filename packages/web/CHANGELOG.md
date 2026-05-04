@@ -1,5 +1,11 @@
 # @7ito/sketcherson-web
 
+## 0.2.2
+
+### Patch Changes
+
+- Remove justify-content: center from canvas viewport so the canvas frame stretches to fill horizontal space.
+
 ## 0.2.1
 
 ### Patch Changes
