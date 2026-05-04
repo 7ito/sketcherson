@@ -8,7 +8,7 @@ import './styles.css';
 
 export { App } from './App';
 export type { AppProps } from './App';
-export type { PromptReferenceSlotProps, SketchersonWebSlots } from './components/WebExtensionSlots';
+export type { LobbySettingsPanelSlotProps, LobbySettingsSlotProps, PromptReferenceSlotProps, SketchersonWebSlots } from './components/WebExtensionSlots';
 
 export function applySketchersonDocumentMetadata(documentRef: Document = document): void {
   documentRef.title = GAME_DEFINITION.title;

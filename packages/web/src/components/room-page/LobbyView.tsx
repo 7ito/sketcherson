@@ -8,6 +8,7 @@ import { useUserSettings } from '../../lib/userSettings';
 import { useRoomDrawing } from '../../providers/RoomSessionProvider';
 import { DrawingCanvas } from '../DrawingCanvas';
 import { GameLogo } from '../GameLogo';
+import { useWebExtensionSlots } from '../WebExtensionSlots';
 import {
   buildPlayerAccentMap,
   canHostKickPlayer,
@@ -53,6 +54,7 @@ export function LobbyView({
   onOpenSettings: () => void;
 }) {
   const lobbyDrawing = useRoomDrawing('lobby', room);
+  const slots = useWebExtensionSlots();
   const [userSettings] = useUserSettings();
   const [copyState, setCopyState] = useState<'idle' | 'copied'>('idle');
   const [settingsDraft, setSettingsDraft] = useState(() => normalizeLobbySettingsForGame(GAME_DEFINITION, room.settings));
@@ -71,6 +73,8 @@ export function LobbyView({
   const { containerRef: chatFeedRef, handleScroll: handleChatFeedScroll } = useAutoScrollToBottom(lobbyFeedLength);
 
   const isViewerHost = room.players.some((player) => player.id === currentPlayerId && player.isHost);
+  const canEditSettings = isViewerHost && room.status === 'lobby';
+  const settingsDisabled = !canEditSettings || isSavingSettings;
   const connectedPlayerCount = room.players.filter((player) => player.connected).length;
   const canStart = isViewerHost && connectedPlayerCount >= MIN_PLAYERS_TO_START && room.status === 'lobby';
   const playerAccentColors = useMemo(() => buildPlayerAccentMap(room.players), [room.players]);
@@ -150,6 +154,43 @@ export function LobbyView({
       chatInputRef.current?.focus();
     });
   };
+
+  const defaultLobbySettingsPanel = isViewerHost ? (
+    <div className="lobby-settings-form">
+      <SharedSettingsFields
+        variant="lobby"
+        settings={settingsDraft}
+        disabled={settingsDisabled}
+        onChange={(nextSettings) => {
+          void handleSettingsChange(nextSettings);
+        }}
+      />
+      {settingsError ? <p className="error-text">{settingsError}</p> : null}
+      {isSavingSettings ? <p className="helper-text">{SHELL_COMMON_COPY.saving}</p> : null}
+    </div>
+  ) : (
+    <SettingsSummary
+      variant="lobby"
+      settings={room.settings}
+      helperText={SHELL_LOBBY_COPY.onlyHostCanChangeSettings}
+    />
+  );
+
+  const LobbySettingsPanelSlot = slots.lobbySettingsPanel;
+  const lobbySettingsPanel = LobbySettingsPanelSlot ? (
+    <LobbySettingsPanelSlot
+      room={room}
+      currentPlayerId={currentPlayerId}
+      isViewerHost={isViewerHost}
+      canEditSettings={canEditSettings}
+      settings={settingsDraft}
+      disabled={settingsDisabled}
+      isSavingSettings={isSavingSettings}
+      settingsError={settingsError}
+      onChange={handleSettingsChange}
+      defaultPanel={defaultLobbySettingsPanel}
+    />
+  ) : defaultLobbySettingsPanel;
 
   return (
     <div className="match-screen lobby-screen">
@@ -256,26 +297,7 @@ export function LobbyView({
           </div>
 
           <div className="lobby-right-settings">
-            {isViewerHost ? (
-              <div className="lobby-settings-form">
-                <SharedSettingsFields
-                  variant="lobby"
-                  settings={settingsDraft}
-                  disabled={isSavingSettings || room.status !== 'lobby'}
-                  onChange={(nextSettings) => {
-                    void handleSettingsChange(nextSettings);
-                  }}
-                />
-                {settingsError ? <p className="error-text">{settingsError}</p> : null}
-                {isSavingSettings ? <p className="helper-text">{SHELL_COMMON_COPY.saving}</p> : null}
-              </div>
-            ) : (
-              <SettingsSummary
-                variant="lobby"
-                settings={room.settings}
-                helperText={SHELL_LOBBY_COPY.onlyHostCanChangeSettings}
-              />
-            )}
+            {lobbySettingsPanel}
 
             <div className="lobby-start-section">
               {startError ? <p className="error-text">{startError}</p> : null}

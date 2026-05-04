@@ -147,6 +147,17 @@ const slots: SketchersonWebSlots = {
   promptReferencePanel: ({ visibility, room }) => (
     <aside>{visibility === 'drawer' ? room.match?.currentTurn?.prompt : 'Answer reveal'}</aside>
   ),
+  lobbySettingsPanel: ({ settings, canEditSettings, disabled, onChange, defaultPanel }) => (
+    canEditSettings ? (
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => void onChange({ ...settings, turnsPerPlayer: 2 })}
+      >
+        Use two turns per player
+      </button>
+    ) : defaultPanel
+  ),
 };
 
 export function GameApp() {
@@ -154,7 +165,7 @@ export function GameApp() {
 }
 ```
 
-The default UI is used when a slot is omitted. The first supported slots are the home page addon and the prompt reference panel shown to the drawer or during reveal.
+The default UI is used when a slot is omitted. `lobbySettingsPanel` replaces the lobby match settings panel while leaving the start button and chat controls in the shell. Its props include the room, current player, editable settings draft, save state, `onChange`, and `defaultPanel` for composition.
 
 ## Migration note
 
