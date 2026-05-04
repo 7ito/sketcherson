@@ -336,7 +336,8 @@ describe('room realtime flow', () => {
       appOrigin: 'http://localhost:4173',
       corsOrigin: '*',
       countdownMs: 25,
-      revealMs: 60,
+      // Snapshot rendering uses a worker in this path, so the reveal window must outlive worker startup on CI.
+      revealMs: 2_000,
       roundDurationOverrideMs: 120,
     });
     const port = await server.start(0);
@@ -460,8 +461,11 @@ describe('room realtime flow', () => {
 
     const revealState = await waitForState(
       watcherSocket,
-      (roomState) => roomState.status === 'reveal' && Boolean(roomState.match?.currentTurn?.drawing.snapshotDataUrl),
-      2_000,
+      (roomState) =>
+        roomState.status === 'reveal' &&
+        typeof roomState.match?.currentTurn?.drawing.snapshotDataUrl === 'string' &&
+        typeof roomState.match?.completedTurns[0]?.finalImageDataUrl === 'string',
+      3_000,
       watcherHistory,
     );
 
