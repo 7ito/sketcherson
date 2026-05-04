@@ -1,5 +1,11 @@
 # @7ito/sketcherson-common
 
+## 0.1.3
+
+### Patch Changes
+
+- CI test cleanup and lobby refresh dropping fixed
+
 ## 0.1.2
 
 ### Patch Changes
