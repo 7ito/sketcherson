@@ -1,5 +1,17 @@
 # @7ito/sketcherson-web
 
+## 0.2.0
+
+### Minor Changes
+
+- 7e40524: Add a typed `lobbySettingsPanel` extension slot for downstream lobby settings UI.
+
+### Patch Changes
+
+- Settings extension
+- Updated dependencies
+  - @7ito/sketcherson-common@0.1.4
+
 ## 0.1.3
 
 ### Patch Changes

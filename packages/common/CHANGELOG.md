@@ -1,5 +1,11 @@
 # @7ito/sketcherson-common
 
+## 0.1.4
+
+### Patch Changes
+
+- Settings extension
+
 ## 0.1.3
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @7ito/sketcherson-server
 
+## 0.1.4
+
+### Patch Changes
+
+- Settings extension
+- Updated dependencies
+  - @7ito/sketcherson-common@0.1.4
+
 ## 0.1.3
 
 ### Patch Changes
