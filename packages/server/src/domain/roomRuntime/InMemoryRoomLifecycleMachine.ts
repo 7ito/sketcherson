@@ -879,7 +879,7 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
     const deletedRoomCodes: string[] = [];
 
     for (const room of this.store.listRooms()) {
-      if (now - room.lastActivityAt < idleMs) {
+      if (now - room.lastActivityAt < idleMs || this.hasConnectedOrReservedPlayer(room, now)) {
         continue;
       }
 
@@ -894,6 +894,16 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
     }
 
     return deletedRoomCodes;
+  }
+
+  private hasConnectedOrReservedPlayer(room: RoomRecord, now: number): boolean {
+    for (const player of room.players.values()) {
+      if (player.connected || (player.reconnectBy !== null && player.reconnectBy > now) || player.reconnectRemainingMs !== null) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   private notifyRoomChanged(roomCode: string): void {

@@ -167,7 +167,7 @@ function createManualScheduler() {
 }
 
 describe('RoomRuntime', () => {
-  it('deletes rooms that exceed the idle TTL and clears their session lookups', () => {
+  it('keeps connected idle rooms so a solo host can refresh back into the lobby', () => {
     let now = 1_000;
     const driver = createRoomRuntimeDriver({
       now: () => now,
@@ -185,15 +185,9 @@ describe('RoomRuntime', () => {
     expect(driver.getRoomState(created.data.room.code, 'origin').ok).toBe(true);
 
     now += 1;
-    expect(driver.deleteIdleRooms(1_000)).toEqual([created.data.room.code]);
-    expect(driver.getRoomState(created.data.room.code, 'origin')).toMatchObject({
-      ok: false,
-      error: { code: 'ROOM_NOT_FOUND' },
-    });
-    expect(driver.reclaimRoom(created.data.room.code, created.data.sessionToken, 'new-socket', 'origin')).toMatchObject({
-      ok: false,
-      error: { code: 'ROOM_NOT_FOUND' },
-    });
+    expect(driver.deleteIdleRooms(1_000)).toEqual([]);
+    expect(driver.getRoomState(created.data.room.code, 'origin').ok).toBe(true);
+    expect(driver.reclaimRoom(created.data.room.code, created.data.sessionToken, 'new-socket', 'origin').ok).toBe(true);
   });
 
   it('uses game rules for player limits and reroll availability', () => {
@@ -1799,6 +1793,42 @@ describe('RoomRuntime', () => {
       guesserNickname: sender.nickname,
     });
     expect(watcherCorrectFeedItem).not.toHaveProperty('answer');
+  });
+
+  it('keeps an idle solo lobby while its host is still connected and lets them refresh back in', () => {
+    let now = 0;
+    const service = createRoomRuntimeDriver({ now: () => now });
+    const createResult = service.createRoom('Host', 'socket-1', 'https://sketcherson.example');
+
+    if (!createResult.ok) {
+      throw new Error('Expected room creation to succeed');
+    }
+
+    now = 2 * 60 * 60 * 1000;
+    expect(service.deleteIdleRooms(60 * 1000)).toEqual([]);
+
+    const disconnectedRoomCode = service.disconnect('socket-1');
+    expect(disconnectedRoomCode).toBe(createResult.data.room.code);
+
+    const reclaimResult = service.reclaimRoom(
+      createResult.data.room.code,
+      createResult.data.sessionToken,
+      'socket-2',
+      'https://sketcherson.example',
+    );
+
+    expect(reclaimResult.ok).toBe(true);
+
+    if (!reclaimResult.ok) {
+      return;
+    }
+
+    const reclaimedPlayer = reclaimResult.data.room.players.find((player) => player.id === createResult.data.playerId);
+    expect(reclaimedPlayer).toMatchObject({
+      nickname: 'Host',
+      connected: true,
+      isHost: true,
+    });
   });
 
   it('preserves the lobby host during reconnect grace and lets them reclaim host controls', () => {
