@@ -1,5 +1,11 @@
 # @7ito/sketcherson-web
 
+## 0.2.1
+
+### Patch Changes
+
+- 2f5a59b: Remove 4:3 aspect ratio constraint from drawing canvas so it fills the available horizontal space.
+
 ## 0.2.0
 
 ### Minor Changes
