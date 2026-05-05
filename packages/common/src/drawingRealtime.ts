@@ -115,11 +115,11 @@ export function createDrawingRealtimeCore<TRoom>(accessors: DrawingRealtimeCoreA
       for (const target of ['lobby', 'match'] as const) {
         const currentDrawing = accessors.getDrawing(current, target);
         const incomingDrawing = accessors.getDrawing(incoming, target);
-        if (!currentDrawing || !incomingDrawing || currentDrawing.revision <= incomingDrawing.revision) {
+        if (!currentDrawing || (incomingDrawing && currentDrawing.revision <= incomingDrawing.revision)) {
           continue;
         }
 
-        if (accessors.shouldPreserveDrawing?.({ current, incoming, target, currentDrawing, incomingDrawing }) ?? true) {
+        if (!incomingDrawing || (accessors.shouldPreserveDrawing?.({ current, incoming, target, currentDrawing, incomingDrawing }) ?? true)) {
           nextRoom = accessors.replaceDrawing(nextRoom, target, currentDrawing);
         }
       }

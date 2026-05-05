@@ -38,7 +38,7 @@ export type RoomCommandResult =
 
 export type RoomQuery =
   | { type: 'getRoomState'; code: string; origin: string; viewerConnectionId?: string }
-  | { type: 'getBroadcastTargets'; code: string; origin: string }
+  | { type: 'getBroadcastTargets'; code: string; origin: string; drawingPayload?: 'include' | 'omit' }
   | { type: 'hasRoom'; code: string };
 
 export type RoomQueryResult = ApiResult<RoomStateSuccess> | BroadcastTarget[] | boolean;
@@ -49,4 +49,3 @@ export interface RoomLifecycleMachine {
   dispatch(command: RoomCommand): RoomCommandResult;
   query(query: RoomQuery): RoomQueryResult;
 }
-

@@ -139,7 +139,7 @@ export interface CurrentTurnState {
   rerolledFrom: string | null;
   correctGuessPlayerIds: string[];
   guessingDelayRemainingMs?: number | null;
-  drawing: DrawingState;
+  drawing: DrawingState | null;
 }
 
 export interface CompletedTurnState {

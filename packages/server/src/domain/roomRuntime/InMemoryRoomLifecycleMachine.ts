@@ -683,7 +683,7 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
       return {
         ok: true,
         data: {
-          room: this.toRoomState(currentRoom, origin, player.id),
+          room: this.toRoomState(currentRoom, origin, player.id, 'omit'),
         },
       };
     }
@@ -703,7 +703,7 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
     return {
       ok: true,
       data: {
-        room: this.toRoomState(currentRoom, origin, player.id),
+        room: this.toRoomState(currentRoom, origin, player.id, 'omit'),
       },
     };
   }
@@ -727,14 +727,14 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
     };
   }
 
-  public getBroadcastTargets(input: { code: string; origin: string }): BroadcastTarget[] {
+  public getBroadcastTargets(input: { code: string; origin: string; drawingPayload?: 'include' | 'omit' }): BroadcastTarget[] {
     const room = this.store.getRoom(input.code);
 
     if (!room) {
       return [];
     }
 
-    return this.projector.projectBroadcastTargets({ room, origin: input.origin }).map((target) => ({
+    return this.projector.projectBroadcastTargets({ room, origin: input.origin, drawingPayload: input.drawingPayload }).map((target) => ({
       connectionId: target.socketId,
       room: target.room,
     }));
@@ -763,8 +763,8 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
     };
   }
 
-  private toRoomState(room: RoomRecord, origin: string, viewerPlayerId?: string): RoomState {
-    return this.projector.project({ room, origin, viewerPlayerId });
+  private toRoomState(room: RoomRecord, origin: string, viewerPlayerId?: string, drawingPayload?: 'include' | 'omit'): RoomState {
+    return this.projector.project({ room, origin, viewerPlayerId, drawingPayload });
   }
 
   private transitionToCountdown(room: RoomRecord, notify: boolean): void {

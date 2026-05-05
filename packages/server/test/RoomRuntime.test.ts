@@ -190,6 +190,41 @@ describe('RoomRuntime', () => {
     expect(driver.reclaimRoom(created.data.room.code, created.data.sessionToken, 'new-socket', 'origin').ok).toBe(true);
   });
 
+  it('omits drawing payloads from chat responses while preserving current drawing in room snapshots', () => {
+    const driver = createRoomRuntimeDriver({
+      ids: createSequentialIds(['host-id', 'host-session', 'host-joined-feed', 'stroke-id', 'chat-feed']),
+    });
+    const created = driver.createRoom('Host', 'host-socket', 'origin');
+    expect(created.ok).toBe(true);
+    if (!created.ok) {
+      return;
+    }
+
+    const drawingResult = driver.applyLobbyDrawingAction('host-socket', {
+      type: 'beginStroke',
+      strokeId: 'stroke-1',
+      tool: 'pen',
+      color: '#111827',
+      size: 8,
+      point: { x: 10, y: 20 },
+    }, 'origin');
+    expect(drawingResult.ok).toBe(true);
+
+    const messageResult = driver.submitMessage('host-socket', 'hello lobby', 'origin');
+    expect(messageResult.ok).toBe(true);
+    if (!messageResult.ok) {
+      return;
+    }
+    expect(messageResult.data.room.lobbyDrawing).toBeNull();
+
+    const snapshotResult = driver.getRoomState(created.data.room.code, 'origin');
+    expect(snapshotResult.ok).toBe(true);
+    if (!snapshotResult.ok) {
+      return;
+    }
+    expect(snapshotResult.data.room.lobbyDrawing?.activeStrokes).toHaveLength(1);
+  });
+
   it('uses game rules for player limits and reroll availability', () => {
     const gamePack = defineGamePack({
       definition: TEST_GAME_DEFINITION,

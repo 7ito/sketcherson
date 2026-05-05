@@ -182,7 +182,11 @@ export class RoomRuntime {
   }
 
   public submitMessageOutcome(input: ActorInput<{ text: string }>): RoomCommandOutcome<SubmitMessageSuccess> {
-    return this.withRoomStateBroadcast(this.submitMessage(input), input.origin);
+    const response = this.submitMessage(input);
+    return {
+      response,
+      effects: response.ok ? [this.createBroadcastRoomStateEffect(response.data.room.code, input.origin, { drawingPayload: 'omit' })] : [],
+    };
   }
 
   public applyDrawingAction(input: ActorInput<{ action: DrawingAction }>): ApiResult<DrawingActionSuccess> {
@@ -235,7 +239,7 @@ export class RoomRuntime {
     return this.query<ApiResult<RoomStateSuccess>>({ type: 'getRoomState', ...input });
   }
 
-  public getBroadcastTargets(input: { code: string; origin: string }): BroadcastTarget[] {
+  public getBroadcastTargets(input: { code: string; origin: string; drawingPayload?: 'include' | 'omit' }): BroadcastTarget[] {
     return this.query<BroadcastTarget[]>({ type: 'getBroadcastTargets', ...input });
   }
 
@@ -251,8 +255,8 @@ export class RoomRuntime {
     return { response, effects };
   }
 
-  public createRoomStateBroadcastEffect(roomCode: string, origin: string, options?: { exceptConnectionId?: string }): RoomRuntimeEffect {
-    const targets = this.getBroadcastTargets({ code: roomCode, origin }).filter((target) => target.connectionId !== options?.exceptConnectionId);
+  public createRoomStateBroadcastEffect(roomCode: string, origin: string, options?: { exceptConnectionId?: string; drawingPayload?: 'include' | 'omit' }): RoomRuntimeEffect {
+    const targets = this.getBroadcastTargets({ code: roomCode, origin, drawingPayload: options?.drawingPayload }).filter((target) => target.connectionId !== options?.exceptConnectionId);
 
     return {
       type: 'broadcastRoomState',

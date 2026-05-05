@@ -18,7 +18,10 @@ export interface ProjectRoomInput {
   room: RoomRecord;
   origin: string;
   viewerPlayerId?: string;
+  drawingPayload?: RoomDrawingPayloadPolicy;
 }
+
+export type RoomDrawingPayloadPolicy = 'include' | 'omit';
 
 export interface ProjectedBroadcastTarget {
   socketId: string;
@@ -46,6 +49,7 @@ export class RoomProjector {
 
   public project(input: ProjectRoomInput): RoomState {
     const { room, origin, viewerPlayerId } = input;
+    const drawingPayload = input.drawingPayload ?? 'include';
 
     return {
       code: room.code,
@@ -55,13 +59,13 @@ export class RoomProjector {
       serverReferenceArtEnabled: this.referenceArtEnabled,
       players: Array.from(room.players.values()).map((player) => this.toRoomPlayerState(room, player)),
       settings: room.settings,
-      lobbyDrawing: room.status === 'lobby' && this.rules.features.lobbyDrawing ? cloneDrawingState(room.lobbyDrawing) : null,
+      lobbyDrawing: drawingPayload === 'include' && room.status === 'lobby' && this.rules.features.lobbyDrawing ? cloneDrawingState(room.lobbyDrawing) : null,
       lobbyFeed: this.feedProjector.projectLobbyFeed({ records: room.lobbyFeed, viewerPlayerId }),
       match: room.match
         ? {
             phaseEndsAt: room.status === 'paused' ? null : room.match.phaseEndsAt,
             currentTurn: room.match.activeTurn
-              ? this.toCurrentTurnState(room, room.match.activeTurn, viewerPlayerId)
+              ? this.toCurrentTurnState(room, room.match.activeTurn, viewerPlayerId, drawingPayload)
               : null,
             completedTurns: room.match.completedTurns.map((turn) => ({
               turnNumber: turn.turnNumber,
@@ -93,16 +97,16 @@ export class RoomProjector {
     };
   }
 
-  public projectBroadcastTargets(input: { room: RoomRecord; origin: string }): ProjectedBroadcastTarget[] {
+  public projectBroadcastTargets(input: { room: RoomRecord; origin: string; drawingPayload?: RoomDrawingPayloadPolicy }): ProjectedBroadcastTarget[] {
     return Array.from(input.room.players.values())
       .filter((player) => player.connected && player.socketId)
       .map((player) => ({
         socketId: player.socketId as string,
-        room: this.project({ room: input.room, origin: input.origin, viewerPlayerId: player.id }),
+        room: this.project({ room: input.room, origin: input.origin, viewerPlayerId: player.id, drawingPayload: input.drawingPayload }),
       }));
   }
 
-  private toCurrentTurnState(room: RoomRecord, activeTurn: ActiveTurnRecord, viewerPlayerId: string | undefined): NonNullable<NonNullable<RoomState['match']>['currentTurn']> {
+  private toCurrentTurnState(room: RoomRecord, activeTurn: ActiveTurnRecord, viewerPlayerId: string | undefined, drawingPayload: RoomDrawingPayloadPolicy): NonNullable<NonNullable<RoomState['match']>['currentTurn']> {
     const referenceArtUrl = this.resolveReferenceArtForViewer(room, activeTurn, viewerPlayerId);
 
     return {
@@ -121,7 +125,7 @@ export class RoomProjector {
         this.getEffectiveMatchPhase(room) === 'round'
           ? this.getGuessingDelayRemainingMs(room, activeTurn)
           : 0,
-      drawing: cloneDrawingState(activeTurn.drawing),
+      drawing: drawingPayload === 'include' ? cloneDrawingState(activeTurn.drawing) : null,
     };
   }
 
