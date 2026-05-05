@@ -1,5 +1,5 @@
 import type { DrawingTarget } from '@7ito/sketcherson-common/drawingRealtime';
-import type { DrawingAction, DrawingActionAppliedEvent, DrawingState, DrawingStrokeOperation } from '@7ito/sketcherson-common/drawing';
+import { DRAWING_MAX_OPERATIONS, type DrawingAction, type DrawingActionAppliedEvent, type DrawingState, type DrawingStrokeOperation } from '@7ito/sketcherson-common/drawing';
 import type { ApiResult } from '@7ito/sketcherson-common/room';
 import { estimateSerializedPayloadBytes, logDrawingTransportMetric } from '../../drawingMetrics';
 import type { RoomRecord } from './model';
@@ -24,7 +24,7 @@ export interface DrawingChannelServer {
     actor: DrawingChannelActor;
     target: DrawingTarget;
     action: DrawingAction;
-  }): ApiResult<DrawingActionAppliedEvent>;
+  }): ApiResult<DrawingActionAppliedEvent & { actionApplied?: boolean }>;
 }
 
 export class ServerDrawingChannel implements DrawingChannelServer {
@@ -37,7 +37,7 @@ export class ServerDrawingChannel implements DrawingChannelServer {
     actor: DrawingChannelActor;
     target: DrawingTarget;
     action: DrawingAction;
-  }): ApiResult<DrawingActionAppliedEvent> {
+  }): ApiResult<DrawingActionAppliedEvent & { actionApplied?: boolean }> {
     const rateLimitError = this.consumeRateLimitForAction(input.actor.connectionId, input.action);
     if (rateLimitError) {
       return rateLimitError;
@@ -48,11 +48,24 @@ export class ServerDrawingChannel implements DrawingChannelServer {
       return policyResult;
     }
 
-    const lobbyPreparationResult = input.target === 'lobby'
+    const preparationResult = input.target === 'lobby'
       ? this.prepareLobbyDrawingForAction(input.room, input.actor, input.action)
-      : { ok: true as const, data: { finalizedStrokes: [] as DrawingStrokeOperation[] } };
-    if (!lobbyPreparationResult.ok) {
-      return lobbyPreparationResult;
+      : this.prepareMatchDrawingForAction(policyResult.data, input.action);
+    if (!preparationResult.ok) {
+      return preparationResult;
+    }
+
+    if (this.isAlreadyFinalizedEndStroke(policyResult.data, input.action)) {
+      return {
+        ok: true,
+        data: {
+          code: input.room.code,
+          action: input.action,
+          revision: policyResult.data.revision,
+          stateRevision: input.room.stateRevision,
+          actionApplied: false,
+        },
+      };
     }
 
     const authoritativeStroke = input.action.type === 'endStroke'
@@ -82,8 +95,8 @@ export class ServerDrawingChannel implements DrawingChannelServer {
         revision: policyResult.data.revision,
         stateRevision: input.room.stateRevision,
         authoritativeStroke,
-        finalizedStrokes: lobbyPreparationResult.data.finalizedStrokes.length > 0
-          ? lobbyPreparationResult.data.finalizedStrokes
+        finalizedStrokes: preparationResult.data.finalizedStrokes.length > 0
+          ? preparationResult.data.finalizedStrokes
           : undefined,
       },
     };
@@ -152,12 +165,34 @@ export class ServerDrawingChannel implements DrawingChannelServer {
       };
     }
 
-    if (input.action.type === 'beginStroke' && activeTurn.drawing.activeStrokes.length > 0) {
-      activeTurn.drawing.activeStrokes = [];
-      activeTurn.drawing.snapshotDataUrl = null;
+    return { ok: true, data: activeTurn.drawing };
+  }
+
+  private prepareMatchDrawingForAction(
+    drawing: DrawingState,
+    action: DrawingAction,
+  ): ApiResult<{ finalizedStrokes: DrawingStrokeOperation[] }> {
+    if (action.type === 'beginStroke' && drawing.activeStrokes.some((stroke) => stroke.id === action.strokeId)) {
+      return { ok: true, data: { finalizedStrokes: [] } };
     }
 
-    return { ok: true, data: activeTurn.drawing };
+    const finalizedStrokes = action.type === 'beginStroke'
+      ? drawing.activeStrokes.filter((stroke) => stroke.id !== action.strokeId).map(cloneActiveStrokeOperation)
+      : [];
+
+    if (finalizedStrokes.length > 0) {
+      const finalizeResult = finalizeActiveStrokesIntoOperations(
+        drawing,
+        finalizedStrokes,
+        DRAWING_MAX_OPERATIONS,
+        `Drawing history can only contain ${DRAWING_MAX_OPERATIONS} operations.`,
+      );
+      if (!finalizeResult.ok) {
+        return finalizeResult;
+      }
+    }
+
+    return { ok: true, data: { finalizedStrokes } };
   }
 
   private prepareLobbyDrawingForAction(
@@ -167,28 +202,26 @@ export class ServerDrawingChannel implements DrawingChannelServer {
   ): ApiResult<{ finalizedStrokes: DrawingStrokeOperation[] }> {
     this.pruneLobbyStrokeOwners(room);
 
+    if (action.type === 'beginStroke' && room.lobbyDrawing.activeStrokes.some((stroke) => stroke.id === action.strokeId)) {
+      return { ok: true, data: { finalizedStrokes: [] } };
+    }
+
     const finalizedStrokes = action.type === 'beginStroke'
-      ? this.getLobbyActiveStrokesOwnedByPlayer(room, actor.playerId)
+      ? this.getLobbyActiveStrokesOwnedByPlayer(room, actor.playerId).filter((stroke) => stroke.id !== action.strokeId)
       : [];
 
     if (finalizedStrokes.length > 0) {
-      if (room.lobbyDrawing.operations.length + finalizedStrokes.length >= LOBBY_DRAWING_MAX_OPERATIONS) {
-        return {
-          ok: false,
-          error: {
-            code: 'INVALID_DRAW_ACTION',
-            message: `Lobby drawing history can only contain ${LOBBY_DRAWING_MAX_OPERATIONS} operations.`,
-          },
-        };
+      const finalizeResult = finalizeActiveStrokesIntoOperations(
+        room.lobbyDrawing,
+        finalizedStrokes,
+        LOBBY_DRAWING_MAX_OPERATIONS,
+        `Lobby drawing history can only contain ${LOBBY_DRAWING_MAX_OPERATIONS} operations.`,
+      );
+      if (!finalizeResult.ok) {
+        return finalizeResult;
       }
 
-      const finalizedStrokeIds = new Set(finalizedStrokes.map((stroke) => stroke.id));
-      room.lobbyDrawing.operations.push(...finalizedStrokes.map(cloneActiveStrokeOperation));
-      room.lobbyDrawing.activeStrokes = room.lobbyDrawing.activeStrokes.filter((stroke) => !finalizedStrokeIds.has(stroke.id));
-      room.lobbyDrawing.undoneOperations = [];
-      room.lobbyDrawing.snapshotDataUrl = null;
-
-      for (const strokeId of finalizedStrokeIds) {
+      for (const strokeId of finalizedStrokes.map((stroke) => stroke.id)) {
         this.lobbyStrokeOwners.delete(this.toLobbyStrokeOwnerKey(room.code, strokeId));
       }
     }
@@ -280,6 +313,39 @@ export class ServerDrawingChannel implements DrawingChannelServer {
 
     return this.options.consumeDrawingRateLimit(connectionId);
   }
+
+  private isAlreadyFinalizedEndStroke(drawing: DrawingState, action: DrawingAction): boolean {
+    if (action.type !== 'endStroke') {
+      return false;
+    }
+
+    return !drawing.activeStrokes.some((stroke) => stroke.id === action.strokeId) &&
+      drawing.operations.some((operation) => operation.kind === 'stroke' && operation.id === action.strokeId);
+  }
+}
+
+function finalizeActiveStrokesIntoOperations(
+  drawing: DrawingState,
+  finalizedStrokes: DrawingStrokeOperation[],
+  maxOperations: number,
+  maxOperationsMessage: string,
+): ApiResult<null> {
+  if (drawing.operations.length + finalizedStrokes.length > maxOperations) {
+    return {
+      ok: false,
+      error: {
+        code: 'INVALID_DRAW_ACTION',
+        message: maxOperationsMessage,
+      },
+    };
+  }
+
+  const finalizedStrokeIds = new Set(finalizedStrokes.map((stroke) => stroke.id));
+  drawing.operations.push(...finalizedStrokes.map(cloneActiveStrokeOperation));
+  drawing.activeStrokes = drawing.activeStrokes.filter((stroke) => !finalizedStrokeIds.has(stroke.id));
+  drawing.undoneOperations = [];
+  drawing.snapshotDataUrl = null;
+  return { ok: true, data: null };
 }
 
 function cloneActiveStrokeOperation(stroke: DrawingStrokeOperation): DrawingStrokeOperation {

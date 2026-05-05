@@ -47,6 +47,7 @@ export class DrawingController {
         stateRevision: result.data.stateRevision,
         authoritativeStroke: result.data.authoritativeStroke,
         finalizedStrokes: result.data.finalizedStrokes,
+        actionApplied: result.data.actionApplied,
       },
     };
   }
@@ -74,6 +75,7 @@ export class DrawingController {
         stateRevision: result.data.stateRevision,
         authoritativeStroke: result.data.authoritativeStroke,
         finalizedStrokes: result.data.finalizedStrokes,
+        actionApplied: result.data.actionApplied,
       },
     };
   }

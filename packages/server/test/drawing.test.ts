@@ -124,6 +124,79 @@ describe('drawing state', () => {
     expect(drawing.activeStrokes.map((stroke) => stroke.id)).toEqual(['fresh-stroke']);
   });
 
+  it('finalizes a previous match stroke before a quick successive stroke and ignores the delayed end', () => {
+    const drawing = createDrawingState();
+    const room = createMatchDrawingRoom(drawing);
+    const channel = createDrawingChannel();
+
+    expect(channel.apply({
+      room,
+      actor: { playerId: 'player-1', connectionId: 'socket-1' },
+      target: 'match',
+      action: {
+        type: 'beginStroke',
+        strokeId: 'stroke-1',
+        tool: 'pen',
+        color: '#2d56ff',
+        size: 6,
+        point: { x: 40, y: 40 },
+      },
+    }).ok).toBe(true);
+    expect(channel.apply({
+      room,
+      actor: { playerId: 'player-1', connectionId: 'socket-1' },
+      target: 'match',
+      action: { type: 'extendStroke', strokeId: 'stroke-1', points: [{ x: 50, y: 50 }] },
+    }).ok).toBe(true);
+
+    const quickBegin = channel.apply({
+      room,
+      actor: { playerId: 'player-1', connectionId: 'socket-1' },
+      target: 'match',
+      action: {
+        type: 'beginStroke',
+        strokeId: 'stroke-2',
+        tool: 'pen',
+        color: '#ff6600',
+        size: 6,
+        point: { x: 80, y: 80 },
+      },
+    });
+
+    expect(quickBegin.ok).toBe(true);
+    expect(quickBegin.ok ? quickBegin.data.finalizedStrokes?.map((stroke) => stroke.id) : []).toEqual(['stroke-1']);
+    expect(drawing.operations.map((operation) => operation.id)).toEqual(['stroke-1']);
+    expect(drawing.activeStrokes.map((stroke) => stroke.id)).toEqual(['stroke-2']);
+
+    const delayedEnd = channel.apply({
+      room,
+      actor: { playerId: 'player-1', connectionId: 'socket-1' },
+      target: 'match',
+      action: { type: 'endStroke', strokeId: 'stroke-1' },
+    });
+
+    expect(delayedEnd.ok).toBe(true);
+    expect(delayedEnd.ok ? delayedEnd.data.actionApplied : true).toBe(false);
+    expect(drawing.operations.map((operation) => operation.id)).toEqual(['stroke-1']);
+    expect(drawing.activeStrokes.map((stroke) => stroke.id)).toEqual(['stroke-2']);
+
+    expect(channel.apply({
+      room,
+      actor: { playerId: 'player-1', connectionId: 'socket-1' },
+      target: 'match',
+      action: { type: 'extendStroke', strokeId: 'stroke-2', points: [{ x: 90, y: 90 }] },
+    }).ok).toBe(true);
+    expect(channel.apply({
+      room,
+      actor: { playerId: 'player-1', connectionId: 'socket-1' },
+      target: 'match',
+      action: { type: 'endStroke', strokeId: 'stroke-2' },
+    }).ok).toBe(true);
+
+    expect(drawing.operations.map((operation) => operation.id)).toEqual(['stroke-1', 'stroke-2']);
+    expect(drawing.activeStrokes).toEqual([]);
+  });
+
   it('finalizes the actor previous lobby stroke before accepting a new one', () => {
     const room = createLobbyDrawingRoom(['player-1']);
     const channel = createDrawingChannel();
@@ -161,6 +234,21 @@ describe('drawing state', () => {
     expect(room.lobbyDrawing.operations.map((operation) => operation.id)).toEqual(['stroke-1']);
     expect(room.lobbyDrawing.activeStrokes.map((stroke) => stroke.id)).toEqual(['stroke-2']);
     expect(secondResult.ok ? secondResult.data.finalizedStrokes?.map((stroke) => stroke.id) : []).toEqual(['stroke-1']);
+
+    const delayedEndResult = channel.apply({
+      room,
+      actor: { playerId: 'player-1', connectionId: 'socket-1' },
+      target: 'lobby',
+      action: {
+        type: 'endStroke',
+        strokeId: 'stroke-1',
+      },
+    });
+
+    expect(delayedEndResult.ok).toBe(true);
+    expect(delayedEndResult.ok ? delayedEndResult.data.actionApplied : true).toBe(false);
+    expect(room.lobbyDrawing.operations.map((operation) => operation.id)).toEqual(['stroke-1']);
+    expect(room.lobbyDrawing.activeStrokes.map((stroke) => stroke.id)).toEqual(['stroke-2']);
   });
 
   it('rejects lobby strokes beyond the participant active stroke cap', () => {
@@ -282,6 +370,26 @@ function createDrawingChannel(): ServerDrawingChannel {
     touchRoom: vi.fn(),
     lobbyDrawingEnabled: true,
   });
+}
+
+function createMatchDrawingRoom(drawing = createDrawingState()): RoomRecord {
+  return {
+    code: 'ABCDEF',
+    stateRevision: 1,
+    status: 'round',
+    match: {
+      activeTurn: {
+        drawerPlayerId: 'player-1',
+        drawing,
+      },
+    },
+    players: new Map(),
+    hostPlayerId: 'player-1',
+    settings: {} as RoomRecord['settings'],
+    lobbyDrawing: createDrawingState(),
+    lobbyFeed: [],
+    timer: null,
+  } as RoomRecord;
 }
 
 function createLobbyDrawingRoom(playerIds: string[]): RoomRecord {

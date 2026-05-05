@@ -1,6 +1,6 @@
 {
   "name": "@7ito/sketcherson-common",
-  "version": "0.3.9",
+  "version": "0.3.11",
   "description": "Shared engine, game definition, room, drawing, and Vite utilities for Sketcherson games.",
   "license": "MIT",
   "type": "module",

@@ -199,7 +199,7 @@ export class RoomRuntime {
 
   public applyDrawingActionOutcome(input: ActorInput<{ action: DrawingAction }>): RoomCommandOutcome<DrawingActionSuccess> {
     const response = this.applyDrawingAction(input);
-    const effects: RoomRuntimeEffect[] = response.ok
+    const effects: RoomRuntimeEffect[] = response.ok && response.data.actionApplied !== false
       ? [{
           type: 'broadcastDrawingAction',
           roomCode: response.data.roomCode,
@@ -224,7 +224,7 @@ export class RoomRuntime {
 
   public applyLobbyDrawingActionOutcome(input: ActorInput<{ action: DrawingAction }>): RoomCommandOutcome<LobbyDrawingActionSuccess> {
     const response = this.applyLobbyDrawingAction(input);
-    const effects: RoomRuntimeEffect[] = response.ok
+    const effects: RoomRuntimeEffect[] = response.ok && response.data.actionApplied !== false
       ? [{
           type: 'broadcastDrawingAction',
           roomCode: response.data.roomCode,

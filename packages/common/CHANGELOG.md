@@ -1,5 +1,17 @@
 # @7ito/sketcherson-common
 
+## 0.3.11
+
+### Patch Changes
+
+- Fix quick successive drawing strokes on production latency.
+
+## 0.3.10
+
+### Patch Changes
+
+- Drawing canvas fixes
+
 ## 0.3.9
 
 ### Patch Changes

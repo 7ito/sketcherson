@@ -86,7 +86,12 @@ export function applyRemoteDrawingEvent(drawing: DrawingState, event: DrawingAct
     event.authoritativeStroke &&
     event.revision > drawing.revision + 1 &&
     drawing.activeStrokes.some((stroke) => stroke.id === authoritativeEndStrokeId);
-  if (event.revision !== drawing.revision + 1 && !isCoalescedExtend && !isAuthoritativeEndStrokeCorrection) {
+  const isFinalizedStrokeCorrection = Boolean(
+    event.finalizedStrokes?.length &&
+    event.revision > drawing.revision + 1 &&
+    event.finalizedStrokes.some((finalizedStroke) => drawing.activeStrokes.some((stroke) => stroke.id === finalizedStroke.id)),
+  );
+  if (event.revision !== drawing.revision + 1 && !isCoalescedExtend && !isAuthoritativeEndStrokeCorrection && !isFinalizedStrokeCorrection) {
     return {
       state: drawing,
       status: 'requires-resync',
@@ -106,7 +111,7 @@ export function applyRemoteDrawingEvent(drawing: DrawingState, event: DrawingAct
     };
   }
 
-  const appliedState = isCoalescedExtend || isAuthoritativeEndStrokeCorrection
+  const appliedState = isCoalescedExtend || isAuthoritativeEndStrokeCorrection || isFinalizedStrokeCorrection
     ? { ...result.data, revision: event.revision }
     : result.data;
 

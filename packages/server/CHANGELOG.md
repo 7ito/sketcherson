@@ -1,5 +1,21 @@
 # @7ito/sketcherson-server
 
+## 0.3.11
+
+### Patch Changes
+
+- Fix quick successive drawing strokes on production latency.
+- Updated dependencies
+  - @7ito/sketcherson-common@0.3.11
+
+## 0.3.10
+
+### Patch Changes
+
+- Drawing canvas fixes
+- Updated dependencies
+  - @7ito/sketcherson-common@0.3.10
+
 ## 0.3.9
 
 ### Patch Changes

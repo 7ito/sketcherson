@@ -191,6 +191,32 @@ describe('drawingProtocol', () => {
     expect(applied.state.activeStrokes.map((activeStroke) => activeStroke.id)).toEqual(['stroke-2']);
   });
 
+  it('uses finalized stroke payloads to recover skipped live extends before a quick next stroke', () => {
+    const drawing = createDrawingState();
+    drawing.activeStrokes = [stroke({ id: 'stroke-1', points: [{ x: 10, y: 20 }] })];
+    drawing.revision = 1;
+    const finalizedStroke = stroke({ id: 'stroke-1', points: [{ x: 10, y: 20 }, { x: 50, y: 60 }] });
+
+    const applied = applyRemoteDrawingEvent(drawing, {
+      code: 'ABCDEF',
+      action: {
+        type: 'beginStroke',
+        strokeId: 'stroke-2',
+        tool: 'pen',
+        color: '#000000',
+        size: 8,
+        point: { x: 30, y: 40 },
+      },
+      revision: 3,
+      finalizedStrokes: [finalizedStroke],
+    });
+
+    expect(applied.status).toBe('applied');
+    expect(applied.state.revision).toBe(3);
+    expect(applied.state.operations).toEqual([finalizedStroke]);
+    expect(applied.state.activeStrokes.map((activeStroke) => activeStroke.id)).toEqual(['stroke-2']);
+  });
+
   it('applies coalesced remote extend gaps without dropping merged points', () => {
     const drawing = createDrawingState();
     drawing.activeStrokes = [stroke()];
