@@ -44,7 +44,8 @@ const INITIAL_SNAPSHOT: RoomClientSnapshot = {
 };
 
 export function createRoomClient(options: CreateRoomClientOptions): RoomClient {
-  const { transport, drawingTransport = transport, joinedSessionStore, preferredNicknameStore } = options;
+  const { transport, joinedSessionStore, preferredNicknameStore } = options;
+  const drawingTransport = options.drawingTransport ?? createDrawingTransportAdapter(transport);
   const listeners = new Set<() => void>();
   const unsubscribeCallbacks: RoomTransportUnsubscribe[] = [];
   const resyncingRoomCodes = new Set<string>();
@@ -443,6 +444,17 @@ export function createRoomClient(options: CreateRoomClientOptions): RoomClient {
       unsubscribeCallbacks.length = 0;
       listeners.clear();
       resyncingRoomCodes.clear();
+    },
+  };
+}
+
+function createDrawingTransportAdapter(transport: RoomTransport): RoomDrawingTransport {
+  return {
+    emitWithAck(event, payload) {
+      return (transport.emitWithAck as RoomDrawingTransport['emitWithAck'])(event, payload);
+    },
+    on(event, handler) {
+      return transport.on(event, handler);
     },
   };
 }

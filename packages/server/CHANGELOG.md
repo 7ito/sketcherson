@@ -1,5 +1,29 @@
 # @7ito/sketcherson-server
 
+## 0.2.5
+
+### Patch Changes
+
+- Patch drawing canvas horizontal area #2
+- Updated dependencies
+  - @7ito/sketcherson-common@0.2.5
+
+## 0.2.4
+
+### Patch Changes
+
+- Patch canvas drawing space
+- Updated dependencies
+  - @7ito/sketcherson-common@0.2.4
+
+## 0.2.3
+
+### Patch Changes
+
+- Publish aligned package versions for downstream updates.
+- Updated dependencies
+  - @7ito/sketcherson-common@0.2.3
+
 ## 0.1.4
 
 ### Patch Changes
