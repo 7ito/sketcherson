@@ -4,6 +4,10 @@ import type { PromptEngine } from '@7ito/sketcherson-common/prompts';
 import type {
   RoomClientEventName,
   RoomClientToServerSocketEvents,
+  RoomDrawingClientEventName,
+  RoomDrawingClientToServerSocketEvents,
+  RoomDrawingRequest,
+  RoomDrawingResponse,
   RoomRequest,
   RoomResponse,
   RoomServerToClientSocketEvents,
@@ -66,6 +70,8 @@ export function createGameServer(options?: Partial<CreateGameServerOptions<any>>
     },
     maxHttpBufferSize: SOCKET_MAX_HTTP_BUFFER_SIZE_BYTES,
   });
+  const drawingIo = io.of('/drawing') as unknown as Server<RoomDrawingClientToServerSocketEvents, RoomServerToClientSocketEvents>;
+  const drawingConnectionActors = new Map<string, string>();
   const roomRuntime = new RoomRuntime({
     countdownMs: options?.countdownMs,
     revealMs: options?.revealMs,
@@ -98,7 +104,7 @@ export function createGameServer(options?: Partial<CreateGameServerOptions<any>>
           }
           break;
         case 'broadcastDrawingAction':
-          io.to(effect.roomCode).emit(
+          drawingIo.to(effect.roomCode).emit(
             effect.target === 'match' ? 'room:drawingActionApplied' : 'room:lobbyDrawingActionApplied',
             effect.event,
           );
@@ -405,6 +411,61 @@ export function createGameServer(options?: Partial<CreateGameServerOptions<any>>
       });
 
       applyRoomRuntimeEffects(outcome.effects);
+    });
+  });
+
+  drawingIo.on('connection', (socket) => {
+    const registerDrawingAction = <E extends RoomDrawingClientEventName>(
+      eventName: E,
+      actionName: string,
+      run: (payload: RoomDrawingRequest<E>, actorConnectionId: string) => RoomDrawingResponse<E>,
+    ) => {
+      (socket.on as (event: string, listener: (...args: any[]) => void) => void)(eventName, (payload: RoomDrawingRequest<E>, ack?: (result: RoomDrawingResponse<E>) => void) => {
+        const actorConnectionId = eventName === 'room:bindDrawingTransport'
+          ? socket.id
+          : drawingConnectionActors.get(socket.id);
+
+        if (!actorConnectionId) {
+          ack?.({ ok: false, error: { code: 'SESSION_EXPIRED', message: 'The drawing transport is not bound to a room session.' } } as RoomDrawingResponse<E>);
+          return;
+        }
+
+        const result = run(payload, actorConnectionId);
+        if (!result.ok) {
+          logFailedAction(actionName, socket.id, payload, result.error);
+        }
+        ack?.(result);
+      });
+    };
+
+    registerDrawingAction('room:bindDrawingTransport', 'room.bindDrawingTransport', (payload) => {
+      if (!io.sockets.sockets.has(payload.controlConnectionId)) {
+        return { ok: false, error: { code: 'SESSION_EXPIRED', message: 'The control transport is not connected.' } };
+      }
+
+      if (!roomRuntime.hasRoom(payload.code)) {
+        return { ok: false, error: { code: 'ROOM_NOT_FOUND', message: 'The room could not be found.' } };
+      }
+
+      drawingConnectionActors.set(socket.id, payload.controlConnectionId);
+      socket.join(payload.code);
+      return { ok: true, data: { roomCode: payload.code } };
+    });
+
+    registerDrawingAction('room:drawingAction', 'room.drawingAction', (payload, actorConnectionId) => {
+      const outcome = roomRuntime.applyDrawingActionOutcome({ connectionId: actorConnectionId, origin: appOrigin, payload: { action: payload.action } });
+      applyRoomRuntimeEffects(outcome.effects);
+      return outcome.response;
+    });
+
+    registerDrawingAction('room:lobbyDrawingAction', 'room.lobbyDrawingAction', (payload, actorConnectionId) => {
+      const outcome = roomRuntime.applyLobbyDrawingActionOutcome({ connectionId: actorConnectionId, origin: appOrigin, payload: { action: payload.action } });
+      applyRoomRuntimeEffects(outcome.effects);
+      return outcome.response;
+    });
+
+    socket.on('disconnect', () => {
+      drawingConnectionActors.delete(socket.id);
     });
   });
 

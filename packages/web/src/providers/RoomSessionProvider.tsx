@@ -5,6 +5,7 @@ import {
   createBrowserJoinedSessionStore,
   createPreferredNicknameStore,
   createRoomClient,
+  createSocketRoomDrawingTransport,
   createSocketRoomTransport,
   type ConnectionNotice,
   type JoinedSession,
@@ -14,7 +15,7 @@ import {
 } from '../client-room-runtime';
 import { JOINED_SESSION_STORAGE_KEY } from '../lib/gameKeys';
 import { writePreferredNickname } from '../lib/preferredNickname';
-import { socket } from '../lib/socket';
+import { drawingSocket, socket } from '../lib/socket';
 
 export type { ConnectionNotice, JoinedSession, RoomExitNotice, SessionRecoveryError } from '../client-room-runtime';
 
@@ -53,6 +54,7 @@ let defaultRoomClientDestroyTimer: ReturnType<typeof setTimeout> | null = null;
 function createDefaultRoomClient(): RoomClient {
   return createRoomClient({
     transport: createSocketRoomTransport(socket),
+    drawingTransport: createSocketRoomDrawingTransport(drawingSocket),
     joinedSessionStore: createBrowserJoinedSessionStore(JOINED_SESSION_STORAGE_KEY),
     preferredNicknameStore: createPreferredNicknameStore(writePreferredNickname),
   });

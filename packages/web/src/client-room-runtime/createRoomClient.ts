@@ -8,7 +8,7 @@ import {
   recordRemoteDrawingEventReceived,
 } from '../lib/drawingMetrics';
 import { createRoomDrawingSync, type RoomDrawingView } from './RoomDrawingSync';
-import type { RoomTransport, RoomTransportUnsubscribe } from './RoomTransport';
+import type { RoomDrawingTransport, RoomTransport, RoomTransportUnsubscribe } from './RoomTransport';
 import type { JoinedSessionStore, PreferredNicknameStore } from './sessionStores';
 import type { JoinedSession, RoomClient, RoomClientSnapshot } from './types';
 
@@ -28,6 +28,7 @@ type RoomMutationEventName = {
 
 export interface CreateRoomClientOptions {
   transport: RoomTransport;
+  drawingTransport?: RoomDrawingTransport;
   joinedSessionStore: JoinedSessionStore;
   preferredNicknameStore: PreferredNicknameStore;
 }
@@ -43,7 +44,7 @@ const INITIAL_SNAPSHOT: RoomClientSnapshot = {
 };
 
 export function createRoomClient(options: CreateRoomClientOptions): RoomClient {
-  const { transport, joinedSessionStore, preferredNicknameStore } = options;
+  const { transport, drawingTransport = transport, joinedSessionStore, preferredNicknameStore } = options;
   const listeners = new Set<() => void>();
   const unsubscribeCallbacks: RoomTransportUnsubscribe[] = [];
   const resyncingRoomCodes = new Set<string>();
@@ -115,10 +116,20 @@ export function createRoomClient(options: CreateRoomClientOptions): RoomClient {
     sessionToken: data.sessionToken,
   });
 
+  const bindDrawingTransport = (roomCode: string) => {
+    const controlConnectionId = transport.getConnectionId?.();
+    if (!controlConnectionId) {
+      return;
+    }
+
+    void drawingTransport.emitWithAck('room:bindDrawingTransport', { code: roomCode, controlConnectionId });
+  };
+
   const applyJoinedSessionResult = (data: SessionActionSuccess, fallbackNickname: string) => {
     const nextSession = buildJoinedSession(data, fallbackNickname);
     joinedSessionStore.write(nextSession);
     preferredNicknameStore.write(nextSession.nickname);
+    bindDrawingTransport(nextSession.roomCode);
     const view = drawingSync.applySnapshot(data.room);
     activeRoomRef = view.room;
     setSnapshot({
@@ -281,6 +292,7 @@ export function createRoomClient(options: CreateRoomClientOptions): RoomClient {
       return;
     }
 
+    bindDrawingTransport(currentSession.roomCode);
     void reclaimSession(currentSession);
   };
 
@@ -312,8 +324,8 @@ export function createRoomClient(options: CreateRoomClientOptions): RoomClient {
   unsubscribeCallbacks.push(
     transport.on('room:state', handleRoomState),
     transport.on('room:kicked', handleRoomKicked),
-    transport.on('room:drawingActionApplied', (payload) => handleDrawingActionApplied(payload, 'match')),
-    transport.on('room:lobbyDrawingActionApplied', (payload) => handleDrawingActionApplied(payload, 'lobby')),
+    drawingTransport.on('room:drawingActionApplied', (payload) => handleDrawingActionApplied(payload, 'match')),
+    drawingTransport.on('room:lobbyDrawingActionApplied', (payload) => handleDrawingActionApplied(payload, 'lobby')),
     transport.onConnectionEvent('connect', handleConnect),
     transport.onConnectionEvent('disconnect', handleDisconnect),
     transport.onConnectionEvent('connect_error', handleConnectError),
@@ -380,7 +392,7 @@ export function createRoomClient(options: CreateRoomClientOptions): RoomClient {
       return runRoomMutation('room:reroll', { code }, code);
     },
     async submitDrawingAction(code, action) {
-      const result = await transport.emitWithAck('room:drawingAction', {
+      const result = await drawingTransport.emitWithAck('room:drawingAction', {
         code,
         action,
       });
@@ -402,7 +414,7 @@ export function createRoomClient(options: CreateRoomClientOptions): RoomClient {
       return result;
     },
     async submitLobbyDrawingAction(code, action) {
-      const result = await transport.emitWithAck('room:lobbyDrawingAction', { code, action });
+      const result = await drawingTransport.emitWithAck('room:lobbyDrawingAction', { code, action });
 
       recordDrawingAck({
         roomCode: code,

@@ -9,6 +9,12 @@ import { GAME_WEB_CONFIG } from '../game';
 
 vi.mock('../lib/socket', () => ({
   socket: {
+    id: 'control-socket',
+    emit: vi.fn(),
+    on: vi.fn(),
+    off: vi.fn(),
+  },
+  drawingSocket: {
     emit: vi.fn(),
     on: vi.fn(),
     off: vi.fn(),

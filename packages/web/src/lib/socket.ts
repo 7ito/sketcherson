@@ -6,3 +6,8 @@ export const socket = io(serverUrl, {
   autoConnect: true,
   transports: ['websocket'],
 });
+
+export const drawingSocket = io(`${serverUrl}/drawing`, {
+  autoConnect: true,
+  transports: ['websocket'],
+});

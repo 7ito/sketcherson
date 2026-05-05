@@ -30,6 +30,21 @@ import type {
   UpdateLobbySettingsSuccess,
 } from './room';
 
+export interface RoomDrawingClientToServerEvents {
+  'room:bindDrawingTransport': {
+    request: { code: string; controlConnectionId: string };
+    response: ApiResult<{ roomCode: string }>;
+  };
+  'room:drawingAction': {
+    request: DrawingActionRequest;
+    response: ApiResult<DrawingActionSuccess>;
+  };
+  'room:lobbyDrawingAction': {
+    request: LobbyDrawingActionRequest;
+    response: ApiResult<LobbyDrawingActionSuccess>;
+  };
+}
+
 export interface RoomClientToServerEvents {
   'room:create': {
     request: CreateRoomRequest;
@@ -96,10 +111,13 @@ export interface RoomServerToClientEvents {
 }
 
 export type RoomClientEventName = keyof RoomClientToServerEvents;
+export type RoomDrawingClientEventName = keyof RoomDrawingClientToServerEvents;
 export type RoomServerEventName = keyof RoomServerToClientEvents;
 
 export type RoomRequest<E extends RoomClientEventName> = RoomClientToServerEvents[E]['request'];
 export type RoomResponse<E extends RoomClientEventName> = RoomClientToServerEvents[E]['response'];
+export type RoomDrawingRequest<E extends RoomDrawingClientEventName> = RoomDrawingClientToServerEvents[E]['request'];
+export type RoomDrawingResponse<E extends RoomDrawingClientEventName> = RoomDrawingClientToServerEvents[E]['response'];
 export type RoomServerPayload<E extends RoomServerEventName> = RoomServerToClientEvents[E];
 
 export type RoomClientToServerSocketEvents = {
@@ -108,4 +126,8 @@ export type RoomClientToServerSocketEvents = {
 
 export type RoomServerToClientSocketEvents = {
   [E in RoomServerEventName]: (payload: RoomServerPayload<E>) => void;
+};
+
+export type RoomDrawingClientToServerSocketEvents = {
+  [E in RoomDrawingClientEventName]: (request: RoomDrawingRequest<E>, ack: (response: RoomDrawingResponse<E>) => void) => void;
 };
