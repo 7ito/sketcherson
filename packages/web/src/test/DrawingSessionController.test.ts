@@ -1,3 +1,4 @@
+import { DRAWING_MAX_EXTEND_POINTS } from '@7ito/sketcherson-common/drawing';
 import type { ApiResult } from '@7ito/sketcherson-common/room';
 import { DrawingSessionController, type DrawingSessionExtendBatch } from '../client-drawing-session';
 
@@ -28,6 +29,7 @@ describe('DrawingSessionController', () => {
     });
     expect(controller.isPointerActive()).toBe(true);
     expect(controller.extendActiveStroke({ x: 1, y: 1 })).toBeNull();
+    expect(controller.extendActiveStroke({ x: 1.25, y: 1.25 })).toBeNull();
     expect(controller.extendActiveStroke({ x: 2, y: 2 })).toEqual({
       strokeId: 'stroke-1',
       previousPoint: { x: 1, y: 1 },
@@ -72,6 +74,30 @@ describe('DrawingSessionController', () => {
       ],
       pointsCount: 2,
     });
+  });
+
+  it('splits queued extend points into server-sized batches', () => {
+    vi.useFakeTimers();
+    const sendExtendBatch = vi.fn<(batch: DrawingSessionExtendBatch) => Promise<ApiResult<{ revision: number }>>>()
+      .mockResolvedValue(ok());
+    const controller = new DrawingSessionController({
+      setTimeout: (callback, delayMs) => window.setTimeout(callback, delayMs),
+      clearTimeout: (timerId) => window.clearTimeout(timerId),
+      now: () => performance.now(),
+      isStrokeActive: () => true,
+      sendExtendBatch,
+    });
+    const queuedPoints = Array.from({ length: DRAWING_MAX_EXTEND_POINTS + 2 }, (_, index) => ({ x: index + 1, y: index + 1 }));
+
+    for (const queuedPoint of queuedPoints) {
+      controller.queueExtendPoint('stroke-1', queuedPoint);
+    }
+
+    vi.advanceTimersByTime(33);
+
+    expect(sendExtendBatch).toHaveBeenCalledTimes(2);
+    expect(sendExtendBatch.mock.calls[0]?.[0].points).toHaveLength(DRAWING_MAX_EXTEND_POINTS);
+    expect(sendExtendBatch.mock.calls[1]?.[0].points).toEqual(queuedPoints.slice(DRAWING_MAX_EXTEND_POINTS));
   });
 
   it('requeues failed extend batches while the stroke remains active', async () => {

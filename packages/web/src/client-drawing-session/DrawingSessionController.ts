@@ -1,5 +1,5 @@
 import type { ApiResult } from '@7ito/sketcherson-common/room';
-import type { DrawingPoint } from '@7ito/sketcherson-common/drawing';
+import { DRAWING_MAX_EXTEND_POINTS, type DrawingPoint } from '@7ito/sketcherson-common/drawing';
 import {
   getBaseExtendFlushIntervalMs,
   getScheduledExtendFlushIntervalMs,
@@ -44,6 +44,8 @@ export interface ExtendActiveStrokeResult {
   point: DrawingPoint;
 }
 
+const MIN_EXTEND_POINT_DISTANCE_SQUARED = 0.25;
+
 export class DrawingSessionController {
   private activeStroke: ActiveStrokeState | null = null;
   private pointerActive = false;
@@ -67,7 +69,7 @@ export class DrawingSessionController {
     }
 
     const previousPoint = this.activeStroke.lastPoint;
-    if (previousPoint.x === point.x && previousPoint.y === point.y) {
+    if (getPointDistanceSquared(previousPoint, point) < MIN_EXTEND_POINT_DISTANCE_SQUARED) {
       return null;
     }
 
@@ -135,6 +137,33 @@ export class DrawingSessionController {
 
     const points = this.pendingExtendPoints;
     this.pendingExtendPoints = [];
+
+    for (let index = 0; index < points.length; index += DRAWING_MAX_EXTEND_POINTS) {
+      this.sendExtendPointBatch(strokeId, points.slice(index, index + DRAWING_MAX_EXTEND_POINTS));
+    }
+  }
+
+  resetPendingExtend(): void {
+    this.pendingExtendPoints = [];
+    this.clearPendingExtendFlush();
+  }
+
+  dispose(): void {
+    this.abortActiveStroke();
+  }
+
+  getPendingExtendPointCount(): number {
+    return this.pendingExtendPoints.length;
+  }
+
+  private clearPendingExtendFlush(): void {
+    if (this.flushTimer !== null) {
+      this.options.clearTimeout(this.flushTimer);
+      this.flushTimer = null;
+    }
+  }
+
+  private sendExtendPointBatch(strokeId: string, points: DrawingPoint[]): void {
     const batchId = this.extendBatchId + 1;
     this.extendBatchId = batchId;
     const sentAtMs = this.options.now();
@@ -171,24 +200,10 @@ export class DrawingSessionController {
       }
     });
   }
+}
 
-  resetPendingExtend(): void {
-    this.pendingExtendPoints = [];
-    this.clearPendingExtendFlush();
-  }
-
-  dispose(): void {
-    this.abortActiveStroke();
-  }
-
-  getPendingExtendPointCount(): number {
-    return this.pendingExtendPoints.length;
-  }
-
-  private clearPendingExtendFlush(): void {
-    if (this.flushTimer !== null) {
-      this.options.clearTimeout(this.flushTimer);
-      this.flushTimer = null;
-    }
-  }
+function getPointDistanceSquared(previous: DrawingPoint, next: DrawingPoint): number {
+  const dx = next.x - previous.x;
+  const dy = next.y - previous.y;
+  return dx * dx + dy * dy;
 }
