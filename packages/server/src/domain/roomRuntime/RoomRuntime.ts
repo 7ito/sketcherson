@@ -120,7 +120,11 @@ export class RoomRuntime {
   }
 
   public startRoomOutcome(input: EmptyActorInput): RoomCommandOutcome<StartRoomSuccess> {
-    return this.withRoomStateBroadcast(this.startRoom(input), input.origin);
+    const response = this.startRoom(input);
+    return {
+      response,
+      effects: response.ok ? [this.createBroadcastRoomStateEffect(response.data.room.code, input.origin)] : [],
+    };
   }
 
   public pauseRoom(input: EmptyActorInput): ApiResult<PauseRoomSuccess> {
@@ -162,7 +166,7 @@ export class RoomRuntime {
                 },
               ]
             : []),
-          this.createBroadcastRoomStateEffect(result.data.room.code, input.origin),
+          this.createBroadcastRoomStateEffect(result.data.room.code, input.origin, { drawingPayload: 'omit' }),
         ]
       : [];
 
@@ -205,6 +209,7 @@ export class RoomRuntime {
             action: input.payload.action,
             revision: response.data.revision,
             stateRevision: response.data.stateRevision,
+            authoritativeStroke: response.data.authoritativeStroke,
           },
         }]
       : [];
@@ -254,7 +259,7 @@ export class RoomRuntime {
   public disconnectOutcome(input: { connectionId: string; origin: string }): RoomCommandOutcome<string | null> {
     const roomCode = this.disconnect(input);
     const response = { ok: true as const, data: roomCode };
-    const effects: RoomRuntimeEffect[] = roomCode ? [this.createBroadcastRoomStateEffect(roomCode, input.origin)] : [];
+    const effects: RoomRuntimeEffect[] = roomCode ? [this.createBroadcastRoomStateEffect(roomCode, input.origin, { drawingPayload: 'omit' })] : [];
 
     return { response, effects };
   }
@@ -284,7 +289,7 @@ export class RoomRuntime {
   private withRoomStateBroadcast<T extends { room: { code: string } }>(response: ApiResult<T>, origin: string): RoomCommandOutcome<T> {
     return {
       response,
-      effects: response.ok ? [this.createBroadcastRoomStateEffect(response.data.room.code, origin)] : [],
+      effects: response.ok ? [this.createBroadcastRoomStateEffect(response.data.room.code, origin, { drawingPayload: 'omit' })] : [],
     };
   }
 

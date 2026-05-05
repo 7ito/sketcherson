@@ -329,6 +329,12 @@ export function createRoomClient(options: CreateRoomClientOptions): RoomClient {
     drawingTransport.on('room:drawingActionApplied', (payload) => handleDrawingActionApplied(payload, 'match')),
     drawingTransport.on('room:lobbyDrawingActionApplied', (payload) => handleDrawingActionApplied(payload, 'lobby')),
     transport.onConnectionEvent('connect', handleConnect),
+    drawingTransport.onConnectionEvent?.('connect', () => {
+      const currentSession = snapshot.joinedSession;
+      if (currentSession && activeRoomRef?.code === currentSession.roomCode) {
+        bindDrawingTransport(currentSession.roomCode);
+      }
+    }) ?? (() => {}),
     transport.onConnectionEvent('disconnect', handleDisconnect),
     transport.onConnectionEvent('connect_error', handleConnectError),
   );
@@ -455,6 +461,9 @@ function createDrawingTransportAdapter(transport: RoomTransport): RoomDrawingTra
     },
     on(event, handler) {
       return transport.on(event, handler);
+    },
+    onConnectionEvent(event, handler) {
+      return transport.onConnectionEvent(event, handler);
     },
   };
 }

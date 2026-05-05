@@ -45,6 +45,7 @@ export class DrawingController {
         roomCode: result.data.code,
         revision: result.data.revision,
         stateRevision: result.data.stateRevision,
+        authoritativeStroke: result.data.authoritativeStroke,
       },
     };
   }
@@ -70,6 +71,7 @@ export class DrawingController {
         roomCode: result.data.code,
         revision: result.data.revision,
         stateRevision: result.data.stateRevision,
+        authoritativeStroke: result.data.authoritativeStroke,
       },
     };
   }

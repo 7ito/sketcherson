@@ -304,12 +304,14 @@ export interface DrawingActionSuccess {
   roomCode: string;
   revision: number;
   stateRevision?: number;
+  authoritativeStroke?: import('./drawing').DrawingStrokeOperation;
 }
 
 export interface LobbyDrawingActionSuccess {
   roomCode: string;
   revision: number;
   stateRevision?: number;
+  authoritativeStroke?: import('./drawing').DrawingStrokeOperation;
 }
 
 export interface SubmitMessageSuccess {

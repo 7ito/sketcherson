@@ -26,6 +26,7 @@ interface PendingCoalescedEvent {
 
 export class DrawingBroadcastCoordinator {
   private readonly pendingExtendEvents = new Map<string, PendingCoalescedEvent>();
+  private readonly pendingFlushTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
   public constructor(private readonly namespace: DrawingBroadcastNamespace) {}
 
@@ -57,6 +58,7 @@ export class DrawingBroadcastCoordinator {
   public flushAll(roomCode: string, target: 'match' | 'lobby'): void {
     for (const [socketId, pending] of [...this.pendingExtendEvents]) {
       this.pendingExtendEvents.delete(socketId);
+      this.clearPendingTimer(socketId);
       logCoalesced(roomCode, target, pending);
     }
   }
@@ -86,6 +88,20 @@ export class DrawingBroadcastCoordinator {
       mergedLiveUpdateCount: Math.max(0, coalescedCount - 1),
       eventBytes: estimateSerializedPayloadBytes(event),
     });
+
+    if (!this.pendingFlushTimers.has(socket.id)) {
+      this.pendingFlushTimers.set(socket.id, setTimeout(() => {
+        this.pendingFlushTimers.delete(socket.id);
+        if (this.isWritable(socket)) {
+          this.flushPending(socket, roomCode, target);
+          return;
+        }
+
+        if (this.pendingExtendEvents.has(socket.id)) {
+          this.queueScheduledFlush(socket, roomCode, target);
+        }
+      }, 100));
+    }
   }
 
   private flushPending(socket: DrawingBroadcastSocket, roomCode: string, target: 'match' | 'lobby'): void {
@@ -95,8 +111,34 @@ export class DrawingBroadcastCoordinator {
     }
 
     this.pendingExtendEvents.delete(socket.id);
+    this.clearPendingTimer(socket.id);
     socket.emit(pending.eventName, pending.payload);
     logCoalesced(roomCode, target, pending);
+  }
+
+  private queueScheduledFlush(socket: DrawingBroadcastSocket, roomCode: string, target: 'match' | 'lobby'): void {
+    if (this.pendingFlushTimers.has(socket.id)) {
+      return;
+    }
+
+    this.pendingFlushTimers.set(socket.id, setTimeout(() => {
+      this.pendingFlushTimers.delete(socket.id);
+      if (this.isWritable(socket)) {
+        this.flushPending(socket, roomCode, target);
+      } else if (this.pendingExtendEvents.has(socket.id)) {
+        this.queueScheduledFlush(socket, roomCode, target);
+      }
+    }, 100));
+  }
+
+  private clearPendingTimer(socketId: string): void {
+    const timer = this.pendingFlushTimers.get(socketId);
+    if (!timer) {
+      return;
+    }
+
+    clearTimeout(timer);
+    this.pendingFlushTimers.delete(socketId);
   }
 
   private isWritable(socket: DrawingBroadcastSocket): boolean {

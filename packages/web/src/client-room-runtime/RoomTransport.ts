@@ -11,6 +11,10 @@ export interface RoomConnectionEvents {
 export interface RoomDrawingTransport {
   emitWithAck<E extends RoomDrawingClientEventName>(event: E, payload: RoomDrawingRequest<E>): Promise<RoomDrawingResponse<E>>;
   on<E extends RoomServerEventName>(event: E, handler: (payload: RoomServerPayload<E>) => void): RoomTransportUnsubscribe;
+  onConnectionEvent?<E extends keyof RoomConnectionEvents>(
+    event: E,
+    handler: (payload: RoomConnectionEvents[E]) => void,
+  ): RoomTransportUnsubscribe;
 }
 
 export interface RoomTransport {

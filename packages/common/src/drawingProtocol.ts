@@ -79,7 +79,8 @@ export function applyRemoteDrawingEvent(drawing: DrawingState, event: DrawingAct
     };
   }
 
-  if (event.revision !== drawing.revision + 1) {
+  const isCoalescedExtend = event.action.type === 'extendStroke' && event.revision > drawing.revision + 1;
+  if (event.revision !== drawing.revision + 1 && !isCoalescedExtend) {
     return {
       state: drawing,
       status: 'requires-resync',
@@ -89,7 +90,18 @@ export function applyRemoteDrawingEvent(drawing: DrawingState, event: DrawingAct
   const result = event.action.type === 'endStroke' && event.authoritativeStroke
     ? applyAuthoritativeEndStrokeEvent(drawing, event)
     : applyDrawingAction(drawing, event.action);
-  if (!result.ok || result.data.revision !== event.revision) {
+  if (!result.ok) {
+    return {
+      state: drawing,
+      status: 'requires-resync',
+    };
+  }
+
+  const appliedState = isCoalescedExtend
+    ? { ...result.data, revision: event.revision }
+    : result.data;
+
+  if (appliedState.revision !== event.revision) {
     return {
       state: drawing,
       status: 'requires-resync',
@@ -97,7 +109,7 @@ export function applyRemoteDrawingEvent(drawing: DrawingState, event: DrawingAct
   }
 
   return {
-    state: result.data,
+    state: appliedState,
     status: 'applied',
   };
 }
