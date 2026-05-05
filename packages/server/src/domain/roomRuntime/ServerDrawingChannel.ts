@@ -1,5 +1,5 @@
 import type { DrawingTarget } from '@7ito/sketcherson-common/drawingRealtime';
-import type { DrawingAction, DrawingActionAppliedEvent, DrawingState } from '@7ito/sketcherson-common/drawing';
+import type { DrawingAction, DrawingActionAppliedEvent, DrawingState, DrawingStrokeOperation } from '@7ito/sketcherson-common/drawing';
 import type { ApiResult } from '@7ito/sketcherson-common/room';
 import { estimateSerializedPayloadBytes, logDrawingTransportMetric } from '../../drawingMetrics';
 import type { RoomRecord } from './model';
@@ -46,6 +46,9 @@ export class ServerDrawingChannel implements DrawingChannelServer {
       return policyResult;
     }
 
+    const authoritativeStroke = input.action.type === 'endStroke'
+      ? cloneActiveStroke(policyResult.data, input.action.strokeId)
+      : undefined;
     const result = this.options.applyDrawingAction(policyResult.data, input.action);
     if (!result.ok) {
       return result;
@@ -68,6 +71,7 @@ export class ServerDrawingChannel implements DrawingChannelServer {
         action: input.action,
         revision: policyResult.data.revision,
         stateRevision: input.room.stateRevision,
+        authoritativeStroke,
       },
     };
   }
@@ -185,4 +189,20 @@ export class ServerDrawingChannel implements DrawingChannelServer {
 
     return this.options.consumeDrawingRateLimit(connectionId);
   }
+}
+
+function cloneActiveStroke(drawing: DrawingState, strokeId: string): DrawingStrokeOperation | undefined {
+  const stroke = drawing.activeStrokes.find((candidate) => candidate.id === strokeId);
+  if (!stroke) {
+    return undefined;
+  }
+
+  return {
+    kind: 'stroke',
+    id: stroke.id,
+    tool: stroke.tool,
+    color: stroke.color,
+    size: stroke.size,
+    points: stroke.points.map((point) => ({ ...point })),
+  };
 }

@@ -86,7 +86,9 @@ export function applyRemoteDrawingEvent(drawing: DrawingState, event: DrawingAct
     };
   }
 
-  const result = applyDrawingAction(drawing, event.action);
+  const result = event.action.type === 'endStroke' && event.authoritativeStroke
+    ? applyAuthoritativeEndStrokeEvent(drawing, event)
+    : applyDrawingAction(drawing, event.action);
   if (!result.ok || result.data.revision !== event.revision) {
     return {
       state: drawing,
@@ -97,6 +99,29 @@ export function applyRemoteDrawingEvent(drawing: DrawingState, event: DrawingAct
   return {
     state: result.data,
     status: 'applied',
+  };
+}
+
+function applyAuthoritativeEndStrokeEvent(drawing: DrawingState, event: DrawingActionAppliedEvent): ApiResult<DrawingState> {
+  if (event.action.type !== 'endStroke' || !event.authoritativeStroke || event.authoritativeStroke.id !== event.action.strokeId) {
+    return applyDrawingAction(drawing, event.action);
+  }
+
+  const strokeId = event.action.strokeId;
+  const draft = {
+    ...drawing,
+    operations: [...drawing.operations],
+    activeStrokes: drawing.activeStrokes.filter((stroke) => stroke.id !== strokeId),
+    undoneOperations: [],
+    snapshotDataUrl: null,
+    revision: drawing.revision + 1,
+  };
+
+  draft.operations.push(cloneStroke(event.authoritativeStroke));
+
+  return {
+    ok: true,
+    data: draft,
   };
 }
 

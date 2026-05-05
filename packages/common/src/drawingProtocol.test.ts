@@ -165,6 +165,25 @@ describe('drawingProtocol', () => {
     expect(gap.state).toBe(applied.state);
   });
 
+  it('uses authoritative stroke completion to reconcile missed live extensions', () => {
+    const drawing = createDrawingState();
+    drawing.activeStrokes = [stroke({ points: [{ x: 10, y: 20 }, { x: 20, y: 30 }] })];
+    drawing.revision = 2;
+
+    const finalStroke = stroke({ points: [{ x: 10, y: 20 }, { x: 20, y: 30 }, { x: 40, y: 50 }, { x: 80, y: 90 }] });
+    const applied = applyRemoteDrawingEvent(drawing, {
+      code: 'ABCDEF',
+      action: { type: 'endStroke', strokeId: 'stroke-1' },
+      revision: 3,
+      authoritativeStroke: finalStroke,
+    });
+
+    expect(applied.status).toBe('applied');
+    expect(applied.state.activeStrokes).toEqual([]);
+    expect(applied.state.operations).toEqual([finalStroke]);
+    expect(drawing.activeStrokes[0]?.points).toHaveLength(2);
+  });
+
   it('finalizes active strokes into committed operations and can render a snapshot', () => {
     const drawing = createDrawingState();
     drawing.activeStrokes = [stroke()];
