@@ -288,7 +288,7 @@ export class RoomRuntime {
     };
   }
 
-  private createBroadcastRoomStateEffect(roomCode: string, origin: string): RoomRuntimeEffect {
-    return this.createRoomStateBroadcastEffect(roomCode, origin);
+  private createBroadcastRoomStateEffect(roomCode: string, origin: string, options?: { drawingPayload?: 'include' | 'omit' }): RoomRuntimeEffect {
+    return this.createRoomStateBroadcastEffect(roomCode, origin, options);
   }
 }

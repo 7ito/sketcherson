@@ -16,6 +16,7 @@ import { createServer as createHttpServer } from 'node:http';
 import { Server } from 'socket.io';
 import { estimateSerializedPayloadBytes, logDrawingTransportMetric } from './drawingMetrics';
 import { RoomRuntime, type RoomRuntimeEffect } from './domain/roomRuntime';
+import { DrawingBroadcastCoordinator } from './domain/roomRuntime/DrawingBroadcastCoordinator';
 import { logServerError, logServerEvent } from './logger';
 
 interface ActionSuccess {
@@ -72,6 +73,7 @@ export function createGameServer(options?: Partial<CreateGameServerOptions<any>>
   });
   const drawingIo = io.of('/drawing') as unknown as Server<RoomDrawingClientToServerSocketEvents, RoomServerToClientSocketEvents>;
   const drawingConnectionActors = new Map<string, string>();
+  const drawingBroadcastCoordinator = new DrawingBroadcastCoordinator(drawingIo);
   const roomRuntime = new RoomRuntime({
     countdownMs: options?.countdownMs,
     revealMs: options?.revealMs,
@@ -104,10 +106,12 @@ export function createGameServer(options?: Partial<CreateGameServerOptions<any>>
           }
           break;
         case 'broadcastDrawingAction':
-          drawingIo.to(effect.roomCode).emit(
-            effect.target === 'match' ? 'room:drawingActionApplied' : 'room:lobbyDrawingActionApplied',
-            effect.event,
-          );
+          void drawingBroadcastCoordinator.broadcast({
+            roomCode: effect.roomCode,
+            eventName: effect.target === 'match' ? 'room:drawingActionApplied' : 'room:lobbyDrawingActionApplied',
+            event: effect.event,
+            target: effect.target,
+          });
           break;
       }
     }
