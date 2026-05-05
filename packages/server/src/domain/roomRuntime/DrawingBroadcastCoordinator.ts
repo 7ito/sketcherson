@@ -75,12 +75,15 @@ export class DrawingBroadcastCoordinator {
       coalescedCount: (existing?.coalescedCount ?? 0) + 1,
     });
 
+    const coalescedCount = (existing?.coalescedCount ?? 0) + 1;
+
     logDrawingTransportMetric('drawing.extend.coalesced', {
       socketId: socket.id,
       roomCode,
       target,
       revision: event.revision,
-      coalescedCount: (existing?.coalescedCount ?? 0) + 1,
+      coalescedCount,
+      mergedLiveUpdateCount: Math.max(0, coalescedCount - 1),
       eventBytes: estimateSerializedPayloadBytes(event),
     });
   }
@@ -107,6 +110,7 @@ function logCoalesced(roomCode: string, target: 'match' | 'lobby', pending: Pend
     target,
     revision: pending.payload.revision,
     coalescedCount: pending.coalescedCount,
+    mergedLiveUpdateCount: Math.max(0, pending.coalescedCount - 1),
     eventBytes: estimateSerializedPayloadBytes(pending.payload),
   });
 }

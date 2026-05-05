@@ -165,6 +165,7 @@ export function recordDrawingResync(fields: {
   }
 
   logDrawingMetric('drawing.resync_requested', fields);
+  recordAggregateMetric(`drawing.resync_count.${fields.target}.${fields.reason}`, 1, 'count');
 }
 
 function isDrawingMetricsEnabled(): boolean {
