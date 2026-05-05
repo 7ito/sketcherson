@@ -82,7 +82,11 @@ export function MatchView({
   const isCurrentDrawer = currentTurn?.drawerPlayerId === currentPlayerId;
   const hasGuessedCorrectly = Boolean(currentTurn?.correctGuessPlayerIds.includes(currentPlayerId));
   const canReroll = Boolean(
-    GAME_RUNTIME.rules.features.reroll && isCurrentDrawer && currentTurn && currentTurn.rerollsRemaining > 0 && ['countdown', 'round'].includes(room.status),
+    GAME_RUNTIME.rules.features.reroll &&
+      isCurrentDrawer &&
+      currentTurn &&
+      (currentTurn.rerollsRemaining === 'unlimited' || currentTurn.rerollsRemaining > 0) &&
+      ['countdown', 'round'].includes(room.status),
   );
   const canPauseMatch = GAME_RUNTIME.rules.features.pause;
   const canDraw = Boolean(isCurrentDrawer && room.status === 'round' && currentTurn);
@@ -381,7 +385,9 @@ export function MatchView({
                     disabled={isRerolling}
                     style={{ width: '100%' }}
                   >
-                    {isRerolling ? SHELL_MATCH_COPY.rerolling : `${GAME_TERMINOLOGY.rerollLabel} (${currentTurn.rerollsRemaining} left)`}
+                    {isRerolling
+                      ? SHELL_MATCH_COPY.rerolling
+                      : `${GAME_TERMINOLOGY.rerollLabel} (${currentTurn.rerollsRemaining === 'unlimited' ? 'unlimited' : currentTurn.rerollsRemaining} left)`}
                   </button>
                 ) : null}
                 {currentTurn.rerolledFrom ? (

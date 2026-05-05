@@ -698,6 +698,7 @@ describe('RoomRuntime', () => {
       firstCorrectGuessTimeCapSeconds: 30,
       guessingDelaySeconds: 0,
       turnsPerPlayer: 3,
+      rerollsPerTurn: 1,
       artEnabled: true,
       enabledCollectionIds: ['troop', 'building', 'spell'],
     });
@@ -1061,6 +1062,57 @@ describe('RoomRuntime', () => {
     expect(rerollResult.data.room.match.currentTurn.rerollsRemaining).toBe(0);
     expect(rerollResult.data.room.match.currentTurn.rerolledFrom).not.toBeNull();
     expect(rerollResult.data.room.match.currentTurn.drawing).toBeNull();
+  });
+
+  it('lets the host configure unlimited rerolls for each turn', () => {
+    const service = createRoomRuntimeDriver();
+    const createResult = service.createRoom('Host', 'socket-1', 'https://sketcherson.example');
+
+    if (!createResult.ok) {
+      throw new Error('Expected room creation to succeed');
+    }
+
+    const joinResult = service.joinRoom(createResult.data.room.code, 'Guest', 'socket-2', 'https://sketcherson.example');
+
+    if (!joinResult.ok) {
+      throw new Error('Expected room join to succeed');
+    }
+
+    const settingsUpdate = service.updateLobbySettings(
+      'socket-1',
+      {
+        roundTimerSeconds: 60,
+        firstCorrectGuessTimeCapSeconds: 30,
+        turnsPerPlayer: 1,
+        rerollsPerTurn: 'unlimited',
+        artEnabled: true,
+      },
+      'https://sketcherson.example',
+    );
+    expect(settingsUpdate.ok).toBe(true);
+
+    const startResult = service.startRoom('socket-1', 'https://sketcherson.example');
+    expect(startResult.ok).toBe(true);
+
+    if (!startResult.ok || !startResult.data.room.match?.currentTurn) {
+      return;
+    }
+
+    expect(startResult.data.room.settings.rerollsPerTurn).toBe('unlimited');
+    expect(startResult.data.room.match.currentTurn.rerollsRemaining).toBe('unlimited');
+
+    const drawerSocketId = startResult.data.room.match.currentTurn.drawerPlayerId === createResult.data.playerId ? 'socket-1' : 'socket-2';
+
+    for (let rerollCount = 0; rerollCount < 3; rerollCount += 1) {
+      const rerollResult = service.rerollTurn(drawerSocketId, 'https://sketcherson.example');
+      expect(rerollResult.ok).toBe(true);
+
+      if (!rerollResult.ok || !rerollResult.data.room.match?.currentTurn) {
+        return;
+      }
+
+      expect(rerollResult.data.room.match.currentTurn.rerollsRemaining).toBe('unlimited');
+    }
   });
 
   it('projects prompt metadata only to the drawer until reveal', () => {
@@ -2016,6 +2068,7 @@ describe('RoomRuntime', () => {
       firstCorrectGuessTimeCapSeconds: 30,
       guessingDelaySeconds: 0,
       turnsPerPlayer: 2,
+      rerollsPerTurn: 1,
       artEnabled: false,
       enabledCollectionIds: ['troop', 'building', 'spell'],
     });

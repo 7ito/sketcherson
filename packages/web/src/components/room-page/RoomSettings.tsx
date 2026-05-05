@@ -23,6 +23,15 @@ const formatFirstCorrectGuessTimeCapOption = (
   unit: 's' | 'seconds',
 ) => `${preset}${unit === 's' ? 's' : ' seconds'}${preset === roundTimerSeconds ? ' (none)' : ''}`;
 
+const parseRerollsPerTurnOption = (value: string): NonNullable<LobbySettings['rerollsPerTurn']> =>
+  value === 'unlimited' ? 'unlimited' : Number(value) as NonNullable<LobbySettings['rerollsPerTurn']>;
+
+const formatRerollsPerTurnOption = (preset: NonNullable<LobbySettings['rerollsPerTurn']>): string =>
+  preset === 'unlimited' ? 'Unlimited' : String(preset);
+
+const getRerollsPerTurnValue = (settings: LobbySettings): NonNullable<LobbySettings['rerollsPerTurn']> =>
+  settings.rerollsPerTurn ?? GAME_SETTINGS_RULES.rerollsPerTurn.default;
+
 function updateRoundTimerSettings(
   settings: LobbySettings,
   roundTimerSeconds: LobbySettings['roundTimerSeconds'],
@@ -174,6 +183,30 @@ export function SharedSettingsFields({
           </label>
         </div>
 
+        {GAME_RUNTIME.rules.features.reroll ? (
+          <div className="lobby-settings-row">
+            <label className="lobby-setting">
+              <span className="lobby-setting-label">{SHELL_SETTINGS_COPY.rerollsPerTurnLabel}</span>
+              <select
+                value={getRerollsPerTurnValue(settings)}
+                disabled={disabled}
+                onChange={(event) =>
+                  onChange({
+                    ...settings,
+                    rerollsPerTurn: parseRerollsPerTurnOption(event.target.value),
+                  })
+                }
+              >
+                {GAME_SETTINGS_RULES.rerollsPerTurn.options.map((preset) => (
+                  <option key={preset} value={preset}>
+                    {formatRerollsPerTurnOption(preset)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        ) : null}
+
         {GAME_RUNTIME.rules.features.closeGuessFeedback ? (
           <div className="lobby-settings-row">
             <label className="lobby-toggle-row">
@@ -297,6 +330,28 @@ export function SharedSettingsFields({
         </select>
       </label>
 
+      {GAME_RUNTIME.rules.features.reroll ? (
+        <label>
+          <span>{SHELL_SETTINGS_COPY.rerollsPerTurnLabel}</span>
+          <select
+            value={getRerollsPerTurnValue(settings)}
+            disabled={disabled}
+            onChange={(event) =>
+              onChange({
+                ...settings,
+                rerollsPerTurn: parseRerollsPerTurnOption(event.target.value),
+              })
+            }
+          >
+            {GAME_SETTINGS_RULES.rerollsPerTurn.options.map((preset) => (
+              <option key={preset} value={preset}>
+                {formatRerollsPerTurnOption(preset)}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
+
       <label className="checkbox-row">
         <input
           type="checkbox"
@@ -351,6 +406,12 @@ export function SettingsSummary({
             <span className="lobby-setting-value">{settings.turnsPerPlayer}</span>
           </div>
         </div>
+        {GAME_RUNTIME.rules.features.reroll ? (
+          <div className="lobby-setting-display">
+            <span className="lobby-setting-label">{SHELL_SETTINGS_COPY.rerollsPerTurnLabel}</span>
+            <span className="lobby-setting-value">{formatRerollsPerTurnOption(getRerollsPerTurnValue(settings))}</span>
+          </div>
+        ) : null}
         <div className="lobby-setting-display">
           <span className="lobby-setting-label">{capitalizeFirst(SHELL_SETTINGS_COPY.referenceArtToggleLabel)}</span>
           <span className="lobby-setting-value">{settings.artEnabled ? 'Enabled' : 'Disabled'}</span>
@@ -384,6 +445,12 @@ export function SettingsSummary({
           <dt>{SHELL_SETTINGS_COPY.turnsPerPlayerLabel}</dt>
           <dd>{settings.turnsPerPlayer}</dd>
         </div>
+        {GAME_RUNTIME.rules.features.reroll ? (
+          <div>
+            <dt>{SHELL_SETTINGS_COPY.rerollsPerTurnLabel}</dt>
+            <dd>{formatRerollsPerTurnOption(getRerollsPerTurnValue(settings))}</dd>
+          </div>
+        ) : null}
         <div>
           <dt>{capitalizeFirst(SHELL_SETTINGS_COPY.referenceArtToggleLabel)}</dt>
           <dd>{settings.artEnabled ? 'Enabled' : 'Disabled'}</dd>

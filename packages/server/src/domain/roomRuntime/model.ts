@@ -1,4 +1,4 @@
-import type { LiveRoomStatus, LobbySettings, RoomFeedAudience, RoomState, RoundScoreChange, ScoreboardEntry, SystemFeedItem } from '@7ito/sketcherson-common/room';
+import type { LiveRoomStatus, LobbySettings, RerollsRemaining, RoomFeedAudience, RoomState, RoundScoreChange, ScoreboardEntry, SystemFeedItem } from '@7ito/sketcherson-common/room';
 import type { DrawingState } from '@7ito/sketcherson-common/drawing';
 import type { PlannedTurn } from './turnPlan';
 
@@ -30,7 +30,7 @@ export interface ActiveTurnRecord {
   drawerNickname: string;
   promptId: string;
   prompt: string;
-  rerollsRemaining: number;
+  rerollsRemaining: RerollsRemaining;
   rerolledFrom: string | null;
   roundStartedAt: number | null;
   roundDurationMs: number;

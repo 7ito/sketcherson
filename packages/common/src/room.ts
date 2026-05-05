@@ -18,6 +18,7 @@ export const ROUND_TIMER_PRESETS = [60, 75, 90, 105, 120] as const;
 export const FIRST_CORRECT_GUESS_TIME_CAP_PRESETS = [15, 30, 45, 60, 75, 90, 105, 120] as const;
 export const GUESSING_DELAY_PRESETS = [0, 5, 10, 15] as const;
 export const TURNS_PER_PLAYER_PRESETS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
+export const REROLLS_PER_TURN_PRESETS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 'unlimited'] as const;
 
 export type LiveRoomStatus = 'countdown' | 'round' | 'reveal';
 export type RoomStatus = 'lobby' | LiveRoomStatus | 'paused' | 'postgame';
@@ -25,6 +26,8 @@ export type RoundTimerPreset = (typeof ROUND_TIMER_PRESETS)[number];
 export type FirstCorrectGuessTimeCapPreset = (typeof FIRST_CORRECT_GUESS_TIME_CAP_PRESETS)[number];
 export type GuessingDelayPreset = (typeof GUESSING_DELAY_PRESETS)[number];
 export type TurnsPerPlayerPreset = (typeof TURNS_PER_PLAYER_PRESETS)[number];
+export type RerollsPerTurnPreset = (typeof REROLLS_PER_TURN_PRESETS)[number];
+export type RerollsRemaining = number | 'unlimited';
 export type PromptVisibility = 'hidden' | 'assigned' | 'revealed';
 
 export interface LobbySettings {
@@ -34,6 +37,7 @@ export interface LobbySettings {
   hideCloseGuesses?: boolean;
   showCloseGuessAlerts?: boolean;
   turnsPerPlayer: TurnsPerPlayerPreset;
+  rerollsPerTurn?: RerollsPerTurnPreset;
   artEnabled: boolean;
   enabledCollectionIds?: string[];
 }
@@ -136,7 +140,7 @@ export interface CurrentTurnState {
   promptVisibility: PromptVisibility;
   promptDisplayMetadata?: PromptDisplayMetadata | null;
   referenceArtUrl?: string | null;
-  rerollsRemaining: number;
+  rerollsRemaining: RerollsRemaining;
   rerolledFrom: string | null;
   correctGuessPlayerIds: string[];
   guessingDelayRemainingMs?: number | null;

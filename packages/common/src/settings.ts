@@ -1,7 +1,7 @@
 import { resolveDrawingGameRules, type ResolvedDrawingGameRules } from './drawingGameRules';
 import type { GameDefinition } from './gameDefinition';
 import { createPromptEngine } from './promptEngine';
-import type { FirstCorrectGuessTimeCapPreset, LobbySettings, RoundTimerPreset } from './room';
+import type { FirstCorrectGuessTimeCapPreset, LobbySettings, RerollsPerTurnPreset, RoundTimerPreset } from './room';
 
 export function normalizeLobbySettingsForGame(gameDefinition: GameDefinition, settings: LobbySettings, rules: ResolvedDrawingGameRules = resolveDrawingGameRules()): LobbySettings {
   const defaultEnabledCollectionIds = createPromptEngine({ definition: gameDefinition }).normalizeCollectionIds();
@@ -11,7 +11,9 @@ export function normalizeLobbySettingsForGame(gameDefinition: GameDefinition, se
     firstCorrectGuessTimeCapSeconds: rules.settings.firstCorrectGuessTimeCapSeconds.default,
     guessingDelaySeconds: rules.settings.guessingDelaySeconds.default,
     turnsPerPlayer: rules.settings.turnsPerPlayer.default,
-  }, rules.features.closeGuessFeedback ? {
+  }, rules.features.reroll ? {
+    rerollsPerTurn: rules.settings.rerollsPerTurn.default,
+  } : {}, rules.features.closeGuessFeedback ? {
     hideCloseGuesses: false,
     showCloseGuessAlerts: true,
   } : {}, settings, {
@@ -24,6 +26,7 @@ export function normalizeLobbySettingsForGame(gameDefinition: GameDefinition, se
 
 export function areLobbySettingsValidForGame(gameDefinition: GameDefinition, settings: LobbySettings, rules: ResolvedDrawingGameRules = resolveDrawingGameRules()): boolean {
   const normalizedSettings = normalizeLobbySettingsForGame(gameDefinition, settings, rules);
+  const rerollsPerTurn = normalizedSettings.rerollsPerTurn ?? rules.settings.rerollsPerTurn.default;
 
   return (
     rules.settings.roundTimerSeconds.options.includes(normalizedSettings.roundTimerSeconds) &&
@@ -32,6 +35,7 @@ export function areLobbySettingsValidForGame(gameDefinition: GameDefinition, set
     (!normalizedSettings.hideCloseGuesses || rules.features.closeGuessFeedback) &&
     (!normalizedSettings.showCloseGuessAlerts || rules.features.closeGuessFeedback) &&
     rules.settings.turnsPerPlayer.options.includes(normalizedSettings.turnsPerPlayer) &&
+    (!rules.features.reroll || rules.settings.rerollsPerTurn.options.includes(rerollsPerTurn)) &&
     createPromptEngine({ definition: gameDefinition }).areCollectionIdsValid(settings.enabledCollectionIds ?? normalizedSettings.enabledCollectionIds)
   );
 }
@@ -42,6 +46,7 @@ export function defaultLobbySettingsForGame(gameDefinition: GameDefinition, rule
     firstCorrectGuessTimeCapSeconds: rules.settings.firstCorrectGuessTimeCapSeconds.default,
     guessingDelaySeconds: rules.settings.guessingDelaySeconds.default,
     turnsPerPlayer: rules.settings.turnsPerPlayer.default,
+    ...(rules.features.reroll ? { rerollsPerTurn: rules.settings.rerollsPerTurn.default as RerollsPerTurnPreset } : {}),
     artEnabled: true,
   }, rules);
 }

@@ -1,4 +1,4 @@
-import { type ApiError, type LiveRoomStatus, type RoomState, type RoundScoreChange } from '@7ito/sketcherson-common/room';
+import { type ApiError, type LiveRoomStatus, type RerollsRemaining, type RoomState, type RoundScoreChange } from '@7ito/sketcherson-common/room';
 import type { ResolvedDrawingGameRules } from '@7ito/sketcherson-common/game';
 import type { DrawingState } from '@7ito/sketcherson-common/drawing';
 import type { PromptEngine } from '@7ito/sketcherson-common/prompts';
@@ -70,6 +70,14 @@ export class MatchController {
     this.scheduleRoomTimer = options.scheduleRoomTimer;
     this.freezeReconnectTimers = options.freezeReconnectTimers;
     this.resumeReconnectTimers = options.resumeReconnectTimers;
+  }
+
+  private getRerollsPerTurn(room: RoomRecord): RerollsRemaining {
+    if (!this.rules.features.reroll) {
+      return 0;
+    }
+
+    return room.settings.rerollsPerTurn ?? this.rules.settings.rerollsPerTurn.default;
   }
 
   public startRoom(room: RoomRecord): { ok: true } | { ok: false; error: ApiError } {
@@ -211,7 +219,7 @@ export class MatchController {
       drawerNickname,
       promptId: prompt.id,
       prompt: prompt.name,
-      rerollsRemaining: this.rules.turns.rerollsPerTurn,
+      rerollsRemaining: this.getRerollsPerTurn(room),
       rerolledFrom: null,
       roundStartedAt: null,
       roundDurationMs: this.getRoundDurationMs(room),
@@ -485,7 +493,7 @@ export class MatchController {
       };
     }
 
-    if (activeTurn.rerollsRemaining < 1) {
+    if (activeTurn.rerollsRemaining !== 'unlimited' && activeTurn.rerollsRemaining < 1) {
       return {
         ok: false,
         error: {
@@ -504,7 +512,9 @@ export class MatchController {
     });
     activeTurn.promptId = nextPrompt.prompt.id;
     activeTurn.prompt = nextPrompt.prompt.name;
-    activeTurn.rerollsRemaining -= 1;
+    if (activeTurn.rerollsRemaining !== 'unlimited') {
+      activeTurn.rerollsRemaining -= 1;
+    }
     activeTurn.rerolledFrom = nextPrompt.rerolledFrom?.name ?? previousPrompt;
     match.usedPromptIds = nextPrompt.usedPromptIds;
 

@@ -5,9 +5,11 @@ import {
   MAX_TOTAL_TURNS,
   MIN_PLAYERS_TO_START,
   ROUND_TIMER_PRESETS,
+  REROLLS_PER_TURN_PRESETS,
   TURNS_PER_PLAYER_PRESETS,
   type FirstCorrectGuessTimeCapPreset,
   type GuessingDelayPreset,
+  type RerollsPerTurnPreset,
   type RoundTimerPreset,
   type TurnsPerPlayerPreset,
 } from './room';
@@ -69,6 +71,10 @@ export interface LobbySettingsRules {
     options: readonly TurnsPerPlayerPreset[];
     default: TurnsPerPlayerPreset;
   };
+  rerollsPerTurn: {
+    options: readonly RerollsPerTurnPreset[];
+    default: RerollsPerTurnPreset;
+  };
 }
 
 export interface ResolvedDrawingGameRules {
@@ -105,8 +111,17 @@ export function defineDrawingGameRules(config: DrawingGameRulesConfig): DrawingG
   return config;
 }
 
+function normalizeRerollsPerTurnDefault(value: number | undefined): RerollsPerTurnPreset {
+  if (value !== undefined && REROLLS_PER_TURN_PRESETS.includes(value as RerollsPerTurnPreset)) {
+    return value as RerollsPerTurnPreset;
+  }
+
+  return 1;
+}
+
 export function resolveDrawingGameRules(config: DrawingGameRulesConfig = {}): ResolvedDrawingGameRules {
-  const rerollsPerTurn = config.turns?.rerollsPerTurn ?? 1;
+  const configuredRerollsPerTurn = config.turns?.rerollsPerTurn ?? 1;
+  const rerollsPerTurnDefault = normalizeRerollsPerTurnDefault(configuredRerollsPerTurn);
   const scoreCorrectGuess = config.scoring?.guesserPoints === undefined || config.scoring.guesserPoints === 'linear-100-to-30'
     ? (input: GuesserScoreInput) => calculateGuesserScore(input.elapsedMs, input.roundDurationMs)
     : config.scoring.guesserPoints;
@@ -129,6 +144,10 @@ export function resolveDrawingGameRules(config: DrawingGameRulesConfig = {}): Re
         options: config.turns?.perPlayerOptions ?? TURNS_PER_PLAYER_PRESETS,
         default: config.turns?.defaultTurnsPerPlayer ?? 3,
       },
+      rerollsPerTurn: {
+        options: REROLLS_PER_TURN_PRESETS,
+        default: rerollsPerTurnDefault,
+      },
     },
     limits: {
       minPlayersToStart: config.players?.minToStart ?? MIN_PLAYERS_TO_START,
@@ -136,7 +155,7 @@ export function resolveDrawingGameRules(config: DrawingGameRulesConfig = {}): Re
       maxTotalTurns: config.turns?.maxTotalTurns ?? MAX_TOTAL_TURNS,
     },
     turns: {
-      rerollsPerTurn,
+      rerollsPerTurn: configuredRerollsPerTurn,
     },
     scoring: {
       drawerPointsPerCorrectGuess: config.scoring?.drawerPointsPerCorrectGuess ?? 50,
@@ -148,7 +167,7 @@ export function resolveDrawingGameRules(config: DrawingGameRulesConfig = {}): Re
       lobbyDrawing: config.features?.lobbyDrawing ?? true,
       referenceArt: config.features?.referenceArt ?? 'drawer-and-reveal',
       pause: config.features?.pause ?? true,
-      reroll: rerollsPerTurn > 0,
+      reroll: configuredRerollsPerTurn > 0,
       closeGuessFeedback: config.features?.closeGuessFeedback ?? false,
     },
   };

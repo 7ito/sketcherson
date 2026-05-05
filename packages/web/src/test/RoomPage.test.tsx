@@ -340,6 +340,7 @@ describe('RoomPage', () => {
         firstCorrectGuessTimeCapSeconds: 30,
         guessingDelaySeconds: 0,
         turnsPerPlayer: 3,
+        rerollsPerTurn: 1,
         artEnabled: true,
         enabledCollectionIds: ['troop', 'building', 'spell'],
       });
@@ -455,6 +456,7 @@ describe('RoomPage', () => {
         firstCorrectGuessTimeCapSeconds: 60,
         guessingDelaySeconds: 0,
         turnsPerPlayer: 1,
+        rerollsPerTurn: 1,
         artEnabled: true,
         enabledCollectionIds: ['troop', 'building', 'spell'],
       });
@@ -569,6 +571,7 @@ describe('RoomPage', () => {
         firstCorrectGuessTimeCapSeconds: 30,
         guessingDelaySeconds: 5,
         turnsPerPlayer: 3,
+        rerollsPerTurn: 1,
         artEnabled: true,
         enabledCollectionIds: ['troop', 'building', 'spell'],
       });
@@ -689,6 +692,7 @@ describe('RoomPage', () => {
         firstCorrectGuessTimeCapSeconds: 30,
         guessingDelaySeconds: 0,
         turnsPerPlayer: 3,
+        rerollsPerTurn: 1,
         artEnabled: true,
         enabledCollectionIds: ['building', 'spell'],
       });

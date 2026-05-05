@@ -93,7 +93,10 @@ describe('server game runtime', () => {
       enabledCollectionIds: ['creatures', 'objects'],
     });
     expect(game.settings.firstCorrectGuessCaps(60)).toEqual([15, 30, 45, 60]);
+    expect(game.settings.defaults().rerollsPerTurn).toBe(1);
     expect(game.settings.validate(game.settings.defaults())).toBe(true);
+    expect(game.settings.validate({ ...game.settings.defaults(), rerollsPerTurn: 'unlimited' })).toBe(true);
+    expect(game.settings.validate({ ...game.settings.defaults(), rerollsPerTurn: 11 as never })).toBe(false);
     expect(game.settings.normalize({ ...game.settings.defaults(), enabledCollectionIds: ['fantasy'] }).enabledCollectionIds).toEqual(['fantasy']);
 
     const assignment = game.prompts.assign({ random: () => 0 });

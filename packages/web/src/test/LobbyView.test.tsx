@@ -88,6 +88,23 @@ describe('buildLobbyInviteUrl', () => {
   });
 });
 
+describe('LobbyView settings', () => {
+  it('lets the host choose unlimited rerolls from the default settings panel', async () => {
+    const onSaveSettings = vi.fn<(settings: LobbySettings) => Promise<string | null>>().mockResolvedValue(null);
+
+    renderLobbyView({ onSaveSettings });
+
+    const rerollsSelect = screen.getByLabelText('Rerolls per turn') as HTMLSelectElement;
+    expect(Array.from(rerollsSelect.options, (option) => option.value)).toEqual(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'unlimited']);
+
+    fireEvent.change(rerollsSelect, { target: { value: 'unlimited' } });
+
+    await waitFor(() => {
+      expect(onSaveSettings).toHaveBeenCalledWith(expect.objectContaining({ rerollsPerTurn: 'unlimited' }));
+    });
+  });
+});
+
 describe('LobbyView extension slots', () => {
   it('renders an injected lobby settings panel and lets it update settings', async () => {
     const onSaveSettings = vi.fn<(settings: LobbySettings) => Promise<string | null>>().mockResolvedValue(null);
