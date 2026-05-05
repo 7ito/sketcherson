@@ -111,6 +111,7 @@ export class RoomProjector {
 
     return {
       turnNumber: activeTurn.turnNumber,
+      roundNumber: activeTurn.roundNumber,
       totalTurns: room.match?.turnPlan.length ?? 0,
       drawerPlayerId: activeTurn.drawerPlayerId,
       drawerNickname: activeTurn.drawerNickname,

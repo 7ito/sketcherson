@@ -1,5 +1,21 @@
 # @7ito/sketcherson-web
 
+## 0.3.6
+
+### Patch Changes
+
+- remote dev update
+- Updated dependencies
+  - @7ito/sketcherson-common@0.3.5
+
+## 0.3.5
+
+### Patch Changes
+
+- build script fix
+- Updated dependencies
+  - @7ito/sketcherson-common@0.3.4
+
 ## 0.3.4
 
 ### Patch Changes

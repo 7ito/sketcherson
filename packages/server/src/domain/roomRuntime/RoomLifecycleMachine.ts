@@ -38,7 +38,7 @@ export type RoomCommandResult =
 
 export type RoomQuery =
   | { type: 'getRoomState'; code: string; origin: string; viewerConnectionId?: string }
-  | { type: 'getDrawingSnapshot'; code: string; target: 'match' | 'lobby' }
+  | { type: 'getDrawingSnapshot'; code: string; target: 'match' | 'lobby'; viewerConnectionId?: string }
   | { type: 'getBroadcastTargets'; code: string; origin: string; drawingPayload?: 'include' | 'omit' }
   | { type: 'hasRoom'; code: string };
 

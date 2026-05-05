@@ -52,6 +52,64 @@ export function appendTailTurn(
   ];
 }
 
+export function addPlayerTurnsForRounds(
+  turnPlan: PlannedTurn[],
+  drawerPlayerId: string,
+  firstRoundNumber: number,
+  lastRoundNumber: number,
+  maxTotalTurns = MAX_TOTAL_TURNS,
+): PlannedTurn[] {
+  if (firstRoundNumber > lastRoundNumber || turnPlan.length >= maxTotalTurns) {
+    return turnPlan;
+  }
+
+  let updatedTurnPlan = [...turnPlan];
+
+  for (let roundNumber = firstRoundNumber; roundNumber <= lastRoundNumber; roundNumber += 1) {
+    if (updatedTurnPlan.length >= maxTotalTurns) {
+      break;
+    }
+
+    if (updatedTurnPlan.some((turn) => turn.roundNumber === roundNumber && turn.drawerPlayerId === drawerPlayerId)) {
+      continue;
+    }
+
+    const insertIndex = findRoundInsertIndex(updatedTurnPlan, roundNumber);
+    if (insertIndex === null) {
+      continue;
+    }
+
+    updatedTurnPlan = [
+      ...updatedTurnPlan.slice(0, insertIndex),
+      {
+        turnNumber: 0,
+        roundNumber,
+        drawerPlayerId,
+      },
+      ...updatedTurnPlan.slice(insertIndex),
+    ];
+  }
+
+  return reindexTurnNumbers(updatedTurnPlan);
+}
+
+function findRoundInsertIndex(turnPlan: PlannedTurn[], roundNumber: number): number | null {
+  for (let index = turnPlan.length - 1; index >= 0; index -= 1) {
+    if (turnPlan[index]?.roundNumber === roundNumber) {
+      return index + 1;
+    }
+  }
+
+  return null;
+}
+
+function reindexTurnNumbers(turnPlan: PlannedTurn[]): PlannedTurn[] {
+  return turnPlan.map((turn, index) => ({
+    ...turn,
+    turnNumber: index + 1,
+  }));
+}
+
 function shuffle<T>(values: T[], random: () => number): T[] {
   const copy = [...values];
 

@@ -128,6 +128,7 @@ export interface RoundScoreChange {
 
 export interface CurrentTurnState {
   turnNumber: number;
+  roundNumber?: number;
   totalTurns: number;
   drawerPlayerId: string;
   drawerNickname: string;

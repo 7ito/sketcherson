@@ -223,7 +223,7 @@ describe('RoomPage', () => {
 
     expect(
       screen.getByText(
-        'A match is already in progress. Join now to appear on the live scoreboard, guess starting next round, and get a tail draw turn when eligible.',
+        'A match is already in progress. Join now to appear on the live scoreboard, guess right away when a round is active, and draw in each remaining round.',
       ),
     ).toBeInTheDocument();
 

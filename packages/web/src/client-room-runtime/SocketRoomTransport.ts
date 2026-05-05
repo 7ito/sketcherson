@@ -18,7 +18,12 @@ export function createSocketRoomTransport(socket: SocketLike): RoomTransport {
       });
     },
     on<E extends RoomServerEventName>(event: E, handler: (payload: RoomServerPayload<E>) => void): RoomTransportUnsubscribe {
-      const socketHandler = (payload: unknown) => handler(payload as RoomServerPayload<E>);
+      const socketHandler = (payload: unknown, ack?: unknown) => {
+        handler(payload as RoomServerPayload<E>);
+        if (typeof ack === 'function') {
+          ack();
+        }
+      };
       socket.on(event, socketHandler);
       return () => {
         socket.off(event, socketHandler);
@@ -50,7 +55,22 @@ export function createSocketRoomDrawingTransport(socket: SocketLike): RoomDrawin
       });
     },
     on<E extends RoomServerEventName>(event: E, handler: (payload: RoomServerPayload<E>) => void): RoomTransportUnsubscribe {
-      const socketHandler = (payload: unknown) => handler(payload as RoomServerPayload<E>);
+      const socketHandler = (payload: unknown, ack?: unknown) => {
+        handler(payload as RoomServerPayload<E>);
+        if (typeof ack === 'function') {
+          ack();
+        }
+      };
+      socket.on(event, socketHandler);
+      return () => {
+        socket.off(event, socketHandler);
+      };
+    },
+    onConnectionEvent<E extends keyof RoomConnectionEvents>(
+      event: E,
+      handler: (payload: RoomConnectionEvents[E]) => void,
+    ): RoomTransportUnsubscribe {
+      const socketHandler = (payload: unknown) => handler(payload as RoomConnectionEvents[E]);
       socket.on(event, socketHandler);
       return () => {
         socket.off(event, socketHandler);

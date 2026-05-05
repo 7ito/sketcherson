@@ -15,7 +15,7 @@ export interface DrawingRealtimeCoreAccessors<TRoom> {
     incoming: TRoom;
     target: DrawingTarget;
     currentDrawing: DrawingState;
-    incomingDrawing: DrawingState;
+    incomingDrawing: DrawingState | null;
   }): boolean;
 }
 
@@ -107,11 +107,11 @@ export function createDrawingRealtimeCore<TRoom>(accessors: DrawingRealtimeCoreA
 
       const currentRevision = accessors.getRevision(current);
       const incomingRevision = accessors.getRevision(incoming);
+      let nextRoom = incoming;
       if (currentRevision !== undefined && incomingRevision !== undefined && currentRevision > incomingRevision) {
-        return current;
+        nextRoom = accessors.setRevision(nextRoom, currentRevision);
       }
 
-      let nextRoom = incoming;
       for (const target of ['lobby', 'match'] as const) {
         const currentDrawing = accessors.getDrawing(current, target);
         const incomingDrawing = accessors.getDrawing(incoming, target);
@@ -119,7 +119,15 @@ export function createDrawingRealtimeCore<TRoom>(accessors: DrawingRealtimeCoreA
           continue;
         }
 
-        if (!incomingDrawing || (accessors.shouldPreserveDrawing?.({ current, incoming, target, currentDrawing, incomingDrawing }) ?? true)) {
+        const shouldPreserveDrawing = accessors.shouldPreserveDrawing?.({
+          current,
+          incoming,
+          target,
+          currentDrawing,
+          incomingDrawing,
+        }) ?? true;
+
+        if (shouldPreserveDrawing) {
           nextRoom = accessors.replaceDrawing(nextRoom, target, currentDrawing);
         }
       }

@@ -1,5 +1,29 @@
 # @7ito/sketcherson-server
 
+## 0.3.5
+
+### Patch Changes
+
+- remote dev update
+- Updated dependencies
+  - @7ito/sketcherson-common@0.3.5
+
+## 0.3.4
+
+### Patch Changes
+
+- build script fix
+- Updated dependencies
+  - @7ito/sketcherson-common@0.3.4
+
+## 0.3.3
+
+### Patch Changes
+
+- Fuzzy guess checking update
+- Updated dependencies
+  - @7ito/sketcherson-common@0.3.3
+
 ## 0.3.2
 
 ### Patch Changes

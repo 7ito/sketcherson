@@ -6,6 +6,7 @@ import type { DrawingAction, DrawingState } from '@7ito/sketcherson-common/drawi
 import { isNicknameValid, normalizeNickname, normalizeNicknameForComparison } from '@7ito/sketcherson-common/identity';
 import { containsProfanity } from '@7ito/sketcherson-common/moderation';
 import { randomUUID } from 'node:crypto';
+import { cloneDrawingState } from '@7ito/sketcherson-common/drawingProtocol';
 import { applyDrawingAction, createDrawingState } from '../drawing';
 import { appendRoomFeedRecord, type ActiveTurnRecord, type RoomPlayerRecord, type RoomRecord } from './model';
 import { ConnectionController } from './ConnectionController';
@@ -424,7 +425,7 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
     return {
       ok: true,
       data: {
-        room: this.toRoomState(room.value.room, origin, room.value.playerId),
+        room: this.toRoomState(room.value.room, origin, room.value.playerId, 'omit'),
       },
     };
   }
@@ -493,7 +494,7 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
     return {
       ok: true,
       data: {
-        room: this.toRoomState(currentRoom, origin, room.value.playerId),
+        room: this.toRoomState(currentRoom, origin, room.value.playerId, 'omit'),
       },
     };
   }
@@ -528,7 +529,7 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
     return {
       ok: true,
       data: {
-        room: this.toRoomState(currentRoom, origin, room.value.playerId),
+        room: this.toRoomState(currentRoom, origin, room.value.playerId, 'omit'),
       },
     };
   }
@@ -578,7 +579,7 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
       ok: true,
       data: {
         kickedPlayerId: playerId,
-        room: this.toRoomState(room.value.room, origin, room.value.playerId),
+        room: this.toRoomState(room.value.room, origin, room.value.playerId, 'omit'),
       },
       kickedConnectionId: removedPlayer.connectionId,
     };
@@ -601,7 +602,7 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
     return {
       ok: true,
       data: {
-        room: this.toRoomState(room.value.room, origin, room.value.playerId),
+        room: this.toRoomState(room.value.room, origin, room.value.playerId, 'omit'),
       },
     };
   }
@@ -679,8 +680,7 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
         createdAt: this.now(),
         turnNumber: null,
       });
-
-      this.notifyRoomChanged(currentRoom.code);
+      this.touchRoom(currentRoom);
 
       return {
         ok: true,
@@ -700,7 +700,7 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
       return messageResult;
     }
 
-    this.notifyRoomChanged(currentRoom.code);
+    this.touchRoom(currentRoom);
 
     return {
       ok: true,
@@ -729,12 +729,25 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
     };
   }
 
-  public getDrawingSnapshot(input: { code: string; target: 'match' | 'lobby' }) {
+  public getDrawingSnapshot(input: { code: string; target: 'match' | 'lobby'; viewerConnectionId?: string }) {
     const normalizedCode = normalizeRoomCode(input.code);
     const room = this.store.getRoom(normalizedCode);
 
     if (!room) {
       return this.roomNotFound();
+    }
+
+    if (input.viewerConnectionId) {
+      const membership = this.store.getConnection(input.viewerConnectionId);
+      if (membership?.roomCode !== room.code) {
+        return {
+          ok: false as const,
+          error: {
+            code: 'FORBIDDEN' as const,
+            message: 'Only room members can request drawing snapshots.',
+          },
+        };
+      }
     }
 
     const drawing = input.target === 'lobby' ? room.lobbyDrawing : room.match?.activeTurn?.drawing ?? null;
@@ -756,7 +769,7 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
         target: input.target,
         revision: drawing.revision,
         stateRevision: room.stateRevision,
-        drawing,
+        drawing: cloneDrawingState(drawing),
       },
     };
   }

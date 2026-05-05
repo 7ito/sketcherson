@@ -103,6 +103,36 @@ describe('drawingRealtime', () => {
     expect(gap.status).toBe('requires-resync');
   });
 
+  it('applies older metadata snapshots without rolling drawing or room revision backward', () => {
+    const newerLobby = createDrawingState();
+    newerLobby.revision = 3;
+    const current = room({ stateRevision: 5, lobbyDrawing: newerLobby, matchDrawing: null, turnId: 'current-metadata' });
+
+    const merged = core.mergeSnapshot({
+      current,
+      incoming: room({ stateRevision: 4, lobbyDrawing: createDrawingState(), matchDrawing: null, turnId: 'stale-metadata' }),
+    });
+
+    expect(merged).not.toBe(current);
+    expect(merged.turnId).toBe('stale-metadata');
+    expect(merged.stateRevision).toBe(5);
+    expect(merged.lobbyDrawing).toBe(newerLobby);
+  });
+
+  it('does not carry omitted match drawing into a different turn', () => {
+    const previousTurnDrawing = createDrawingState();
+    previousTurnDrawing.revision = 5;
+
+    const merged = core.mergeSnapshot({
+      current: room({ stateRevision: 5, lobbyDrawing: null, matchDrawing: previousTurnDrawing, turnId: 'turn-1' }),
+      incoming: room({ stateRevision: 6, lobbyDrawing: null, matchDrawing: null, turnId: 'turn-2' }),
+    });
+
+    expect(merged.turnId).toBe('turn-2');
+    expect(merged.stateRevision).toBe(6);
+    expect(merged.matchDrawing).toBeNull();
+  });
+
   it('preserves newer snapshot drawing per target policy', () => {
     const newerLobby = createDrawingState();
     newerLobby.revision = 3;

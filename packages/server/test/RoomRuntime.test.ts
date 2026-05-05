@@ -80,6 +80,10 @@ class RoomRuntimeTestDriver {
     return this.runtime.getRoomState({ viewerConnectionId: connectionId, code, origin });
   }
 
+  public getDrawingSnapshot(code: string, target: 'match' | 'lobby', viewerConnectionId?: string) {
+    return this.runtime.getDrawingSnapshot({ code, target, viewerConnectionId });
+  }
+
   public getBroadcastTargets(code: string, origin: string) {
     return this.runtime.getBroadcastTargets({ code, origin }).map((target) => ({
       socketId: target.connectionId,
@@ -223,6 +227,56 @@ describe('RoomRuntime', () => {
       return;
     }
     expect(snapshotResult.data.room.lobbyDrawing?.activeStrokes).toHaveLength(1);
+  });
+
+  it('returns cloned drawing snapshots from the runtime snapshot API', () => {
+    const driver = createRoomRuntimeDriver({
+      ids: createSequentialIds(['host-id', 'host-session', 'host-joined-feed']),
+    });
+    const created = driver.createRoom('Host', 'host-socket', 'origin');
+    expect(created.ok).toBe(true);
+    if (!created.ok) {
+      return;
+    }
+
+    const drawingResult = driver.applyLobbyDrawingAction('host-socket', {
+      type: 'beginStroke',
+      strokeId: 'stroke-1',
+      tool: 'pen',
+      color: '#111827',
+      size: 8,
+      point: { x: 10, y: 20 },
+    }, 'origin');
+    expect(drawingResult.ok).toBe(true);
+
+    const snapshotResult = driver.getDrawingSnapshot(created.data.room.code, 'lobby', 'host-socket');
+    expect(snapshotResult.ok).toBe(true);
+    if (!snapshotResult.ok) {
+      return;
+    }
+
+    const snapshotPoint = snapshotResult.data.drawing.activeStrokes[0]?.points[0];
+    expect(snapshotPoint).toEqual({ x: 10, y: 20 });
+    if (snapshotPoint) {
+      snapshotPoint.x = 999;
+    }
+    snapshotResult.data.drawing.activeStrokes.push({
+      kind: 'stroke',
+      id: 'mutated-stroke',
+      tool: 'pen',
+      color: '#111827',
+      size: 8,
+      points: [{ x: 999, y: 999 }],
+    });
+
+    const freshSnapshotResult = driver.getDrawingSnapshot(created.data.room.code, 'lobby', 'host-socket');
+    expect(freshSnapshotResult.ok).toBe(true);
+    if (!freshSnapshotResult.ok) {
+      return;
+    }
+
+    expect(freshSnapshotResult.data.drawing.activeStrokes).toHaveLength(1);
+    expect(freshSnapshotResult.data.drawing.activeStrokes[0]?.points[0]).toEqual({ x: 10, y: 20 });
   });
 
   it('uses game rules for player limits and reroll availability', () => {
@@ -465,7 +519,7 @@ describe('RoomRuntime', () => {
     ]);
   });
 
-  it('returns join and reclaim outcomes with transport join and room state broadcast effects', () => {
+  it('returns join and reclaim outcomes with transport join and lightweight room state broadcast effects', () => {
     const runtime = new RoomRuntime({ gamePack: DEMO_GAME_PACK, random: () => 0 });
     const origin = 'https://sketcherson.example';
     const createOutcome = runtime.createRoomOutcome({ nickname: 'Host', connectionId: 'socket-host', origin });
@@ -489,6 +543,11 @@ describe('RoomRuntime', () => {
       connectionId: 'socket-guest',
       roomCode: createOutcome.response.data.room.code,
     });
+    expect(joinOutcome.effects[1]).toMatchObject({ type: 'broadcastRoomState' });
+    if (joinOutcome.effects[1]?.type !== 'broadcastRoomState') {
+      return;
+    }
+    expect(joinOutcome.effects[1].targets.every((target) => target.room.lobbyDrawing === null)).toBe(true);
 
     const hostSessionToken = createOutcome.response.data.sessionToken;
     runtime.disconnect({ connectionId: 'socket-host' });
@@ -506,6 +565,34 @@ describe('RoomRuntime', () => {
       connectionId: 'socket-host-new',
       roomCode: createOutcome.response.data.room.code,
     });
+  });
+
+  it('emits lightweight room changed broadcasts from timer-driven phase transitions', () => {
+    vi.useFakeTimers();
+    const runtime = new RoomRuntime({ gamePack: DEMO_GAME_PACK, random: () => 0, countdownMs: 25 });
+    const effects: Array<ReturnType<RoomRuntime['createRoomStateBroadcastEffect']>> = [];
+    runtime.onRoomChangedEffect('https://sketcherson.example', (effect) => {
+      if (effect.type === 'broadcastRoomState') {
+        effects.push(effect);
+      }
+    });
+
+    const createResult = runtime.createRoom({ nickname: 'Host', connectionId: 'socket-host', origin: 'https://sketcherson.example' });
+    expect(createResult.ok).toBe(true);
+    if (!createResult.ok) {
+      return;
+    }
+
+    const joinResult = runtime.joinRoom({ code: createResult.data.room.code, nickname: 'Guest', connectionId: 'socket-guest', origin: 'https://sketcherson.example' });
+    expect(joinResult.ok).toBe(true);
+    const startResult = runtime.startRoom({ connectionId: 'socket-host', origin: 'https://sketcherson.example' });
+    expect(startResult.ok).toBe(true);
+
+    vi.advanceTimersByTime(25);
+
+    const roundBroadcast = effects.find((effect) => effect.targets.some((target) => target.room.status === 'round'));
+    expect(roundBroadcast).toBeDefined();
+    expect(roundBroadcast?.targets.every((target) => target.room.match?.currentTurn?.drawing === null)).toBe(true);
   });
 
   it('returns kick outcomes with leave, kicked notice, and room state broadcast effects', () => {
@@ -973,7 +1060,7 @@ describe('RoomRuntime', () => {
 
     expect(rerollResult.data.room.match.currentTurn.rerollsRemaining).toBe(0);
     expect(rerollResult.data.room.match.currentTurn.rerolledFrom).not.toBeNull();
-    expect(rerollResult.data.room.match.currentTurn.drawing.operations).toHaveLength(0);
+    expect(rerollResult.data.room.match.currentTurn.drawing).toBeNull();
   });
 
   it('projects prompt metadata only to the drawer until reveal', () => {
@@ -1297,6 +1384,7 @@ describe('RoomRuntime', () => {
     expect(revealState.data.room.match.currentTurn.drawing.snapshotDataUrl).toBe('data:image/test;base64,custom-snapshot');
     expect(revealState.data.room.match.completedTurns[0]?.finalImageDataUrl).toBe('data:image/test;base64,custom-snapshot');
   });
+
 
   it('accepts correct guesses, updates the live scoreboard, caps the round timer, and blocks repeat messages', () => {
     vi.useFakeTimers();
@@ -2291,11 +2379,25 @@ describe('RoomRuntime', () => {
     expect(lateJoin.data.room.match.currentTurn.totalTurns).toBe(3);
     expect(lateJoin.data.room.players.find((player) => player.id === lateJoin.data.playerId)).toMatchObject({
       nickname: 'Late',
-      canGuessFromTurnNumber: 2,
+      canGuessFromTurnNumber: 1,
     });
+
+    const pausedGuess = service.submitMessage('socket-3', 'archer', 'https://sketcherson.example');
+    expect(pausedGuess.ok).toBe(true);
+
+    if (!pausedGuess.ok) {
+      return;
+    }
+
+    expect(pausedGuess.data.room.match?.feed.find((item) => item.type === 'correctGuess')).toMatchObject({
+      type: 'correctGuess',
+      visibility: 'self',
+      answer: expect.any(String),
+    });
+    expect(pausedGuess.data.room.match?.scoreboard.find((entry) => entry.playerId === lateJoin.data.playerId)?.score).toBeGreaterThan(0);
   });
 
-  it('lets late joiners enter an active match, unlock guessing on the next round, and receive one tail turn', () => {
+  it('lets late joiners enter an active match, guess immediately, and draw in the current round', () => {
     vi.useFakeTimers();
 
     const service = createRoomRuntimeDriver({
@@ -2348,7 +2450,7 @@ describe('RoomRuntime', () => {
     expect(lateJoin.data.room.players.find((player) => player.id === lateJoin.data.playerId)).toMatchObject({
       nickname: 'Late',
       connected: true,
-      canGuessFromTurnNumber: 2,
+      canGuessFromTurnNumber: 1,
     });
     expect(lateJoin.data.room.match.scoreboard).toEqual(
       expect.arrayContaining([expect.objectContaining({ playerId: lateJoin.data.playerId, nickname: 'Late', score: 0 })]),
@@ -2361,11 +2463,12 @@ describe('RoomRuntime', () => {
       return;
     }
 
-    expect(earlyGuess.data.room.match?.feed.at(-1)).toMatchObject({
-      type: 'playerChat',
-      text: 'archer',
+    expect(earlyGuess.data.room.match?.feed.find((m) => m.type === 'correctGuess')).toMatchObject({
+      type: 'correctGuess',
+      visibility: 'self',
+      answer: expect.any(String),
     });
-    expect(earlyGuess.data.room.match?.scoreboard.find((entry) => entry.playerId === lateJoin.data.playerId)?.score).toBe(0);
+    expect(earlyGuess.data.room.match?.scoreboard.find((entry) => entry.playerId === lateJoin.data.playerId)?.score).toBeGreaterThan(0);
 
     vi.advanceTimersByTime(100);
 
@@ -2395,7 +2498,7 @@ describe('RoomRuntime', () => {
 
     expect(postgameState.data.room.status).toBe('postgame');
     expect(postgameState.data.room.match?.completedTurns).toHaveLength(3);
-    expect(postgameState.data.room.match?.completedTurns.map((turn) => turn.roundNumber)).toEqual([1, 1, 2]);
+    expect(postgameState.data.room.match?.completedTurns.map((turn) => turn.roundNumber)).toEqual([1, 1, 1]);
     expect(postgameState.data.room.match?.completedTurns.at(-1)?.drawerNickname).toBe('Late');
 
     service.disconnect('socket-2');
@@ -2408,6 +2511,77 @@ describe('RoomRuntime', () => {
     );
 
     expect(reclaimResult.ok).toBe(true);
+  });
+
+  it('adds late joiner draw turns to every remaining configured round', () => {
+    vi.useFakeTimers();
+
+    const service = createRoomRuntimeDriver({
+      countdownMs: 25,
+      revealMs: 25,
+      roundDurationOverrideMs: 50,
+      random: () => 0,
+    });
+    const createResult = service.createRoom('Host', 'socket-1', 'https://sketcherson.example');
+
+    if (!createResult.ok) {
+      throw new Error('Expected room creation to succeed');
+    }
+
+    const firstGuest = service.joinRoom(createResult.data.room.code, 'Guest', 'socket-2', 'https://sketcherson.example');
+
+    if (!firstGuest.ok) {
+      throw new Error('Expected room join to succeed');
+    }
+
+    const settingsUpdate = service.updateLobbySettings(
+      'socket-1',
+      {
+        roundTimerSeconds: 60,
+        firstCorrectGuessTimeCapSeconds: 30,
+        turnsPerPlayer: 2,
+        artEnabled: true,
+      },
+      'https://sketcherson.example',
+    );
+    expect(settingsUpdate.ok).toBe(true);
+
+    const startResult = service.startRoom('socket-1', 'https://sketcherson.example');
+
+    if (!startResult.ok) {
+      throw new Error('Expected room start to succeed');
+    }
+
+    vi.advanceTimersByTime(30);
+
+    const lateJoin = service.joinRoom(createResult.data.room.code, 'Late', 'socket-3', 'https://sketcherson.example');
+
+    expect(lateJoin.ok).toBe(true);
+
+    if (!lateJoin.ok || !lateJoin.data.room.match?.currentTurn) {
+      return;
+    }
+
+    expect(lateJoin.data.room.match.currentTurn.totalTurns).toBe(6);
+    expect(lateJoin.data.room.players.find((player) => player.id === lateJoin.data.playerId)).toMatchObject({
+      nickname: 'Late',
+      connected: true,
+      canGuessFromTurnNumber: 1,
+    });
+
+    vi.advanceTimersByTime(700);
+
+    const postgameState = service.getRoomState(createResult.data.room.code, 'https://sketcherson.example');
+    expect(postgameState.ok).toBe(true);
+
+    if (!postgameState.ok) {
+      return;
+    }
+
+    expect(postgameState.data.room.status).toBe('postgame');
+    expect(postgameState.data.room.match?.completedTurns).toHaveLength(6);
+    expect(postgameState.data.room.match?.completedTurns.map((turn) => turn.roundNumber)).toEqual([1, 1, 1, 2, 2, 2]);
+    expect(postgameState.data.room.match?.completedTurns.filter((turn) => turn.drawerNickname === 'Late')).toHaveLength(2);
   });
 
   it('does not grant a tail turn to a player who joins during the final reveal', () => {

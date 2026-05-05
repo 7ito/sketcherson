@@ -45,10 +45,13 @@ const INITIAL_SNAPSHOT: RoomClientSnapshot = {
 
 export function createRoomClient(options: CreateRoomClientOptions): RoomClient {
   const { transport, joinedSessionStore, preferredNicknameStore } = options;
+  const hasDedicatedDrawingTransport = Boolean(options.drawingTransport);
   const drawingTransport = options.drawingTransport ?? createDrawingTransportAdapter(transport);
   const listeners = new Set<() => void>();
   const unsubscribeCallbacks: RoomTransportUnsubscribe[] = [];
   const resyncingRoomCodes = new Set<string>();
+  let drawingBindPromise: Promise<ApiResult<{ roomCode: string }>> | null = null;
+  let boundDrawingRoomCode: string | null = null;
   const drawingSync = createRoomDrawingSync();
   let activeRoomRef: RoomState | null = null;
   let snapshot: RoomClientSnapshot = {
@@ -117,13 +120,56 @@ export function createRoomClient(options: CreateRoomClientOptions): RoomClient {
     sessionToken: data.sessionToken,
   });
 
-  const bindDrawingTransport = (roomCode: string) => {
-    const controlConnectionId = transport.getConnectionId?.();
-    if (!controlConnectionId) {
-      return;
+  const resetDrawingTransportBinding = () => {
+    drawingBindPromise = null;
+    boundDrawingRoomCode = null;
+  };
+
+  const bindDrawingTransport = (roomCode: string): Promise<ApiResult<{ roomCode: string }>> => {
+    if (!hasDedicatedDrawingTransport) {
+      boundDrawingRoomCode = roomCode;
+      drawingBindPromise = Promise.resolve({ ok: true, data: { roomCode } });
+      return drawingBindPromise;
     }
 
-    void drawingTransport.emitWithAck('room:bindDrawingTransport', { code: roomCode, controlConnectionId });
+    const controlConnectionId = transport.getConnectionId?.();
+    if (!controlConnectionId) {
+      resetDrawingTransportBinding();
+      return Promise.resolve({
+        ok: false,
+        error: {
+          code: 'SESSION_EXPIRED',
+          message: 'The control transport is not connected.',
+        },
+      });
+    }
+
+    boundDrawingRoomCode = null;
+    drawingBindPromise = drawingTransport.emitWithAck('room:bindDrawingTransport', { code: roomCode, controlConnectionId })
+      .then((result) => {
+        if (result.ok) {
+          boundDrawingRoomCode = roomCode;
+        }
+        return result;
+      });
+    return drawingBindPromise;
+  };
+
+  const ensureDrawingTransportBound = async (roomCode: string): Promise<ApiResult<{ roomCode: string }>> => {
+    if (boundDrawingRoomCode === roomCode) {
+      return { ok: true, data: { roomCode } };
+    }
+
+    if (!drawingBindPromise) {
+      return bindDrawingTransport(roomCode);
+    }
+
+    const result = await drawingBindPromise;
+    if (result.ok && result.data.roomCode === roomCode) {
+      return result;
+    }
+
+    return bindDrawingTransport(roomCode);
   };
 
   const applyJoinedSessionResult = (data: SessionActionSuccess, fallbackNickname: string) => {
@@ -241,7 +287,12 @@ export function createRoomClient(options: CreateRoomClientOptions): RoomClient {
       return;
     }
 
-    patchRoomDrawingView(drawingSync.applySnapshot(roomState));
+    const view = drawingSync.applySnapshot(roomState);
+    patchRoomDrawingView(view);
+
+    if (roomState.match?.currentTurn && !view.drawings.match) {
+      queueDrawingResync(roomState.code, 'match');
+    }
   };
 
   const handleRoomKicked = (payload: { roomCode: string; message: string }) => {
@@ -299,6 +350,8 @@ export function createRoomClient(options: CreateRoomClientOptions): RoomClient {
   };
 
   const handleDisconnect = (reason: string) => {
+    resetDrawingTransportBinding();
+
     if (reason === 'io client disconnect') {
       patchSnapshot({ connectionNotice: null });
       return;
@@ -334,6 +387,9 @@ export function createRoomClient(options: CreateRoomClientOptions): RoomClient {
       if (currentSession && activeRoomRef?.code === currentSession.roomCode) {
         bindDrawingTransport(currentSession.roomCode);
       }
+    }) ?? (() => {}),
+    drawingTransport.onConnectionEvent?.('disconnect', () => {
+      resetDrawingTransportBinding();
     }) ?? (() => {}),
     transport.onConnectionEvent('disconnect', handleDisconnect),
     transport.onConnectionEvent('connect_error', handleConnectError),
@@ -400,6 +456,11 @@ export function createRoomClient(options: CreateRoomClientOptions): RoomClient {
       return runRoomMutation('room:reroll', { code }, code);
     },
     async submitDrawingAction(code, action) {
+      const bindResult = await ensureDrawingTransportBound(code);
+      if (!bindResult.ok) {
+        return bindResult;
+      }
+
       const result = await drawingTransport.emitWithAck('room:drawingAction', {
         code,
         action,
@@ -422,6 +483,11 @@ export function createRoomClient(options: CreateRoomClientOptions): RoomClient {
       return result;
     },
     async submitLobbyDrawingAction(code, action) {
+      const bindResult = await ensureDrawingTransportBound(code);
+      if (!bindResult.ok) {
+        return bindResult;
+      }
+
       const result = await drawingTransport.emitWithAck('room:lobbyDrawingAction', { code, action });
 
       recordDrawingAck({
@@ -450,6 +516,7 @@ export function createRoomClient(options: CreateRoomClientOptions): RoomClient {
       unsubscribeCallbacks.length = 0;
       listeners.clear();
       resyncingRoomCodes.clear();
+      resetDrawingTransportBinding();
     },
   };
 }

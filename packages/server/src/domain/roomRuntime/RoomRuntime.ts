@@ -39,7 +39,7 @@ export class RoomRuntime {
 
   public onRoomChangedEffect(origin: string, listener: (effect: RoomRuntimeEffect) => void): void {
     this.machine.onChanged((roomCode) => {
-      listener(this.createBroadcastRoomStateEffect(roomCode, origin));
+      listener(this.createBroadcastRoomStateEffect(roomCode, origin, { drawingPayload: 'omit' }));
     });
   }
 
@@ -68,7 +68,7 @@ export class RoomRuntime {
     const effects: RoomRuntimeEffect[] = response.ok
       ? [
           { type: 'joinTransportRoom', connectionId: input.connectionId, roomCode: response.data.room.code },
-          this.createBroadcastRoomStateEffect(response.data.room.code, input.origin),
+          this.createBroadcastRoomStateEffect(response.data.room.code, input.origin, { drawingPayload: 'omit' }),
         ]
       : [];
 
@@ -84,7 +84,7 @@ export class RoomRuntime {
     const effects: RoomRuntimeEffect[] = response.ok
       ? [
           { type: 'joinTransportRoom', connectionId: input.connectionId, roomCode: response.data.room.code },
-          this.createBroadcastRoomStateEffect(response.data.room.code, input.origin),
+          this.createBroadcastRoomStateEffect(response.data.room.code, input.origin, { drawingPayload: 'omit' }),
         ]
       : [];
 
@@ -100,7 +100,7 @@ export class RoomRuntime {
     const effects: RoomRuntimeEffect[] = response.ok
       ? [
           { type: 'joinTransportRoom', connectionId: input.connectionId, roomCode: response.data.room.code },
-          this.createBroadcastRoomStateEffect(response.data.room.code, input.origin),
+          this.createBroadcastRoomStateEffect(response.data.room.code, input.origin, { drawingPayload: 'omit' }),
         ]
       : [];
 
@@ -233,6 +233,7 @@ export class RoomRuntime {
             action: input.payload.action,
             revision: response.data.revision,
             stateRevision: response.data.stateRevision,
+            authoritativeStroke: response.data.authoritativeStroke,
           },
         }]
       : [];
@@ -244,7 +245,7 @@ export class RoomRuntime {
     return this.query<ApiResult<RoomStateSuccess>>({ type: 'getRoomState', ...input });
   }
 
-  public getDrawingSnapshot(input: { code: string; target: 'match' | 'lobby' }): ApiResult<DrawingSnapshotSuccess> {
+  public getDrawingSnapshot(input: { code: string; target: 'match' | 'lobby'; viewerConnectionId?: string }): ApiResult<DrawingSnapshotSuccess> {
     return this.query<ApiResult<DrawingSnapshotSuccess>>({ type: 'getDrawingSnapshot', ...input });
   }
 

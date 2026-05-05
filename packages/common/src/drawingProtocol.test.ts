@@ -165,6 +165,23 @@ describe('drawingProtocol', () => {
     expect(gap.state).toBe(applied.state);
   });
 
+  it('applies coalesced remote extend gaps without dropping merged points', () => {
+    const drawing = createDrawingState();
+    drawing.activeStrokes = [stroke()];
+    drawing.revision = 1;
+    const points = Array.from({ length: DRAWING_MAX_EXTEND_POINTS + 2 }, (_, index) => ({ x: index + 11, y: 20 }));
+
+    const applied = applyRemoteDrawingEvent(drawing, {
+      code: 'ABCDEF',
+      action: { type: 'extendStroke', strokeId: 'stroke-1', points },
+      revision: 4,
+    });
+
+    expect(applied.status).toBe('applied');
+    expect(applied.state.revision).toBe(4);
+    expect(applied.state.activeStrokes[0]?.points).toEqual([{ x: 10, y: 20 }, ...points]);
+  });
+
   it('uses authoritative stroke completion to reconcile missed live extensions', () => {
     const drawing = createDrawingState();
     drawing.activeStrokes = [stroke({ points: [{ x: 10, y: 20 }, { x: 20, y: 30 }] })];
@@ -174,14 +191,30 @@ describe('drawingProtocol', () => {
     const applied = applyRemoteDrawingEvent(drawing, {
       code: 'ABCDEF',
       action: { type: 'endStroke', strokeId: 'stroke-1' },
-      revision: 3,
+      revision: 5,
       authoritativeStroke: finalStroke,
     });
 
     expect(applied.status).toBe('applied');
+    expect(applied.state.revision).toBe(5);
     expect(applied.state.activeStrokes).toEqual([]);
     expect(applied.state.operations).toEqual([finalStroke]);
     expect(drawing.activeStrokes[0]?.points).toHaveLength(2);
+  });
+
+  it('requires resync when authoritative stroke completion arrives without the reliable stroke begin', () => {
+    const drawing = createDrawingState();
+    drawing.revision = 2;
+
+    const applied = applyRemoteDrawingEvent(drawing, {
+      code: 'ABCDEF',
+      action: { type: 'endStroke', strokeId: 'stroke-1' },
+      revision: 5,
+      authoritativeStroke: stroke(),
+    });
+
+    expect(applied.status).toBe('requires-resync');
+    expect(applied.state).toBe(drawing);
   });
 
   it('finalizes active strokes into committed operations and can render a snapshot', () => {

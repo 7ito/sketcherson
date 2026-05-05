@@ -593,7 +593,7 @@ export function resolveShellUiConfig<TPrompt extends PromptEntry>(gamePack: Game
         eyebrow: joinCopy.eyebrow ?? 'Join private room',
         title: joinCopy.title ?? 'Room {roomCode}',
         lobbySubtitle: joinCopy.lobbySubtitle ?? 'Pick a guest nickname to enter the live lobby.',
-        liveMatchSubtitle: joinCopy.liveMatchSubtitle ?? 'A match is already in progress. Join now to appear on the live scoreboard, guess starting next round, and get a tail draw turn when eligible.',
+        liveMatchSubtitle: joinCopy.liveMatchSubtitle ?? 'A match is already in progress. Join now to appear on the live scoreboard, guess right away when a round is active, and draw in each remaining round.',
         nicknameLabel: joinCopy.nicknameLabel ?? 'Nickname',
         nicknamePlaceholder: joinCopy.nicknamePlaceholder ?? 'Your name',
         submitButton: joinCopy.submitButton ?? 'Join room',

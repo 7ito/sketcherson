@@ -2,6 +2,7 @@ import {
   applyDrawingActionToState,
   DRAWING_CANVAS_HEIGHT,
   DRAWING_CANVAS_WIDTH,
+  DRAWING_MAX_EXTEND_POINTS,
   type ApiResult,
   type DrawingAction,
   type DrawingActionAppliedEvent,
@@ -80,7 +81,12 @@ export function applyRemoteDrawingEvent(drawing: DrawingState, event: DrawingAct
   }
 
   const isCoalescedExtend = event.action.type === 'extendStroke' && event.revision > drawing.revision + 1;
-  if (event.revision !== drawing.revision + 1 && !isCoalescedExtend) {
+  const authoritativeEndStrokeId = event.action.type === 'endStroke' ? event.action.strokeId : null;
+  const isAuthoritativeEndStrokeCorrection = authoritativeEndStrokeId !== null &&
+    event.authoritativeStroke &&
+    event.revision > drawing.revision + 1 &&
+    drawing.activeStrokes.some((stroke) => stroke.id === authoritativeEndStrokeId);
+  if (event.revision !== drawing.revision + 1 && !isCoalescedExtend && !isAuthoritativeEndStrokeCorrection) {
     return {
       state: drawing,
       status: 'requires-resync',
@@ -89,7 +95,9 @@ export function applyRemoteDrawingEvent(drawing: DrawingState, event: DrawingAct
 
   const result = event.action.type === 'endStroke' && event.authoritativeStroke
     ? applyAuthoritativeEndStrokeEvent(drawing, event)
-    : applyDrawingAction(drawing, event.action);
+    : event.action.type === 'extendStroke' && isCoalescedExtend
+      ? applyCoalescedExtendEvent(drawing, event.action)
+      : applyDrawingAction(drawing, event.action);
   if (!result.ok) {
     return {
       state: drawing,
@@ -97,7 +105,7 @@ export function applyRemoteDrawingEvent(drawing: DrawingState, event: DrawingAct
     };
   }
 
-  const appliedState = isCoalescedExtend
+  const appliedState = isCoalescedExtend || isAuthoritativeEndStrokeCorrection
     ? { ...result.data, revision: event.revision }
     : result.data;
 
@@ -112,6 +120,49 @@ export function applyRemoteDrawingEvent(drawing: DrawingState, event: DrawingAct
     state: appliedState,
     status: 'applied',
   };
+}
+
+function applyCoalescedExtendEvent(drawing: DrawingState, action: Extract<DrawingAction, { type: 'extendStroke' }>): ApiResult<DrawingState> {
+  const points = getExtendActionPoints(action);
+  if (!points || points.length <= DRAWING_MAX_EXTEND_POINTS) {
+    return applyDrawingAction(drawing, action);
+  }
+
+  let nextDrawing = drawing;
+  for (let index = 0; index < points.length; index += DRAWING_MAX_EXTEND_POINTS) {
+    const result = applyDrawingAction(nextDrawing, {
+      type: 'extendStroke',
+      strokeId: action.strokeId,
+      points: points.slice(index, index + DRAWING_MAX_EXTEND_POINTS),
+    });
+
+    if (!result.ok) {
+      return result;
+    }
+
+    nextDrawing = result.data;
+  }
+
+  return {
+    ok: true,
+    data: nextDrawing,
+  };
+}
+
+function getExtendActionPoints(action: Extract<DrawingAction, { type: 'extendStroke' }>): DrawingPoint[] | null {
+  if (action.point && action.points) {
+    return null;
+  }
+
+  if (action.point) {
+    return [action.point];
+  }
+
+  if (!action.points || action.points.length === 0) {
+    return null;
+  }
+
+  return action.points;
 }
 
 function applyAuthoritativeEndStrokeEvent(drawing: DrawingState, event: DrawingActionAppliedEvent): ApiResult<DrawingState> {

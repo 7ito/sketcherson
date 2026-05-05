@@ -2,7 +2,7 @@ import type { GameDefinition } from '@7ito/sketcherson-common/game';
 import { createPromptEngine, type PromptEntry } from '@7ito/sketcherson-common/prompts';
 import type { LobbySettings } from '@7ito/sketcherson-common/room';
 
-export { appendTailTurn, buildTurnPlan, type PlannedTurn } from './roomRuntime/turnPlan';
+export { addPlayerTurnsForRounds, appendTailTurn, buildTurnPlan, type PlannedTurn } from './roomRuntime/turnPlan';
 
 /**
  * Compatibility helper for older tests and call sites. Runtime prompt assignment should use PromptEngine directly.

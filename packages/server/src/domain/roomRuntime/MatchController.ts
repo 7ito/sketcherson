@@ -3,7 +3,7 @@ import type { ResolvedDrawingGameRules } from '@7ito/sketcherson-common/game';
 import type { DrawingState } from '@7ito/sketcherson-common/drawing';
 import type { PromptEngine } from '@7ito/sketcherson-common/prompts';
 import { createAsyncSnapshotRenderer, createDrawingState, finalizeDrawingState, type AsyncSnapshotRenderer } from '../drawing';
-import { appendTailTurn, buildTurnPlan } from '../match';
+import { addPlayerTurnsForRounds, buildTurnPlan } from '../match';
 import { appendRoomFeedRecord, capCompletedTurnImageRetention, type ActiveTurnRecord, type MatchRecord, type RoomFeedRecord, type RoomPlayerRecord, type RoomRecord } from './model';
 import type { RoomPhaseTimerKind } from './timers';
 
@@ -143,7 +143,7 @@ export class MatchController {
       return null;
     }
 
-    if (effectivePhase === 'countdown') {
+    if (effectivePhase === 'countdown' || effectivePhase === 'round') {
       return activeTurn.turnNumber;
     }
 
@@ -163,12 +163,14 @@ export class MatchController {
       score: 0,
     });
 
-    if (this.shouldGrantLateJoinTailTurn(room)) {
-      match.turnPlan = appendTailTurn(
+    const firstDrawRound = this.resolveFirstLateJoinDrawRound(room);
+    if (firstDrawRound !== null) {
+      match.turnPlan = addPlayerTurnsForRounds(
         match.turnPlan,
         player.id,
+        firstDrawRound,
+        room.settings.turnsPerPlayer,
         this.rules.limits.maxTotalTurns,
-        room.settings.turnsPerPlayer + 1,
       );
     }
 
@@ -554,7 +556,6 @@ export class MatchController {
       const guessEvaluation = this.promptEngine.evaluateGuess(activeTurn.promptId, input.text);
 
       if (
-        input.room.status === 'round' &&
         input.player.id !== activeTurn.drawerPlayerId &&
         this.canPlayerGuessOnTurn(input.player, activeTurn.turnNumber) &&
         guessEvaluation.correct
@@ -565,7 +566,6 @@ export class MatchController {
       }
 
       if (
-        input.room.status === 'round' &&
         input.player.id !== activeTurn.drawerPlayerId &&
         this.canPlayerGuessOnTurn(input.player, activeTurn.turnNumber) &&
         this.rules.features.closeGuessFeedback &&
@@ -608,7 +608,7 @@ export class MatchController {
   ): void {
     activeTurn.correctGuessPlayerIds.add(playerId);
 
-    const elapsedMs = activeTurn.roundStartedAt === null ? 0 : this.now() - activeTurn.roundStartedAt;
+    const elapsedMs = this.getActiveTurnElapsedMs(room, activeTurn) ?? 0;
     const guesserPoints = this.rules.scoring.scoreCorrectGuess({ elapsedMs, roundDurationMs: activeTurn.roundDurationMs });
     const drawerPoints = this.rules.scoring.drawerPointsPerCorrectGuess;
 
@@ -633,6 +633,11 @@ export class MatchController {
 
     if (this.rules.scoring.endRoundWhenAllGuessersCorrect && this.haveAllEligibleGuessersGuessed(room, activeTurn)) {
       appendRoomFeedRecord(match.feed, this.createSystemFeedItem({ type: 'allGuessersCorrect' }, activeTurn.turnNumber, this.now()));
+      if (room.status === 'paused') {
+        this.transitionPausedTurnToReveal(room);
+        return;
+      }
+
       this.transitionToReveal(room, false);
       return;
     }
@@ -757,22 +762,29 @@ export class MatchController {
     return this.isLivePhase(room.status) ? room.status : null;
   }
 
-  private shouldGrantLateJoinTailTurn(room: RoomRecord): boolean {
+  private resolveFirstLateJoinDrawRound(room: RoomRecord): number | null {
     const match = room.match;
     const activeTurn = match?.activeTurn;
     const effectivePhase = this.getEffectiveMatchPhase(room);
 
-    if (!match || !activeTurn || !effectivePhase) {
-      return false;
+    if (!match || !activeTurn || !effectivePhase || match.turnPlan.length >= this.rules.limits.maxTotalTurns) {
+      return null;
     }
 
-    const isFinalReveal = effectivePhase === 'reveal' && match.currentTurnIndex >= match.turnPlan.length - 1;
-
-    if (isFinalReveal) {
-      return false;
+    if (activeTurn.roundNumber > room.settings.turnsPerPlayer) {
+      return null;
     }
 
-    return match.turnPlan.length < this.rules.limits.maxTotalTurns;
+    if (effectivePhase === 'reveal') {
+      const nextPlannedTurn = match.turnPlan[match.currentTurnIndex + 1];
+      if (!nextPlannedTurn) {
+        return null;
+      }
+
+      return nextPlannedTurn.roundNumber;
+    }
+
+    return activeTurn.roundNumber;
   }
 
   private getGuessingDelayRemainingMs(room: RoomRecord, activeTurn: ActiveTurnRecord): number {

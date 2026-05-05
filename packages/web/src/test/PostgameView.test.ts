@@ -29,18 +29,21 @@ describe('groupCompletedTurnsForPostgame', () => {
     ]);
   });
 
-  it('uses server round numbers so late tail turns can render as a bonus round', () => {
+  it('uses server round numbers so late turns stay with their assigned round', () => {
     const turns = [
       { ...buildTurn(1, 'Host'), roundNumber: 1 },
       { ...buildTurn(2, 'Guest'), roundNumber: 1 },
-      { ...buildTurn(3, 'Late'), roundNumber: 2 },
+      { ...buildTurn(3, 'Late'), roundNumber: 1 },
+      { ...buildTurn(4, 'Host'), roundNumber: 2 },
+      { ...buildTurn(5, 'Guest'), roundNumber: 2 },
+      { ...buildTurn(6, 'Late'), roundNumber: 2 },
     ];
 
-    const rounds = groupCompletedTurnsForPostgame(turns, 1);
+    const rounds = groupCompletedTurnsForPostgame(turns, 2);
 
     expect(rounds).toEqual([
-      { roundNumber: 1, turns: [turns[0], turns[1]] },
-      { roundNumber: 2, turns: [turns[2]] },
+      { roundNumber: 1, turns: [turns[0], turns[1], turns[2]] },
+      { roundNumber: 2, turns: [turns[3], turns[4], turns[5]] },
     ]);
   });
 });

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { defaultLobbySettingsForGame } from '@7ito/sketcherson-common/settings';
 import { MAX_TOTAL_TURNS } from '@7ito/sketcherson-common/room';
 import { DEMO_GAME_DEFINITION } from '@sketcherson/demo-game';
-import { appendTailTurn, buildTurnPlan, pickRandomGamePrompt } from '../src/domain/match';
+import { addPlayerTurnsForRounds, appendTailTurn, buildTurnPlan, pickRandomGamePrompt } from '../src/domain/match';
 
 describe('match planning', () => {
   it('repeats a single randomized order across all configured cycles', () => {
@@ -19,7 +19,7 @@ describe('match planning', () => {
     expect(turnPlan.at(-1)?.turnNumber).toBe(MAX_TOTAL_TURNS);
   });
 
-  it('appends late-join tail turns in join order without exceeding the cap', () => {
+  it('appends legacy late-join tail turns in join order without exceeding the cap', () => {
     const originalPlan = buildTurnPlan(['host', 'guest'], 1, () => 0, 2);
     const withFirstLateJoiner = appendTailTurn(originalPlan, 'late-1', 3);
     const withSecondLateJoiner = appendTailTurn(withFirstLateJoiner, 'late-2', 3);
@@ -28,6 +28,39 @@ describe('match planning', () => {
     expect(withFirstLateJoiner.map((turn) => turn.roundNumber)).toEqual([1, 1, 2]);
     expect(withSecondLateJoiner.map((turn) => turn.drawerPlayerId)).toEqual(['guest', 'host', 'late-1']);
     expect(withSecondLateJoiner.at(-1)?.turnNumber).toBe(3);
+  });
+
+  it('adds late joiners to the end of each remaining round', () => {
+    const originalPlan = buildTurnPlan(['host', 'guest'], 3, () => 0);
+    const withFirstLateJoiner = addPlayerTurnsForRounds(originalPlan, 'late-1', 1, 3);
+    const withSecondLateJoiner = addPlayerTurnsForRounds(withFirstLateJoiner, 'late-2', 1, 3);
+
+    expect(withFirstLateJoiner.map((turn) => [turn.drawerPlayerId, turn.roundNumber])).toEqual([
+      ['guest', 1],
+      ['host', 1],
+      ['late-1', 1],
+      ['guest', 2],
+      ['host', 2],
+      ['late-1', 2],
+      ['guest', 3],
+      ['host', 3],
+      ['late-1', 3],
+    ]);
+    expect(withSecondLateJoiner.map((turn) => [turn.drawerPlayerId, turn.roundNumber])).toEqual([
+      ['guest', 1],
+      ['host', 1],
+      ['late-1', 1],
+      ['late-2', 1],
+      ['guest', 2],
+      ['host', 2],
+      ['late-1', 2],
+      ['late-2', 2],
+      ['guest', 3],
+      ['host', 3],
+      ['late-1', 3],
+      ['late-2', 3],
+    ]);
+    expect(withSecondLateJoiner.map((turn) => turn.turnNumber)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
   });
 
   it('avoids rerolling to the same prompt when alternatives exist', () => {

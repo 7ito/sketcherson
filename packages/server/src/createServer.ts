@@ -16,7 +16,7 @@ import { createServer as createHttpServer } from 'node:http';
 import { Server } from 'socket.io';
 import { estimateSerializedPayloadBytes, logDrawingTransportMetric } from './drawingMetrics';
 import { RoomRuntime, type RoomRuntimeEffect } from './domain/roomRuntime';
-import { DrawingBroadcastCoordinator } from './domain/roomRuntime/DrawingBroadcastCoordinator';
+import { DrawingBroadcastCoordinator, type DrawingBroadcastNamespace } from './domain/roomRuntime/DrawingBroadcastCoordinator';
 import { logServerError, logServerEvent } from './logger';
 
 interface ActionSuccess {
@@ -73,7 +73,8 @@ export function createGameServer(options?: Partial<CreateGameServerOptions<any>>
   });
   const drawingIo = io.of('/drawing') as unknown as Server<RoomDrawingClientToServerSocketEvents, RoomServerToClientSocketEvents>;
   const drawingConnectionActors = new Map<string, string>();
-  const drawingBroadcastCoordinator = new DrawingBroadcastCoordinator(drawingIo);
+  const drawingConnectionsByControl = new Map<string, Set<string>>();
+  const drawingBroadcastCoordinator = new DrawingBroadcastCoordinator(drawingIo as unknown as DrawingBroadcastNamespace);
   const roomRuntime = new RoomRuntime({
     countdownMs: options?.countdownMs,
     revealMs: options?.revealMs,
@@ -96,6 +97,7 @@ export function createGameServer(options?: Partial<CreateGameServerOptions<any>>
           break;
         case 'leaveTransportRoom':
           io.sockets.sockets.get(effect.connectionId)?.leave(effect.roomCode);
+          unbindDrawingSocketsForControl(effect.connectionId);
           break;
         case 'emit':
           (io.to(effect.connectionId).emit as (event: string, payload: unknown) => boolean)(effect.event, effect.payload);
@@ -120,6 +122,40 @@ export function createGameServer(options?: Partial<CreateGameServerOptions<any>>
   roomRuntime.onRoomChangedEffect(appOrigin, (effect) => {
     applyRoomRuntimeEffects([effect]);
   });
+
+  const unbindDrawingSocket = (drawingSocketId: string) => {
+    drawingBroadcastCoordinator.clearSocket(drawingSocketId);
+    const drawingSocket = drawingIo.sockets.sockets?.get(drawingSocketId);
+    if (drawingSocket) {
+      for (const roomName of drawingSocket.rooms) {
+        if (roomName !== drawingSocketId) {
+          drawingSocket.leave(roomName);
+        }
+      }
+    }
+
+    const controlConnectionId = drawingConnectionActors.get(drawingSocketId);
+    drawingConnectionActors.delete(drawingSocketId);
+
+    if (controlConnectionId) {
+      const drawingSocketIds = drawingConnectionsByControl.get(controlConnectionId);
+      drawingSocketIds?.delete(drawingSocketId);
+      if (drawingSocketIds?.size === 0) {
+        drawingConnectionsByControl.delete(controlConnectionId);
+      }
+    }
+  };
+
+  const unbindDrawingSocketsForControl = (controlConnectionId: string) => {
+    const drawingSocketIds = drawingConnectionsByControl.get(controlConnectionId);
+    if (!drawingSocketIds) {
+      return;
+    }
+
+    for (const drawingSocketId of [...drawingSocketIds]) {
+      unbindDrawingSocket(drawingSocketId);
+    }
+  };
 
   const logFailedAction = (action: string, socketId: string, payload: unknown, error: { code: string; message: string }) => {
     logServerEvent(error.code === 'ROOM_NOT_FOUND' || error.code === 'SESSION_EXPIRED' ? 'warn' : 'info', `${action}.failed`, {
@@ -254,7 +290,7 @@ export function createGameServer(options?: Partial<CreateGameServerOptions<any>>
     registerRoomAction(
       'room:getDrawingSnapshot',
       'room.getDrawingSnapshot',
-      (payload) => roomRuntime.getDrawingSnapshot({ code: payload.code, target: payload.target }),
+      (payload) => roomRuntime.getDrawingSnapshot({ code: payload.code, target: payload.target, viewerConnectionId: socket.id }),
       {
         broadcastOnSuccess: false,
       },
@@ -417,6 +453,7 @@ export function createGameServer(options?: Partial<CreateGameServerOptions<any>>
 
     socket.on('disconnect', () => {
       const outcome = roomRuntime.disconnectOutcome({ connectionId: socket.id, origin: appOrigin });
+      unbindDrawingSocketsForControl(socket.id);
 
       logServerEvent('info', 'socket.disconnected', {
         socketId: socket.id,
@@ -452,7 +489,8 @@ export function createGameServer(options?: Partial<CreateGameServerOptions<any>>
     };
 
     registerDrawingAction('room:bindDrawingTransport', 'room.bindDrawingTransport', (payload) => {
-      if (!io.sockets.sockets.has(payload.controlConnectionId)) {
+      const controlSocket = io.sockets.sockets.get(payload.controlConnectionId);
+      if (!controlSocket) {
         return { ok: false, error: { code: 'SESSION_EXPIRED', message: 'The control transport is not connected.' } };
       }
 
@@ -460,7 +498,15 @@ export function createGameServer(options?: Partial<CreateGameServerOptions<any>>
         return { ok: false, error: { code: 'ROOM_NOT_FOUND', message: 'The room could not be found.' } };
       }
 
+      if (!controlSocket.rooms.has(payload.code)) {
+        return { ok: false, error: { code: 'FORBIDDEN', message: 'The control transport is not joined to this room.' } };
+      }
+
+      unbindDrawingSocket(socket.id);
       drawingConnectionActors.set(socket.id, payload.controlConnectionId);
+      const drawingSocketIds = drawingConnectionsByControl.get(payload.controlConnectionId) ?? new Set<string>();
+      drawingSocketIds.add(socket.id);
+      drawingConnectionsByControl.set(payload.controlConnectionId, drawingSocketIds);
       socket.join(payload.code);
       return { ok: true, data: { roomCode: payload.code } };
     });
@@ -478,7 +524,7 @@ export function createGameServer(options?: Partial<CreateGameServerOptions<any>>
     });
 
     socket.on('disconnect', () => {
-      drawingConnectionActors.delete(socket.id);
+      unbindDrawingSocket(socket.id);
     });
   });
 

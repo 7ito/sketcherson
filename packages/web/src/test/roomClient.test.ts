@@ -1,7 +1,7 @@
 import type { RoomState } from '@7ito/sketcherson-common/room';
 import type { DrawingActionAppliedEvent, DrawingState } from '@7ito/sketcherson-common/drawing';
-import type { RoomClientEventName, RoomRequest, RoomResponse, RoomServerEventName, RoomServerPayload } from '@7ito/sketcherson-common/roomEvents';
-import { createRoomClient, type JoinedSession, type JoinedSessionStore, type PreferredNicknameStore, type RoomTransport } from '../client-room-runtime';
+import type { RoomClientEventName, RoomDrawingClientEventName, RoomDrawingRequest, RoomDrawingResponse, RoomRequest, RoomResponse, RoomServerEventName, RoomServerPayload } from '@7ito/sketcherson-common/roomEvents';
+import { createRoomClient, type JoinedSession, type JoinedSessionStore, type PreferredNicknameStore, type RoomDrawingTransport, type RoomTransport } from '../client-room-runtime';
 import type { RoomConnectionEvents } from '../client-room-runtime';
 
 class InMemoryRoomTransport implements RoomTransport {
@@ -9,6 +9,7 @@ class InMemoryRoomTransport implements RoomTransport {
   private readonly handlers = new Map<RoomServerEventName, Set<(payload: unknown) => void>>();
   private readonly connectionHandlers = new Map<keyof RoomConnectionEvents, Set<(payload: unknown) => void>>();
   private responders = new Map<RoomClientEventName, (payload: unknown) => unknown>();
+  public connectionId: string | undefined;
 
   public respond<E extends RoomClientEventName>(event: E, responder: (payload: RoomRequest<E>) => RoomResponse<E>): void {
     this.responders.set(event, responder as (payload: unknown) => unknown);
@@ -50,6 +51,59 @@ class InMemoryRoomTransport implements RoomTransport {
     for (const handler of this.handlers.get(event) ?? []) {
       handler(payload);
     }
+  }
+
+  public emitConnectionEvent<E extends keyof RoomConnectionEvents>(event: E, payload: RoomConnectionEvents[E]): void {
+    for (const handler of this.connectionHandlers.get(event) ?? []) {
+      handler(payload);
+    }
+  }
+
+  public getConnectionId(): string | undefined {
+    return this.connectionId;
+  }
+}
+
+class InMemoryRoomDrawingTransport implements RoomDrawingTransport {
+  public readonly emitted: Array<{ event: RoomDrawingClientEventName; payload: RoomDrawingRequest<RoomDrawingClientEventName> }> = [];
+  private readonly handlers = new Map<RoomServerEventName, Set<(payload: unknown) => void>>();
+  private readonly connectionHandlers = new Map<keyof RoomConnectionEvents, Set<(payload: unknown) => void>>();
+  private responders = new Map<RoomDrawingClientEventName, (payload: unknown) => unknown>();
+
+  public respond<E extends RoomDrawingClientEventName>(event: E, responder: (payload: RoomDrawingRequest<E>) => RoomDrawingResponse<E> | Promise<RoomDrawingResponse<E>>): void {
+    this.responders.set(event, responder as (payload: unknown) => unknown);
+  }
+
+  public async emitWithAck<E extends RoomDrawingClientEventName>(event: E, payload: RoomDrawingRequest<E>): Promise<RoomDrawingResponse<E>> {
+    this.emitted.push({ event, payload });
+    const responder = this.responders.get(event);
+    if (!responder) {
+      throw new Error(`No responder registered for ${event}`);
+    }
+
+    return await responder(payload) as RoomDrawingResponse<E>;
+  }
+
+  public on<E extends RoomServerEventName>(event: E, handler: (payload: RoomServerPayload<E>) => void): () => void {
+    const handlers = this.handlers.get(event) ?? new Set<(payload: unknown) => void>();
+    const wrappedHandler = handler as (payload: unknown) => void;
+    handlers.add(wrappedHandler);
+    this.handlers.set(event, handlers);
+
+    return () => {
+      handlers.delete(wrappedHandler);
+    };
+  }
+
+  public onConnectionEvent<E extends keyof RoomConnectionEvents>(event: E, handler: (payload: RoomConnectionEvents[E]) => void): () => void {
+    const handlers = this.connectionHandlers.get(event) ?? new Set<(payload: unknown) => void>();
+    const wrappedHandler = handler as (payload: unknown) => void;
+    handlers.add(wrappedHandler);
+    this.connectionHandlers.set(event, handlers);
+
+    return () => {
+      handlers.delete(wrappedHandler);
+    };
   }
 
   public emitConnectionEvent<E extends keyof RoomConnectionEvents>(event: E, payload: RoomConnectionEvents[E]): void {
@@ -116,14 +170,22 @@ function buildRoomState(code = 'ABCDEF', nickname = 'Guest', drawing: DrawingSta
   };
 }
 
-function createTestClient(options?: { storedSession?: JoinedSession | null }) {
+function createTestClient(options?: { storedSession?: JoinedSession | null; useSeparateDrawingTransport?: boolean }) {
   const transport = new InMemoryRoomTransport();
+  transport.connectionId = options?.useSeparateDrawingTransport ? 'control-connection' : undefined;
+  const drawingTransport = options?.useSeparateDrawingTransport ? new InMemoryRoomDrawingTransport() : null;
+  drawingTransport?.respond('room:bindDrawingTransport', (payload) => ({ ok: true, data: { roomCode: payload.code } }));
   const joinedSessionStore = new MemoryJoinedSessionStore();
   joinedSessionStore.session = options?.storedSession ?? null;
   const preferredNicknameStore = new MemoryPreferredNicknameStore();
-  const client = createRoomClient({ transport, joinedSessionStore, preferredNicknameStore });
+  const client = createRoomClient({
+    transport,
+    drawingTransport: drawingTransport ?? undefined,
+    joinedSessionStore,
+    preferredNicknameStore,
+  });
 
-  return { client, transport, joinedSessionStore, preferredNicknameStore };
+  return { client, transport, drawingTransport, joinedSessionStore, preferredNicknameStore };
 }
 
 describe('room client runtime', () => {
@@ -193,6 +255,126 @@ describe('room client runtime', () => {
     expect(client.getSnapshot().activeRoom).toBe(room);
     expect(client.getSnapshot().lobbyDrawing?.revision).toBe(1);
     expect(client.getSnapshot().lobbyDrawing?.activeStrokes[0]?.points).toEqual([{ x: 10, y: 20 }]);
+  });
+
+  it('waits for the dedicated drawing transport bind before submitting drawing actions', async () => {
+    const { client, transport, drawingTransport } = createTestClient({ useSeparateDrawingTransport: true });
+    const room = buildRoomState('ABCDEF', 'Guest');
+    let resolveBind: ((value: RoomDrawingResponse<'room:bindDrawingTransport'>) => void) | null = null;
+    drawingTransport?.respond('room:bindDrawingTransport', () => new Promise((resolve) => {
+      resolveBind = resolve;
+    }));
+    drawingTransport?.respond('room:lobbyDrawingAction', () => ({ ok: true, data: { roomCode: 'ABCDEF', revision: 1 } }));
+    transport.respond('room:create', () => ({
+      ok: true,
+      data: {
+        playerId: 'player-1',
+        sessionToken: 'session-1',
+        room,
+      },
+    }));
+
+    await client.createRoom('Guest');
+    const actionPromise = client.submitLobbyDrawingAction('ABCDEF', {
+      type: 'beginStroke',
+      strokeId: 'stroke-1',
+      tool: 'pen',
+      color: '#000000',
+      size: 8,
+      point: { x: 1, y: 2 },
+    });
+
+    await Promise.resolve();
+    expect(drawingTransport?.emitted.map((entry) => entry.event)).toEqual(['room:bindDrawingTransport']);
+
+    resolveBind?.({ ok: true, data: { roomCode: 'ABCDEF' } });
+    await actionPromise;
+
+    expect(drawingTransport?.emitted.map((entry) => entry.event)).toEqual(['room:bindDrawingTransport', 'room:lobbyDrawingAction']);
+  });
+
+  it('rebinds before submitting after the drawing socket disconnects', async () => {
+    const { client, transport, drawingTransport } = createTestClient({ useSeparateDrawingTransport: true });
+    const room = buildRoomState('ABCDEF', 'Guest');
+    drawingTransport?.respond('room:lobbyDrawingAction', () => ({ ok: true, data: { roomCode: 'ABCDEF', revision: 1 } }));
+    transport.respond('room:create', () => ({
+      ok: true,
+      data: {
+        playerId: 'player-1',
+        sessionToken: 'session-1',
+        room,
+      },
+    }));
+
+    await client.createRoom('Guest');
+    drawingTransport?.emitConnectionEvent('disconnect', 'transport close');
+    await client.submitLobbyDrawingAction('ABCDEF', {
+      type: 'beginStroke',
+      strokeId: 'stroke-1',
+      tool: 'pen',
+      color: '#000000',
+      size: 8,
+      point: { x: 1, y: 2 },
+    });
+
+    expect(drawingTransport?.emitted.map((entry) => entry.event)).toEqual([
+      'room:bindDrawingTransport',
+      'room:bindDrawingTransport',
+      'room:lobbyDrawingAction',
+    ]);
+  });
+
+  it('does not treat a dedicated drawing transport as bound while control is disconnected', async () => {
+    const { client, transport, drawingTransport } = createTestClient({ useSeparateDrawingTransport: true });
+    const room = buildRoomState('ABCDEF', 'Guest');
+    drawingTransport?.respond('room:lobbyDrawingAction', () => ({ ok: true, data: { roomCode: 'ABCDEF', revision: 1 } }));
+    transport.respond('room:create', () => ({
+      ok: true,
+      data: {
+        playerId: 'player-1',
+        sessionToken: 'session-1',
+        room,
+      },
+    }));
+
+    await client.createRoom('Guest');
+    transport.connectionId = undefined;
+    transport.emitConnectionEvent('disconnect', 'transport close');
+
+    const result = await client.submitLobbyDrawingAction('ABCDEF', {
+      type: 'beginStroke',
+      strokeId: 'stroke-1',
+      tool: 'pen',
+      color: '#000000',
+      size: 8,
+      point: { x: 1, y: 2 },
+    });
+
+    expect(result).toMatchObject({ ok: false, error: { code: 'SESSION_EXPIRED' } });
+    expect(drawingTransport?.emitted.map((entry) => entry.event)).toEqual(['room:bindDrawingTransport']);
+  });
+
+  it('rebinds the dedicated drawing transport after the drawing socket reconnects', async () => {
+    const { client, transport, drawingTransport } = createTestClient({ useSeparateDrawingTransport: true });
+    const room = buildRoomState('ABCDEF', 'Guest');
+    transport.respond('room:create', () => ({
+      ok: true,
+      data: {
+        playerId: 'player-1',
+        sessionToken: 'session-1',
+        room,
+      },
+    }));
+
+    await client.createRoom('Guest');
+    drawingTransport?.emitConnectionEvent('connect', undefined);
+
+    await vi.waitFor(() => {
+      expect(drawingTransport?.emitted).toEqual([
+        { event: 'room:bindDrawingTransport', payload: { code: 'ABCDEF', controlConnectionId: 'control-connection' } },
+        { event: 'room:bindDrawingTransport', payload: { code: 'ABCDEF', controlConnectionId: 'control-connection' } },
+      ]);
+    });
   });
 
   it('reclaims the stored active session after reconnecting', async () => {
@@ -275,6 +457,67 @@ describe('room client runtime', () => {
       expect(client.getSnapshot().lobbyDrawing?.revision).toBe(2);
     });
     expect(transport.emitted.map((entry) => entry.event)).toEqual(['room:lobbyDrawingAction', 'room:getDrawingSnapshot']);
+  });
+
+  it('requests a match drawing snapshot when a metadata update starts a new turn with drawing omitted', async () => {
+    const { client, transport } = createTestClient();
+    const turnOneDrawing = createDrawingState(4);
+    const turnTwoDrawing = createDrawingState();
+    const baseRoom = buildRoomState('ABCDEF', 'Guest');
+    const turnOneRoom: RoomState = {
+      ...baseRoom,
+      status: 'round',
+      stateRevision: 10,
+      match: {
+        phaseEndsAt: null,
+        currentTurn: {
+          turnNumber: 1,
+          totalTurns: 2,
+          drawerPlayerId: 'player-1',
+          drawerNickname: 'Guest',
+          prompt: 'cat',
+          promptVisibility: 'assigned',
+          rerollsRemaining: 0,
+          rerolledFrom: null,
+          correctGuessPlayerIds: [],
+          drawing: turnOneDrawing,
+        },
+        completedTurns: [],
+        feed: [],
+        scoreboard: [],
+      },
+    };
+    const turnTwoRoom: RoomState = {
+      ...turnOneRoom,
+      stateRevision: 11,
+      match: turnOneRoom.match
+        ? {
+            ...turnOneRoom.match,
+            currentTurn: turnOneRoom.match.currentTurn
+              ? {
+                  ...turnOneRoom.match.currentTurn,
+                  turnNumber: 2,
+                  drawing: null,
+                }
+              : null,
+          }
+        : null,
+    };
+    transport.respond('room:getDrawingSnapshot', () => ({
+      ok: true,
+      data: { roomCode: 'ABCDEF', target: 'match', revision: 0, stateRevision: 11, drawing: turnTwoDrawing },
+    }));
+
+    transport.emitServerEvent('room:state', turnOneRoom);
+    transport.emitServerEvent('room:state', turnTwoRoom);
+
+    await vi.waitFor(() => {
+      expect(client.getSnapshot().matchDrawing).toBe(turnTwoDrawing);
+    });
+    expect(transport.emitted).toContainEqual({
+      event: 'room:getDrawingSnapshot',
+      payload: { code: 'ABCDEF', target: 'match' },
+    });
   });
 
   it('requests one resync when a drawing event revision gap is detected', async () => {

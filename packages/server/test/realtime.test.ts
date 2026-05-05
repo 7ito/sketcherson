@@ -64,6 +64,16 @@ function applyDrawingEventToRoomHistory(history: RoomState[], event: DrawingActi
   }
 
   const nextState = structuredClone(currentState) as RoomState;
+  if (!nextState.match?.currentTurn?.drawing) {
+    const previousDrawingState = [...history]
+      .reverse()
+      .find((roomState) => roomState.code === event.code && roomState.match?.currentTurn?.drawing)?.match?.currentTurn?.drawing;
+    if (!previousDrawingState) {
+      return;
+    }
+    nextState.match.currentTurn.drawing = structuredClone(previousDrawingState);
+  }
+
   const result = applyDrawingActionToState(nextState.match.currentTurn.drawing, event.action);
   if (!result.ok) {
     return;
@@ -162,19 +172,23 @@ describe('room realtime flow', () => {
 
     const hostSocket = ioClient(baseUrl, { transports: ['websocket'] });
     const guestSocket = ioClient(baseUrl, { transports: ['websocket'] });
-    sockets.push(hostSocket, guestSocket);
+    const hostDrawingSocket = ioClient(`${baseUrl}/drawing`, { transports: ['websocket'] });
+    const guestDrawingSocket = ioClient(`${baseUrl}/drawing`, { transports: ['websocket'] });
+    sockets.push(hostSocket, guestSocket, hostDrawingSocket, guestDrawingSocket);
 
     await Promise.all([
       new Promise<void>((resolve) => hostSocket.on('connect', () => resolve())),
       new Promise<void>((resolve) => guestSocket.on('connect', () => resolve())),
+      new Promise<void>((resolve) => hostDrawingSocket.on('connect', () => resolve())),
+      new Promise<void>((resolve) => guestDrawingSocket.on('connect', () => resolve())),
     ]);
 
     const hostStates: RoomState[] = [];
     const guestStates: RoomState[] = [];
     hostSocket.on('room:state', (roomState: RoomState) => hostStates.push(roomState));
     guestSocket.on('room:state', (roomState: RoomState) => guestStates.push(roomState));
-    hostSocket.on('room:drawingActionApplied', (event: DrawingActionAppliedEvent) => applyDrawingEventToRoomHistory(hostStates, event));
-    guestSocket.on('room:drawingActionApplied', (event: DrawingActionAppliedEvent) => applyDrawingEventToRoomHistory(guestStates, event));
+    hostDrawingSocket.on('room:drawingActionApplied', (event: DrawingActionAppliedEvent) => applyDrawingEventToRoomHistory(hostStates, event));
+    guestDrawingSocket.on('room:drawingActionApplied', (event: DrawingActionAppliedEvent) => applyDrawingEventToRoomHistory(guestStates, event));
 
     const createResult = await new Promise<{ ok: true; data: CreateRoomSuccess }>((resolve) => {
       hostSocket.emit('room:create', { nickname: 'Host' }, resolve);
@@ -345,19 +359,23 @@ describe('room realtime flow', () => {
 
     const hostSocket = ioClient(baseUrl, { transports: ['websocket'] });
     const guestSocket = ioClient(baseUrl, { transports: ['websocket'] });
-    sockets.push(hostSocket, guestSocket);
+    const hostDrawingSocket = ioClient(`${baseUrl}/drawing`, { transports: ['websocket'] });
+    const guestDrawingSocket = ioClient(`${baseUrl}/drawing`, { transports: ['websocket'] });
+    sockets.push(hostSocket, guestSocket, hostDrawingSocket, guestDrawingSocket);
 
     await Promise.all([
       new Promise<void>((resolve) => hostSocket.on('connect', () => resolve())),
       new Promise<void>((resolve) => guestSocket.on('connect', () => resolve())),
+      new Promise<void>((resolve) => hostDrawingSocket.on('connect', () => resolve())),
+      new Promise<void>((resolve) => guestDrawingSocket.on('connect', () => resolve())),
     ]);
 
     const hostStates: RoomState[] = [];
     const guestStates: RoomState[] = [];
     hostSocket.on('room:state', (roomState: RoomState) => hostStates.push(roomState));
     guestSocket.on('room:state', (roomState: RoomState) => guestStates.push(roomState));
-    hostSocket.on('room:drawingActionApplied', (event: DrawingActionAppliedEvent) => applyDrawingEventToRoomHistory(hostStates, event));
-    guestSocket.on('room:drawingActionApplied', (event: DrawingActionAppliedEvent) => applyDrawingEventToRoomHistory(guestStates, event));
+    hostDrawingSocket.on('room:drawingActionApplied', (event: DrawingActionAppliedEvent) => applyDrawingEventToRoomHistory(hostStates, event));
+    guestDrawingSocket.on('room:drawingActionApplied', (event: DrawingActionAppliedEvent) => applyDrawingEventToRoomHistory(guestStates, event));
 
     const createResult = await new Promise<{ ok: true; data: CreateRoomSuccess }>((resolve) => {
       hostSocket.emit('room:create', { nickname: 'Host' }, resolve);
@@ -366,6 +384,11 @@ describe('room realtime flow', () => {
     await new Promise<{ ok: true; data: JoinRoomSuccess }>((resolve) => {
       guestSocket.emit('room:join', { code: createResult.data.room.code, nickname: 'Guest' }, resolve);
     });
+
+    await Promise.all([
+      new Promise((resolve) => hostDrawingSocket.emit('room:bindDrawingTransport', { code: createResult.data.room.code, controlConnectionId: hostSocket.id }, resolve)),
+      new Promise((resolve) => guestDrawingSocket.emit('room:bindDrawingTransport', { code: createResult.data.room.code, controlConnectionId: guestSocket.id }, resolve)),
+    ]);
 
     const startResult = await new Promise<ApiResult<StartRoomSuccess>>((resolve) => {
       hostSocket.emit('room:start', { code: createResult.data.room.code }, resolve);
@@ -379,6 +402,7 @@ describe('room realtime flow', () => {
 
     const drawerPlayerId = startResult.data.room.match.currentTurn.drawerPlayerId;
     const drawerSocket = drawerPlayerId === createResult.data.playerId ? hostSocket : guestSocket;
+    const drawerDrawingSocket = drawerSocket === hostSocket ? hostDrawingSocket : guestDrawingSocket;
     const watcherSocket = drawerSocket === hostSocket ? guestSocket : hostSocket;
     const drawerHistory = drawerSocket === hostSocket ? hostStates : guestStates;
     const watcherHistory = watcherSocket === hostSocket ? hostStates : guestStates;
@@ -386,7 +410,7 @@ describe('room realtime flow', () => {
     await waitForState(drawerSocket, (roomState) => roomState.status === 'round', 2_000, drawerHistory);
 
     const beginResult = await new Promise<ApiResult<DrawingActionSuccess>>((resolve) => {
-      drawerSocket.emit(
+      drawerDrawingSocket.emit(
         'room:drawingAction',
         {
           code: createResult.data.room.code,
@@ -410,7 +434,7 @@ describe('room realtime flow', () => {
     }
 
     const extendResult = await new Promise<ApiResult<DrawingActionSuccess>>((resolve) => {
-      drawerSocket.emit(
+      drawerDrawingSocket.emit(
         'room:drawingAction',
         {
           code: createResult.data.room.code,
@@ -431,7 +455,7 @@ describe('room realtime flow', () => {
     }
 
     const endResult = await new Promise<ApiResult<DrawingActionSuccess>>((resolve) => {
-      drawerSocket.emit(
+      drawerDrawingSocket.emit(
         'room:drawingAction',
         {
           code: createResult.data.room.code,
@@ -452,7 +476,7 @@ describe('room realtime flow', () => {
 
     const watcherDrawingState = await waitForState(
       watcherSocket,
-      (roomState) => roomState.match?.currentTurn?.drawing.operations.length === 1,
+      (roomState) => roomState.match?.currentTurn?.drawing?.operations.length === 1,
       2_000,
       watcherHistory,
     );
@@ -463,13 +487,11 @@ describe('room realtime flow', () => {
       watcherSocket,
       (roomState) =>
         roomState.status === 'reveal' &&
-        typeof roomState.match?.currentTurn?.drawing.snapshotDataUrl === 'string' &&
         typeof roomState.match?.completedTurns[0]?.finalImageDataUrl === 'string',
       3_000,
       watcherHistory,
     );
 
-    expect(revealState.match?.currentTurn?.drawing.snapshotDataUrl).toMatch(/^data:image\/png;base64,/);
     expect(revealState.match?.completedTurns[0]?.finalImageDataUrl).toMatch(/^data:image\/png;base64,/);
   });
 
@@ -560,7 +582,7 @@ describe('room realtime flow', () => {
     expect(resumedRound[1].match?.pauseCooldownEndsAt).not.toBeNull();
   });
 
-  it('admits late joiners mid-match, adds them to the scoreboard immediately, and appends one tail turn', async () => {
+  it('admits late joiners mid-match, lets them guess immediately, and appends a same-round draw turn', async () => {
     server = createRealtimeGameServer({
       appOrigin: 'http://localhost:4173',
       corsOrigin: '*',
@@ -633,7 +655,7 @@ describe('room realtime flow', () => {
     expect(lateJoinResult.data.room.match.currentTurn.totalTurns).toBe(3);
     expect(lateJoinResult.data.room.players.find((player) => player.id === lateJoinResult.data.playerId)).toMatchObject({
       nickname: 'Late',
-      canGuessFromTurnNumber: 2,
+      canGuessFromTurnNumber: 1,
     });
     expect(lateJoinResult.data.room.match.scoreboard).toEqual(
       expect.arrayContaining([expect.objectContaining({ playerId: lateJoinResult.data.playerId, nickname: 'Late', score: 0 })]),
@@ -665,11 +687,12 @@ describe('room realtime flow', () => {
       return;
     }
 
-    expect(earlyGuess.data.room.match?.feed.at(-1)).toMatchObject({
-      type: 'playerChat',
-      text: 'archer',
+    expect(earlyGuess.data.room.match?.feed.find((m) => m.type === 'correctGuess')).toMatchObject({
+      type: 'correctGuess',
+      visibility: 'self',
+      answer: expect.any(String),
     });
-    expect(earlyGuess.data.room.match?.scoreboard.find((entry) => entry.playerId === lateJoinResult.data.playerId)?.score).toBe(0);
+    expect(earlyGuess.data.room.match?.scoreboard.find((entry) => entry.playerId === lateJoinResult.data.playerId)?.score).toBeGreaterThan(0);
 
     await waitForState(
       lateSocket,
@@ -698,6 +721,7 @@ describe('room realtime flow', () => {
     const latePostgameState = await waitForState(lateSocket, (roomState) => roomState.status === 'postgame', 2_000, lateStates);
 
     expect(latePostgameState.match?.completedTurns).toHaveLength(3);
+    expect(latePostgameState.match?.completedTurns.map((turn) => turn.roundNumber)).toEqual([1, 1, 1]);
     expect(latePostgameState.match?.completedTurns.at(-1)?.drawerNickname).toBe('Late');
   });
 

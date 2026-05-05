@@ -263,7 +263,7 @@ export function MatchView({
           {currentTurn ? (
             <span className="turn-badge">
               {formatShellCopy(SHELL_MATCH_COPY.roundBadge, {
-                currentRound: Math.floor((currentTurn.turnNumber - 1) / (currentTurn.totalTurns / room.settings.turnsPerPlayer)) + 1,
+                currentRound: currentTurn.roundNumber ?? Math.floor((currentTurn.turnNumber - 1) / (currentTurn.totalTurns / room.settings.turnsPerPlayer)) + 1,
                 totalRounds: room.settings.turnsPerPlayer,
               })}
             </span>
