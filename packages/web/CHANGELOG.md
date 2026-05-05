@@ -1,5 +1,19 @@
 # @7ito/sketcherson-web
 
+## 0.3.4
+
+### Patch Changes
+
+- Resolve Socket.IO backend URL at runtime instead of baking localhost into the published web bundle.
+
+## 0.3.3
+
+### Patch Changes
+
+- Fuzzy guess checking update
+- Updated dependencies
+  - @7ito/sketcherson-common@0.3.3
+
 ## 0.3.2
 
 ### Patch Changes
