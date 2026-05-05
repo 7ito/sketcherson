@@ -1855,6 +1855,44 @@ label span {
   color: var(--shell-color-muted-text);
 }
 
+.restart-match-button {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.5rem;
+  background: none;
+  border: 1px solid var(--shell-color-border);
+  border-radius: var(--shell-radius-sm);
+  color: var(--shell-color-muted-text);
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0.15rem 0.35rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.restart-match-button:hover {
+  color: var(--shell-color-text);
+  border-color: var(--shell-color-text);
+}
+
+.restart-confirm-dialog {
+  max-width: 320px;
+}
+
+.danger-button {
+  background: var(--shell-color-danger, #d44) !important;
+  color: #fff !important;
+  border-color: var(--shell-color-danger, #d44) !important;
+}
+
+.danger-button:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.danger-button:disabled {
+  opacity: 0.5;
+}
+
 .chat-feed {
   flex: 1;
   overflow-y: auto;

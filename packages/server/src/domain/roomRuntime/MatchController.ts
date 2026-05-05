@@ -144,6 +144,24 @@ export class MatchController {
     return { ok: true };
   }
 
+  public restartRoom(room: RoomRecord): { ok: true } | { ok: false; error: ApiError } {
+    if (!room.match || (!this.isLivePhase(room.status) && room.status !== 'paused')) {
+      return {
+        ok: false,
+        error: {
+          code: 'INVALID_STATE',
+          message: 'Restart is only available during an active match.',
+        },
+      };
+    }
+
+    this.clearRoomTimer(room);
+    room.status = 'lobby';
+    room.match = null;
+
+    return this.startRoom(room);
+  }
+
   public resolveCanGuessFromTurnNumberForJoin(room: RoomRecord): number | null {
     const activeTurn = room.match?.activeTurn;
     const effectivePhase = this.getEffectiveMatchPhase(room);

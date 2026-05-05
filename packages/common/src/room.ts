@@ -226,6 +226,10 @@ export interface ResumeRoomRequest {
   code: string;
 }
 
+export interface RestartRoomRequest {
+  code: string;
+}
+
 export interface KickPlayerRequest {
   code: string;
   playerId: string;
@@ -293,6 +297,10 @@ export interface PauseRoomSuccess {
 }
 
 export interface ResumeRoomSuccess {
+  room: RoomState;
+}
+
+export interface RestartRoomSuccess {
   room: RoomState;
 }
 

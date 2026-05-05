@@ -359,6 +359,23 @@ export function createGameServer(options?: Partial<CreateGameServerOptions<any>>
     );
 
     registerRoomAction(
+      'room:restart',
+      'room.restart',
+      () => {
+        const outcome = roomRuntime.restartRoomOutcome({ connectionId: socket.id, origin: appOrigin });
+        applyRoomRuntimeEffects(outcome.effects);
+        return outcome.response;
+      },
+      {
+        logSuccess: (result) => ({
+          socketId: socket.id,
+          roomCode: result.data.room.code,
+        }),
+        broadcastOnSuccess: false,
+      },
+    );
+
+    registerRoomAction(
       'room:kick',
       'room.kick',
       (payload) => {

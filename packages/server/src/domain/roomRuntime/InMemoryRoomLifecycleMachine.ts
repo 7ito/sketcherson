@@ -1,7 +1,7 @@
 import type { GameDefinition, GamePack, ServerGameRuntime } from '@7ito/sketcherson-common/game';
 import { createServerGameRuntime } from '@7ito/sketcherson-common/game';
 import { createPromptEngine, type PromptEngine } from '@7ito/sketcherson-common/prompts';
-import { MAX_CHAT_MESSAGE_LENGTH, PAUSE_MAX_DURATION_SECONDS, PAUSE_REPAUSE_COOLDOWN_SECONDS, PRE_ROUND_COUNTDOWN_SECONDS, RECONNECT_GRACE_PERIOD_SECONDS, REVEAL_DURATION_SECONDS, normalizeRoomCode, type ApiResult, type CreateRoomSuccess, type DrawingActionSuccess, type LobbyDrawingActionSuccess, type JoinRoomSuccess, type LiveRoomStatus, type LobbySettings, type ReclaimRoomSuccess, type RoomState, type RoomStateSuccess, type PauseRoomSuccess, type ResumeRoomSuccess, type RerollTurnSuccess, type ScoreboardEntry, type StartRoomSuccess, type SubmitMessageSuccess, type UpdateLobbySettingsSuccess } from '@7ito/sketcherson-common/room';
+import { MAX_CHAT_MESSAGE_LENGTH, PAUSE_MAX_DURATION_SECONDS, PAUSE_REPAUSE_COOLDOWN_SECONDS, PRE_ROUND_COUNTDOWN_SECONDS, RECONNECT_GRACE_PERIOD_SECONDS, REVEAL_DURATION_SECONDS, normalizeRoomCode, type ApiResult, type CreateRoomSuccess, type DrawingActionSuccess, type LobbyDrawingActionSuccess, type JoinRoomSuccess, type LiveRoomStatus, type LobbySettings, type ReclaimRoomSuccess, type RestartRoomSuccess, type RoomState, type RoomStateSuccess, type PauseRoomSuccess, type ResumeRoomSuccess, type RerollTurnSuccess, type ScoreboardEntry, type StartRoomSuccess, type SubmitMessageSuccess, type UpdateLobbySettingsSuccess } from '@7ito/sketcherson-common/room';
 import type { DrawingAction, DrawingState } from '@7ito/sketcherson-common/drawing';
 import { isNicknameValid, normalizeNickname, normalizeNicknameForComparison } from '@7ito/sketcherson-common/identity';
 import { containsProfanity } from '@7ito/sketcherson-common/moderation';
@@ -184,6 +184,8 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
         return this.pauseRoom(command);
       case 'resumeRoom':
         return this.resumeRoom(command);
+      case 'restartRoom':
+        return this.restartRoom(command);
       case 'kickPlayer':
         return this.kickPlayer(command);
       case 'rerollTurn':
@@ -532,6 +534,41 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
       ok: true,
       data: {
         room: this.toRoomState(currentRoom, origin, room.value.playerId, 'omit'),
+      },
+    };
+  }
+
+  public restartRoom(input: EmptyActorInput): ApiResult<RestartRoomSuccess> {
+    const { connectionId: socketId, origin } = input;
+    const room = this.getActorRoom(socketId);
+
+    if (!room.ok) {
+      return room;
+    }
+
+    if (room.value.hostPlayerId !== room.value.playerId) {
+      return {
+        ok: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'Only the host can restart the game.',
+        },
+      };
+    }
+
+    const currentRoom = room.value.room;
+    const restartResult = this.matchController.restartRoom(currentRoom);
+
+    if (!restartResult.ok) {
+      return restartResult;
+    }
+
+    this.touchRoom(currentRoom);
+
+    return {
+      ok: true,
+      data: {
+        room: this.toRoomState(currentRoom, origin, room.value.playerId),
       },
     };
   }

@@ -104,6 +104,7 @@ export function RoomPage() {
           connectionNotice={connectionNotice}
           onPause={screen.actions.pauseGame}
           onResume={screen.actions.resumeGame}
+          onRestart={screen.actions.restartGame}
           onReroll={screen.actions.rerollPrompt}
           onKickPlayer={screen.actions.removePlayer}
           onSubmitDrawingAction={screen.actions.submitDrawingAction}

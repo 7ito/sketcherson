@@ -449,6 +449,9 @@ export function createRoomClient(options: CreateRoomClientOptions): RoomClient {
     async resumeRoom(code) {
       return runRoomMutation('room:resume', { code }, code);
     },
+    async restartRoom(code) {
+      return runRoomMutation('room:restart', { code }, code);
+    },
     async kickPlayer(code, playerId) {
       return runRoomMutation('room:kick', { code, playerId }, code);
     },

@@ -34,6 +34,7 @@ export function MatchView({
   connectionNotice,
   onPause,
   onResume,
+  onRestart,
   onReroll,
   onKickPlayer,
   onSubmitDrawingAction,
@@ -45,6 +46,7 @@ export function MatchView({
   connectionNotice: { state: string; message: string } | null | undefined;
   onPause: () => Promise<string | null>;
   onResume: () => Promise<string | null>;
+  onRestart: () => Promise<string | null>;
   onReroll: () => Promise<string | null>;
   onKickPlayer: (playerId: string) => Promise<string | null>;
   onSubmitDrawingAction: (action: DrawingAction) => Promise<ApiResult<DrawingActionSuccess>>;
@@ -75,6 +77,9 @@ export function MatchView({
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [kickError, setKickError] = useState('');
   const [kickingPlayerId, setKickingPlayerId] = useState<string | null>(null);
+  const [isRestarting, setIsRestarting] = useState(false);
+  const [restartError, setRestartError] = useState('');
+  const restartDialogRef = useRef<HTMLDialogElement>(null);
   const roundWarningTurnRef = useRef<number | null>(null);
 
   const effectivePhase = room.status === 'paused' ? pauseState?.pausedPhase ?? null : room.status;
@@ -177,6 +182,18 @@ export function MatchView({
     const errorMessage = await onResume();
     setIsResuming(false);
     if (errorMessage) setPauseError(errorMessage);
+  };
+
+  const handleRestartConfirm = async () => {
+    setRestartError('');
+    setIsRestarting(true);
+    const errorMessage = await onRestart();
+    setIsRestarting(false);
+    if (errorMessage) {
+      setRestartError(errorMessage);
+    } else {
+      restartDialogRef.current?.close();
+    }
   };
 
   const focusChatInput = () => {
@@ -491,8 +508,16 @@ export function MatchView({
 
               {/* Host controls */}
               {isViewerHost && canPauseMatch ? (
-                <div className="chat-info-card">
+                <div className="chat-info-card" style={{ position: 'relative' }}>
                   <span className="card-label">{SHELL_MATCH_COPY.hostControlsHeader}</span>
+                  <button
+                    type="button"
+                    className="restart-match-button"
+                    title="Restart match"
+                    onClick={() => restartDialogRef.current?.showModal()}
+                  >
+                    ↺
+                  </button>
                   {room.status === 'paused' ? (
                     <button
                       type="button"
@@ -567,6 +592,22 @@ export function MatchView({
           ) : null}
         </div>
       </div>
+      <dialog ref={restartDialogRef} className="settings-dialog restart-confirm-dialog" onClick={(e) => { if (e.target === restartDialogRef.current) restartDialogRef.current?.close(); }}>
+        <div className="settings-dialog-header">
+          <h2>Restart match?</h2>
+          <button type="button" className="settings-dialog-close" onClick={() => restartDialogRef.current?.close()}>&times;</button>
+        </div>
+        <div className="settings-dialog-body">
+          <p style={{ fontSize: '0.85rem', margin: '0 0 1rem' }}>This will end the current match and start a new one. All progress will be lost.</p>
+          {restartError ? <p className="error-text" style={{ fontSize: '0.72rem', marginBottom: '0.5rem' }}>{restartError}</p> : null}
+          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+            <button type="button" className="secondary-button compact-button" onClick={() => restartDialogRef.current?.close()}>Cancel</button>
+            <button type="button" className="secondary-button compact-button danger-button" onClick={handleRestartConfirm} disabled={isRestarting}>
+              {isRestarting ? 'Restarting…' : 'Restart'}
+            </button>
+          </div>
+        </div>
+      </dialog>
     </div>
   );
 }

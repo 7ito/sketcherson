@@ -19,6 +19,8 @@ import type {
   ReclaimRoomSuccess,
   RerollTurnRequest,
   RerollTurnSuccess,
+  RestartRoomRequest,
+  RestartRoomSuccess,
   ResumeRoomRequest,
   ResumeRoomSuccess,
   RoomState,
@@ -83,6 +85,10 @@ export interface RoomClientToServerEvents {
   'room:resume': {
     request: ResumeRoomRequest;
     response: ApiResult<ResumeRoomSuccess>;
+  };
+  'room:restart': {
+    request: RestartRoomRequest;
+    response: ApiResult<RestartRoomSuccess>;
   };
   'room:kick': {
     request: KickPlayerRequest;

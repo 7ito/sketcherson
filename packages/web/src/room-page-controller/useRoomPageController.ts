@@ -10,6 +10,7 @@ export interface RoomPageActions {
   playAgain(): Promise<string | null>;
   pauseGame(): Promise<string | null>;
   resumeGame(): Promise<string | null>;
+  restartGame(): Promise<string | null>;
   rerollPrompt(): Promise<string | null>;
   removePlayer(playerId: string): Promise<string | null>;
   submitMessage(text: string): Promise<string | null>;
@@ -71,6 +72,7 @@ export function useRoomPageController({ codeParam, roomSession }: UseRoomPageCon
     lookupRoom,
     pauseRoom,
     reclaimStoredSession,
+    restartRoom,
     resumeRoom,
     rerollTurn,
     roomExitNotice,
@@ -96,13 +98,14 @@ export function useRoomPageController({ codeParam, roomSession }: UseRoomPageCon
       playAgain: toErrorMessageAction(() => startRoom(code)),
       pauseGame: toErrorMessageAction(() => pauseRoom(code)),
       resumeGame: toErrorMessageAction(() => resumeRoom(code)),
+      restartGame: toErrorMessageAction(() => restartRoom(code)),
       rerollPrompt: toErrorMessageAction(() => rerollTurn(code)),
       removePlayer: toErrorMessageActionWithArg((playerId: string) => kickPlayer(code, playerId)),
       submitMessage: toErrorMessageActionWithArg((text: string) => submitRoomMessage(code, text)),
       submitDrawingAction: (action) => submitDrawingAction(code, action),
       submitLobbyDrawingAction: (action) => submitLobbyDrawingAction(code, action),
     }),
-    [code, kickPlayer, pauseRoom, rerollTurn, resumeRoom, startRoom, submitDrawingAction, submitLobbyDrawingAction, submitRoomMessage, updateLobbySettings],
+    [code, kickPlayer, pauseRoom, rerollTurn, restartRoom, resumeRoom, startRoom, submitDrawingAction, submitLobbyDrawingAction, submitRoomMessage, updateLobbySettings],
   );
 
   useEffect(() => {

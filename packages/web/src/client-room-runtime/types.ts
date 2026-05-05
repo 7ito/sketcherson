@@ -1,4 +1,4 @@
-import type { ApiResult, CreateRoomSuccess, DrawingActionSuccess, JoinRoomSuccess, KickPlayerSuccess, LobbyDrawingActionSuccess, LobbySettings, PauseRoomSuccess, ReclaimRoomSuccess, ResumeRoomSuccess, RoomState, RoomStateSuccess, RerollTurnSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@7ito/sketcherson-common/room';
+import type { ApiResult, CreateRoomSuccess, DrawingActionSuccess, JoinRoomSuccess, KickPlayerSuccess, LobbyDrawingActionSuccess, LobbySettings, PauseRoomSuccess, ReclaimRoomSuccess, RestartRoomSuccess, ResumeRoomSuccess, RoomState, RoomStateSuccess, RerollTurnSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@7ito/sketcherson-common/room';
 import type { DrawingAction, DrawingState } from '@7ito/sketcherson-common/drawing';
 
 export interface JoinedSession {
@@ -44,6 +44,7 @@ export interface RoomClient {
   startRoom(code: string): Promise<ApiResult<StartRoomSuccess>>;
   pauseRoom(code: string): Promise<ApiResult<PauseRoomSuccess>>;
   resumeRoom(code: string): Promise<ApiResult<ResumeRoomSuccess>>;
+  restartRoom(code: string): Promise<ApiResult<RestartRoomSuccess>>;
   kickPlayer(code: string, playerId: string): Promise<ApiResult<KickPlayerSuccess>>;
   rerollTurn(code: string): Promise<ApiResult<RerollTurnSuccess>>;
   submitDrawingAction(code: string, action: DrawingAction): Promise<ApiResult<DrawingActionSuccess>>;
