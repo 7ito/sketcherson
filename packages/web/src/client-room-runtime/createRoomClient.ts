@@ -167,14 +167,15 @@ export function createRoomClient(options: CreateRoomClientOptions): RoomClient {
     });
   };
 
-  const queueRoomResync = (roomCode: string) => {
-    if (resyncingRoomCodes.has(roomCode)) {
+  const queueDrawingResync = (roomCode: string, target: 'match' | 'lobby') => {
+    const resyncKey = `${roomCode}:${target}`;
+    if (resyncingRoomCodes.has(resyncKey)) {
       return;
     }
 
-    resyncingRoomCodes.add(roomCode);
+    resyncingRoomCodes.add(resyncKey);
 
-    void transport.emitWithAck('room:getState', { code: roomCode })
+    void transport.emitWithAck('room:getDrawingSnapshot', { code: roomCode, target })
       .then((result) => {
         if (!result.ok) {
           return;
@@ -184,10 +185,10 @@ export function createRoomClient(options: CreateRoomClientOptions): RoomClient {
           return;
         }
 
-        patchRoomDrawingView(drawingSync.applySnapshot(result.data.room));
+        patchRoomDrawingView(drawingSync.applyDrawingSnapshot(result.data.target, result.data.drawing, result.data.stateRevision));
       })
       .finally(() => {
-        resyncingRoomCodes.delete(roomCode);
+        resyncingRoomCodes.delete(resyncKey);
       });
   };
 
@@ -280,7 +281,7 @@ export function createRoomClient(options: CreateRoomClientOptions): RoomClient {
         revision: payload.revision,
         reason: 'revision_mismatch',
       });
-      queueRoomResync(payload.code);
+      queueDrawingResync(payload.code, target);
     }
   };
 
@@ -408,7 +409,7 @@ export function createRoomClient(options: CreateRoomClientOptions): RoomClient {
 
       if (!result.ok && action.type === 'endStroke') {
         recordDrawingResync({ roomCode: code, target: 'match', reason: 'action_rejected' });
-        queueRoomResync(code);
+        queueDrawingResync(code, 'match');
       }
 
       return result;
@@ -427,7 +428,7 @@ export function createRoomClient(options: CreateRoomClientOptions): RoomClient {
 
       if (!result.ok && action.type === 'endStroke') {
         recordDrawingResync({ roomCode: code, target: 'lobby', reason: 'action_rejected' });
-        queueRoomResync(code);
+        queueDrawingResync(code, 'lobby');
       }
 
       return result;

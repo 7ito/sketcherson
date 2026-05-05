@@ -1,4 +1,4 @@
-import type { ApiResult, CreateRoomSuccess, DrawingActionSuccess, JoinRoomSuccess, LobbyDrawingActionSuccess, LobbySettings, PauseRoomSuccess, ReclaimRoomSuccess, ResumeRoomSuccess, RerollTurnSuccess, RoomStateSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@7ito/sketcherson-common/room';
+import type { ApiResult, CreateRoomSuccess, DrawingActionSuccess, DrawingSnapshotSuccess, JoinRoomSuccess, LobbyDrawingActionSuccess, LobbySettings, PauseRoomSuccess, ReclaimRoomSuccess, ResumeRoomSuccess, RerollTurnSuccess, RoomStateSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@7ito/sketcherson-common/room';
 import type { DrawingAction } from '@7ito/sketcherson-common/drawing';
 import type { RoomTimerFiredInput } from './timers';
 import type { ActorInput, BroadcastTarget, ConnectionInput, EmptyActorInput, KickPlayerResult } from './transport';
@@ -38,10 +38,11 @@ export type RoomCommandResult =
 
 export type RoomQuery =
   | { type: 'getRoomState'; code: string; origin: string; viewerConnectionId?: string }
+  | { type: 'getDrawingSnapshot'; code: string; target: 'match' | 'lobby' }
   | { type: 'getBroadcastTargets'; code: string; origin: string; drawingPayload?: 'include' | 'omit' }
   | { type: 'hasRoom'; code: string };
 
-export type RoomQueryResult = ApiResult<RoomStateSuccess> | BroadcastTarget[] | boolean;
+export type RoomQueryResult = ApiResult<RoomStateSuccess> | ApiResult<DrawingSnapshotSuccess> | BroadcastTarget[] | boolean;
 
 export interface RoomLifecycleMachine {
   onChanged(listener: (roomCode: string) => void): void;

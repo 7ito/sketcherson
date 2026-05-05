@@ -5,6 +5,8 @@ import type {
   CreateRoomSuccess,
   DrawingActionRequest,
   DrawingActionSuccess,
+  DrawingSnapshotRequest,
+  DrawingSnapshotSuccess,
   JoinRoomRequest,
   JoinRoomSuccess,
   KickPlayerRequest,
@@ -61,6 +63,10 @@ export interface RoomClientToServerEvents {
   'room:getState': {
     request: RoomStateRequest;
     response: ApiResult<RoomStateSuccess>;
+  };
+  'room:getDrawingSnapshot': {
+    request: DrawingSnapshotRequest;
+    response: ApiResult<DrawingSnapshotSuccess>;
   };
   'room:updateSettings': {
     request: UpdateLobbySettingsRequest;

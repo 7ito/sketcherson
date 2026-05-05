@@ -202,6 +202,8 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
     switch (query.type) {
       case 'getRoomState':
         return this.getRoomState(query);
+      case 'getDrawingSnapshot':
+        return this.getDrawingSnapshot(query);
       case 'getBroadcastTargets':
         return this.getBroadcastTargets(query);
       case 'hasRoom':
@@ -723,6 +725,38 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
       ok: true,
       data: {
         room: this.toRoomState(room, input.origin, viewerPlayerId),
+      },
+    };
+  }
+
+  public getDrawingSnapshot(input: { code: string; target: 'match' | 'lobby' }) {
+    const normalizedCode = normalizeRoomCode(input.code);
+    const room = this.store.getRoom(normalizedCode);
+
+    if (!room) {
+      return this.roomNotFound();
+    }
+
+    const drawing = input.target === 'lobby' ? room.lobbyDrawing : room.match?.activeTurn?.drawing ?? null;
+
+    if (!drawing) {
+      return {
+        ok: false as const,
+        error: {
+          code: 'INVALID_STATE' as const,
+          message: 'Drawing target is not available.',
+        },
+      };
+    }
+
+    return {
+      ok: true as const,
+      data: {
+        roomCode: room.code,
+        target: input.target,
+        revision: drawing.revision,
+        stateRevision: room.stateRevision,
+        drawing,
       },
     };
   }

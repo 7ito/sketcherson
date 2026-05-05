@@ -15,6 +15,7 @@ export type RoomDrawingEventStatus = 'applied' | 'ignored-stale' | 'requires-res
 export interface RoomDrawingSync {
   bindRoom(room: RoomState | null): RoomDrawingView;
   applySnapshot(room: RoomState): RoomDrawingView;
+  applyDrawingSnapshot(target: DrawingTarget, drawing: DrawingState, stateRevision?: number): RoomDrawingView;
   applyEvent(target: DrawingTarget, event: DrawingActionAppliedEvent): {
     view: RoomDrawingView;
     status: RoomDrawingEventStatus;
@@ -39,6 +40,22 @@ export function createRoomDrawingSync(): RoomDrawingSync {
     },
     applySnapshot(room) {
       activeRoom = drawingRealtimeCore.mergeSnapshot({ current: activeRoom, incoming: room });
+      return buildView();
+    },
+    applyDrawingSnapshot(target, drawing, stateRevision) {
+      if (!activeRoom) {
+        return buildView();
+      }
+
+      const currentDrawing = drawingRealtimeCoreAccessors.getDrawing(activeRoom, target);
+      if (currentDrawing && currentDrawing.revision > drawing.revision) {
+        return buildView();
+      }
+
+      activeRoom = drawingRealtimeCoreAccessors.setRevision(
+        drawingRealtimeCoreAccessors.replaceDrawing(activeRoom, target, drawing),
+        stateRevision ?? activeRoom.stateRevision,
+      );
       return buildView();
     },
     applyEvent(target, event) {

@@ -257,33 +257,33 @@ describe('room client runtime', () => {
   it('requests resync when an end stroke action is rejected', async () => {
     const { client, transport } = createTestClient();
     const room = buildRoomState('ABCDEF', 'Guest', createDrawingState());
-    const resyncedRoom = buildRoomState('ABCDEF', 'Guest', createDrawingState(2));
+    const resyncedDrawing = createDrawingState(2);
     transport.emitServerEvent('room:state', room);
-    transport.respond('room:drawingAction', () => ({
+    transport.respond('room:lobbyDrawingAction', () => ({
       ok: false,
       error: { code: 'INVALID_DRAW_ACTION', message: 'The drawing stroke could not be completed.' },
     }));
-    transport.respond('room:getState', () => ({
+    transport.respond('room:getDrawingSnapshot', () => ({
       ok: true,
-      data: { room: resyncedRoom },
+      data: { roomCode: 'ABCDEF', target: 'lobby', revision: resyncedDrawing.revision, stateRevision: 2, drawing: resyncedDrawing },
     }));
 
-    const result = await client.submitDrawingAction('ABCDEF', { type: 'endStroke', strokeId: 'stroke-1' });
+    const result = await client.submitLobbyDrawingAction('ABCDEF', { type: 'endStroke', strokeId: 'stroke-1' });
 
     expect(result.ok).toBe(false);
     await vi.waitFor(() => {
       expect(client.getSnapshot().lobbyDrawing?.revision).toBe(2);
     });
-    expect(transport.emitted.map((entry) => entry.event)).toEqual(['room:drawingAction', 'room:getState']);
+    expect(transport.emitted.map((entry) => entry.event)).toEqual(['room:lobbyDrawingAction', 'room:getDrawingSnapshot']);
   });
 
   it('requests one resync when a drawing event revision gap is detected', async () => {
     const { client, transport } = createTestClient();
     const room = buildRoomState('ABCDEF', 'Guest', createDrawingState());
-    const resyncedRoom = buildRoomState('ABCDEF', 'Guest', createDrawingState(3));
-    transport.respond('room:getState', () => ({
+    const resyncedDrawing = createDrawingState(3);
+    transport.respond('room:getDrawingSnapshot', () => ({
       ok: true,
-      data: { room: resyncedRoom },
+      data: { roomCode: 'ABCDEF', target: 'lobby', revision: resyncedDrawing.revision, stateRevision: 3, drawing: resyncedDrawing },
     }));
     transport.emitServerEvent('room:state', room);
 
@@ -300,6 +300,6 @@ describe('room client runtime', () => {
     await vi.waitFor(() => {
       expect(client.getSnapshot().lobbyDrawing?.revision).toBe(3);
     });
-    expect(transport.emitted.filter((entry) => entry.event === 'room:getState')).toHaveLength(1);
+    expect(transport.emitted.filter((entry) => entry.event === 'room:getDrawingSnapshot')).toHaveLength(1);
   });
 });

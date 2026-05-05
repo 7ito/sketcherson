@@ -199,6 +199,11 @@ export interface RoomStateRequest {
   code: string;
 }
 
+export interface DrawingSnapshotRequest {
+  code: string;
+  target: 'match' | 'lobby';
+}
+
 export interface UpdateLobbySettingsRequest {
   code: string;
   settings: LobbySettings;
@@ -260,6 +265,14 @@ export interface ReclaimRoomSuccess {
 
 export interface RoomStateSuccess {
   room: RoomState;
+}
+
+export interface DrawingSnapshotSuccess {
+  roomCode: string;
+  target: 'match' | 'lobby';
+  revision: number;
+  stateRevision?: number;
+  drawing: DrawingState;
 }
 
 export interface UpdateLobbySettingsSuccess {

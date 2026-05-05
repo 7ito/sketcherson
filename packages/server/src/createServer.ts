@@ -248,6 +248,15 @@ export function createGameServer(options?: Partial<CreateGameServerOptions<any>>
     );
 
     registerRoomAction(
+      'room:getDrawingSnapshot',
+      'room.getDrawingSnapshot',
+      (payload) => roomRuntime.getDrawingSnapshot({ code: payload.code, target: payload.target }),
+      {
+        broadcastOnSuccess: false,
+      },
+    );
+
+    registerRoomAction(
       'room:updateSettings',
       'room.updateSettings',
       (payload) => {

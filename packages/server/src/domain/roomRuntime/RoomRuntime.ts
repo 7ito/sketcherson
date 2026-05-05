@@ -1,5 +1,5 @@
 import type { ActorInput, BroadcastTarget, ConnectionInput, EmptyActorInput, KickPlayerResult } from './transport';
-import type { ApiResult, CreateRoomSuccess, DrawingActionSuccess, JoinRoomSuccess, KickPlayerSuccess, LobbyDrawingActionSuccess, LobbySettings, PauseRoomSuccess, ReclaimRoomSuccess, ResumeRoomSuccess, RerollTurnSuccess, RoomStateSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@7ito/sketcherson-common/room';
+import type { ApiResult, CreateRoomSuccess, DrawingActionSuccess, DrawingSnapshotSuccess, JoinRoomSuccess, KickPlayerSuccess, LobbyDrawingActionSuccess, LobbySettings, PauseRoomSuccess, ReclaimRoomSuccess, ResumeRoomSuccess, RerollTurnSuccess, RoomStateSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@7ito/sketcherson-common/room';
 import type { DrawingAction, DrawingActionAppliedEvent } from '@7ito/sketcherson-common/drawing';
 import { InMemoryRoomLifecycleMachine, type InMemoryRoomLifecycleMachineOptions } from './InMemoryRoomLifecycleMachine';
 import type { RoomCommand, RoomCommandResult, RoomLifecycleMachine, RoomQuery, RoomQueryResult } from './RoomLifecycleMachine';
@@ -237,6 +237,10 @@ export class RoomRuntime {
 
   public getRoomState(input: { code: string; origin: string; viewerConnectionId?: string }): ApiResult<RoomStateSuccess> {
     return this.query<ApiResult<RoomStateSuccess>>({ type: 'getRoomState', ...input });
+  }
+
+  public getDrawingSnapshot(input: { code: string; target: 'match' | 'lobby' }): ApiResult<DrawingSnapshotSuccess> {
+    return this.query<ApiResult<DrawingSnapshotSuccess>>({ type: 'getDrawingSnapshot', ...input });
   }
 
   public getBroadcastTargets(input: { code: string; origin: string; drawingPayload?: 'include' | 'omit' }): BroadcastTarget[] {
