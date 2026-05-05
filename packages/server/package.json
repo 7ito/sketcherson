@@ -1,6 +1,6 @@
 {
   "name": "@7ito/sketcherson-server",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "description": "Reusable Socket.IO server runtime for Sketcherson games.",
   "license": "MIT",
   "type": "module",
@@ -23,7 +23,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@7ito/sketcherson-common": "^0.3.5",
+    "@7ito/sketcherson-common": "^0.3.6",
     "socket.io": "^4.8.1"
   },
   "devDependencies": {

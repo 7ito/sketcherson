@@ -1,5 +1,13 @@
 # @7ito/sketcherson-server
 
+## 0.3.6
+
+### Patch Changes
+
+- Preserve postgame drawing summaries when players join, leave, or reconnect during matches.
+- Updated dependencies
+  - @7ito/sketcherson-common@0.3.6
+
 ## 0.3.5
 
 ### Patch Changes

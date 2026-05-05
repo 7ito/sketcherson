@@ -1,5 +1,11 @@
 # @7ito/sketcherson-common
 
+## 0.3.6
+
+### Patch Changes
+
+- Improve realtime drawing recovery and late join round metadata for active matches.
+
 ## 0.3.5
 
 ### Patch Changes

@@ -1,5 +1,13 @@
 # @7ito/sketcherson-web
 
+## 0.3.7
+
+### Patch Changes
+
+- Keep postgame galleries grouped by server round metadata for late join drawings.
+- Updated dependencies
+  - @7ito/sketcherson-common@0.3.6
+
 ## 0.3.6
 
 ### Patch Changes
