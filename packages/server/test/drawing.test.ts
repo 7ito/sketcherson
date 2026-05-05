@@ -124,6 +124,45 @@ describe('drawing state', () => {
     expect(drawing.activeStrokes.map((stroke) => stroke.id)).toEqual(['fresh-stroke']);
   });
 
+  it('finalizes the actor previous lobby stroke before accepting a new one', () => {
+    const room = createLobbyDrawingRoom(['player-1']);
+    const channel = createDrawingChannel();
+
+    const firstResult = channel.apply({
+      room,
+      actor: { playerId: 'player-1', connectionId: 'socket-1' },
+      target: 'lobby',
+      action: {
+        type: 'beginStroke',
+        strokeId: 'stroke-1',
+        tool: 'pen',
+        color: '#2d56ff',
+        size: 6,
+        point: { x: 40, y: 40 },
+      },
+    });
+    expect(firstResult.ok).toBe(true);
+
+    const secondResult = channel.apply({
+      room,
+      actor: { playerId: 'player-1', connectionId: 'socket-1' },
+      target: 'lobby',
+      action: {
+        type: 'beginStroke',
+        strokeId: 'stroke-2',
+        tool: 'pen',
+        color: '#ff6600',
+        size: 6,
+        point: { x: 80, y: 80 },
+      },
+    });
+
+    expect(secondResult.ok).toBe(true);
+    expect(room.lobbyDrawing.operations.map((operation) => operation.id)).toEqual(['stroke-1']);
+    expect(room.lobbyDrawing.activeStrokes.map((stroke) => stroke.id)).toEqual(['stroke-2']);
+    expect(secondResult.ok ? secondResult.data.finalizedStrokes?.map((stroke) => stroke.id) : []).toEqual(['stroke-1']);
+  });
+
   it('rejects lobby strokes beyond the participant active stroke cap', () => {
     const room = createLobbyDrawingRoom(['player-1']);
     room.lobbyDrawing.activeStrokes = [{

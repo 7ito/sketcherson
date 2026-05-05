@@ -1,5 +1,29 @@
 # @7ito/sketcherson-server
 
+## 0.3.9
+
+### Patch Changes
+
+- Recover lobby drawing when a quick stroke leaves a stale active stroke.
+- Updated dependencies
+  - @7ito/sketcherson-common@0.3.9
+
+## 0.3.8
+
+### Patch Changes
+
+- Postgame summary fix
+- Updated dependencies
+  - @7ito/sketcherson-common@0.3.8
+
+## 0.3.7
+
+### Patch Changes
+
+- Postgame lobby fixes
+- Updated dependencies
+  - @7ito/sketcherson-common@0.3.7
+
 ## 0.3.6
 
 ### Patch Changes

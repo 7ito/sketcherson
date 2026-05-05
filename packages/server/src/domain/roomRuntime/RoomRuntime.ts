@@ -210,6 +210,7 @@ export class RoomRuntime {
             revision: response.data.revision,
             stateRevision: response.data.stateRevision,
             authoritativeStroke: response.data.authoritativeStroke,
+            finalizedStrokes: response.data.finalizedStrokes,
           },
         }]
       : [];
@@ -234,6 +235,7 @@ export class RoomRuntime {
             revision: response.data.revision,
             stateRevision: response.data.stateRevision,
             authoritativeStroke: response.data.authoritativeStroke,
+            finalizedStrokes: response.data.finalizedStrokes,
           },
         }]
       : [];

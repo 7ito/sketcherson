@@ -215,4 +215,83 @@ describe('DrawingInputSession', () => {
       { type: 'endStroke', strokeId: 'stroke-1' },
     ]);
   });
+
+  it('keeps a new quick stroke alive when the previous end acknowledgement resolves later', async () => {
+    let timer: (() => void) | null = null;
+    let strokeIndex = 0;
+    const endStrokeOne = deferred<ApiResult<DrawingActionSuccess>>();
+    const submitAction = vi.fn<(action: DrawingAction) => Promise<ApiResult<DrawingActionSuccess>>>().mockImplementation((action) => {
+      if (action.type === 'endStroke' && action.strokeId === 'stroke-1') {
+        return endStrokeOne.promise;
+      }
+
+      return Promise.resolve(ok(submitAction.mock.calls.length + 1));
+    });
+    const session = createDrawingInputSession({
+      submitAction,
+      createStrokeId: () => {
+        strokeIndex += 1;
+        return `stroke-${strokeIndex}`;
+      },
+      setTimeout: (callback) => {
+        timer = callback;
+        return 1;
+      },
+      clearTimeout: vi.fn(),
+      now: () => 0,
+    });
+
+    await session.begin({ point: point(1, 1), tool: 'pen', color: '#123456', size: 8 });
+    const firstEnd = session.end();
+    await Promise.resolve();
+    await session.begin({ point: point(10, 10), tool: 'pen', color: '#654321', size: 8 });
+    session.move(point(11, 11));
+
+    endStrokeOne.resolve(ok(2));
+    await firstEnd;
+
+    expect(session.getOptimisticStroke()?.id).toBe('stroke-2');
+
+    timer?.();
+    await Promise.resolve();
+    await session.end();
+
+    expect(submitAction.mock.calls.map(([action]) => action)).toEqual([
+      { type: 'beginStroke', strokeId: 'stroke-1', tool: 'pen', color: '#123456', size: 8, point: point(1, 1) },
+      { type: 'endStroke', strokeId: 'stroke-1' },
+      { type: 'beginStroke', strokeId: 'stroke-2', tool: 'pen', color: '#654321', size: 8, point: point(10, 10) },
+      { type: 'extendStroke', strokeId: 'stroke-2', points: [point(11, 11)] },
+      { type: 'endStroke', strokeId: 'stroke-2' },
+    ]);
+  });
+
+  it('does not let a delayed failed begin abort a newer quick stroke', async () => {
+    let strokeIndex = 0;
+    const firstBegin = deferred<ApiResult<DrawingActionSuccess>>();
+    const submitAction = vi.fn<(action: DrawingAction) => Promise<ApiResult<DrawingActionSuccess>>>().mockImplementation((action) => {
+      if (action.type === 'beginStroke' && action.strokeId === 'stroke-1') {
+        return firstBegin.promise;
+      }
+
+      return Promise.resolve(ok(submitAction.mock.calls.length + 1));
+    });
+    const session = createDrawingInputSession({
+      submitAction,
+      createStrokeId: () => {
+        strokeIndex += 1;
+        return `stroke-${strokeIndex}`;
+      },
+      now: () => 0,
+    });
+
+    const firstBeginResult = session.begin({ point: point(1, 1), tool: 'pen', color: '#123456', size: 8 });
+    const firstEnd = session.end();
+    await session.begin({ point: point(10, 10), tool: 'pen', color: '#654321', size: 8 });
+
+    firstBegin.resolve(fail('begin failed'));
+    await firstBeginResult;
+    await firstEnd;
+
+    expect(session.getOptimisticStroke()?.id).toBe('stroke-2');
+  });
 });

@@ -93,11 +93,12 @@ export function applyRemoteDrawingEvent(drawing: DrawingState, event: DrawingAct
     };
   }
 
+  const drawingForEvent = applyFinalizedStrokesFromEvent(drawing, event);
   const result = event.action.type === 'endStroke' && event.authoritativeStroke
-    ? applyAuthoritativeEndStrokeEvent(drawing, event)
+    ? applyAuthoritativeEndStrokeEvent(drawingForEvent, event)
     : event.action.type === 'extendStroke' && isCoalescedExtend
-      ? applyCoalescedExtendEvent(drawing, event.action)
-      : applyDrawingAction(drawing, event.action);
+      ? applyCoalescedExtendEvent(drawingForEvent, event.action)
+      : applyDrawingAction(drawingForEvent, event.action);
   if (!result.ok) {
     return {
       state: drawing,
@@ -119,6 +120,30 @@ export function applyRemoteDrawingEvent(drawing: DrawingState, event: DrawingAct
   return {
     state: appliedState,
     status: 'applied',
+  };
+}
+
+function applyFinalizedStrokesFromEvent(drawing: DrawingState, event: DrawingActionAppliedEvent): DrawingState {
+  if (!event.finalizedStrokes?.length) {
+    return drawing;
+  }
+
+  const finalizedIds = new Set(event.finalizedStrokes.map((stroke) => stroke.id));
+  const operationIds = new Set(drawing.operations.map((operation) => operation.id));
+  const finalizedOperations = event.finalizedStrokes
+    .filter((stroke) => !operationIds.has(stroke.id))
+    .map(cloneStroke);
+
+  if (finalizedOperations.length === 0 && drawing.activeStrokes.every((stroke) => !finalizedIds.has(stroke.id))) {
+    return drawing;
+  }
+
+  return {
+    ...drawing,
+    operations: [...drawing.operations, ...finalizedOperations],
+    activeStrokes: drawing.activeStrokes.filter((stroke) => !finalizedIds.has(stroke.id)),
+    undoneOperations: [],
+    snapshotDataUrl: null,
   };
 }
 

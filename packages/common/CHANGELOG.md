@@ -1,5 +1,23 @@
 # @7ito/sketcherson-common
 
+## 0.3.9
+
+### Patch Changes
+
+- Fix realtime drawing races from quick successive strokes.
+
+## 0.3.8
+
+### Patch Changes
+
+- Postgame summary fix
+
+## 0.3.7
+
+### Patch Changes
+
+- Postgame lobby fixes
+
 ## 0.3.6
 
 ### Patch Changes

@@ -28,6 +28,8 @@ export interface DrawingChannelServer {
 }
 
 export class ServerDrawingChannel implements DrawingChannelServer {
+  private readonly lobbyStrokeOwners = new Map<string, string>();
+
   public constructor(private readonly options: ServerDrawingChannelOptions) {}
 
   public apply(input: {
@@ -46,6 +48,13 @@ export class ServerDrawingChannel implements DrawingChannelServer {
       return policyResult;
     }
 
+    const lobbyPreparationResult = input.target === 'lobby'
+      ? this.prepareLobbyDrawingForAction(input.room, input.actor, input.action)
+      : { ok: true as const, data: { finalizedStrokes: [] as DrawingStrokeOperation[] } };
+    if (!lobbyPreparationResult.ok) {
+      return lobbyPreparationResult;
+    }
+
     const authoritativeStroke = input.action.type === 'endStroke'
       ? cloneActiveStroke(policyResult.data, input.action.strokeId)
       : undefined;
@@ -54,6 +63,7 @@ export class ServerDrawingChannel implements DrawingChannelServer {
       return result;
     }
 
+    this.updateLobbyStrokeOwnersAfterAppliedAction(input.room, input.actor, input.target, input.action);
     this.options.touchRoom(input.room);
     logDrawingTransportMetric('drawing.retained_state', {
       roomCode: input.room.code,
@@ -72,6 +82,9 @@ export class ServerDrawingChannel implements DrawingChannelServer {
         revision: policyResult.data.revision,
         stateRevision: input.room.stateRevision,
         authoritativeStroke,
+        finalizedStrokes: lobbyPreparationResult.data.finalizedStrokes.length > 0
+          ? lobbyPreparationResult.data.finalizedStrokes
+          : undefined,
       },
     };
   }
@@ -113,11 +126,6 @@ export class ServerDrawingChannel implements DrawingChannelServer {
         };
       }
 
-      const lobbyDrawingLimitResult = this.validateLobbyDrawingLimits(input.room, input.action);
-      if (!lobbyDrawingLimitResult.ok) {
-        return lobbyDrawingLimitResult;
-      }
-
       return { ok: true, data: input.room.lobbyDrawing };
     }
 
@@ -150,6 +158,89 @@ export class ServerDrawingChannel implements DrawingChannelServer {
     }
 
     return { ok: true, data: activeTurn.drawing };
+  }
+
+  private prepareLobbyDrawingForAction(
+    room: RoomRecord,
+    actor: DrawingChannelActor,
+    action: DrawingAction,
+  ): ApiResult<{ finalizedStrokes: DrawingStrokeOperation[] }> {
+    this.pruneLobbyStrokeOwners(room);
+
+    const finalizedStrokes = action.type === 'beginStroke'
+      ? this.getLobbyActiveStrokesOwnedByPlayer(room, actor.playerId)
+      : [];
+
+    if (finalizedStrokes.length > 0) {
+      if (room.lobbyDrawing.operations.length + finalizedStrokes.length >= LOBBY_DRAWING_MAX_OPERATIONS) {
+        return {
+          ok: false,
+          error: {
+            code: 'INVALID_DRAW_ACTION',
+            message: `Lobby drawing history can only contain ${LOBBY_DRAWING_MAX_OPERATIONS} operations.`,
+          },
+        };
+      }
+
+      const finalizedStrokeIds = new Set(finalizedStrokes.map((stroke) => stroke.id));
+      room.lobbyDrawing.operations.push(...finalizedStrokes.map(cloneActiveStrokeOperation));
+      room.lobbyDrawing.activeStrokes = room.lobbyDrawing.activeStrokes.filter((stroke) => !finalizedStrokeIds.has(stroke.id));
+      room.lobbyDrawing.undoneOperations = [];
+      room.lobbyDrawing.snapshotDataUrl = null;
+
+      for (const strokeId of finalizedStrokeIds) {
+        this.lobbyStrokeOwners.delete(this.toLobbyStrokeOwnerKey(room.code, strokeId));
+      }
+    }
+
+    const lobbyDrawingLimitResult = this.validateLobbyDrawingLimits(room, action);
+    if (!lobbyDrawingLimitResult.ok) {
+      return lobbyDrawingLimitResult;
+    }
+
+    return { ok: true, data: { finalizedStrokes } };
+  }
+
+  private updateLobbyStrokeOwnersAfterAppliedAction(
+    room: RoomRecord,
+    actor: DrawingChannelActor,
+    target: DrawingTarget,
+    action: DrawingAction,
+  ): void {
+    if (target !== 'lobby') {
+      return;
+    }
+
+    if (action.type === 'beginStroke') {
+      this.lobbyStrokeOwners.set(this.toLobbyStrokeOwnerKey(room.code, action.strokeId), actor.playerId);
+      return;
+    }
+
+    if (action.type === 'endStroke') {
+      this.lobbyStrokeOwners.delete(this.toLobbyStrokeOwnerKey(room.code, action.strokeId));
+    }
+  }
+
+  private getLobbyActiveStrokesOwnedByPlayer(room: RoomRecord, playerId: string): DrawingStrokeOperation[] {
+    return room.lobbyDrawing.activeStrokes
+      .filter((stroke) => this.lobbyStrokeOwners.get(this.toLobbyStrokeOwnerKey(room.code, stroke.id)) === playerId)
+      .map(cloneActiveStrokeOperation);
+  }
+
+  private pruneLobbyStrokeOwners(room: RoomRecord): void {
+    const activeStrokeIds = new Set(room.lobbyDrawing.activeStrokes.map((stroke) => stroke.id));
+    for (const key of [...this.lobbyStrokeOwners.keys()]) {
+      const parsed = parseLobbyStrokeOwnerKey(key);
+      if (!parsed || parsed.roomCode !== room.code || activeStrokeIds.has(parsed.strokeId)) {
+        continue;
+      }
+
+      this.lobbyStrokeOwners.delete(key);
+    }
+  }
+
+  private toLobbyStrokeOwnerKey(roomCode: string, strokeId: string): string {
+    return `${roomCode}:${strokeId}`;
   }
 
   private validateLobbyDrawingLimits(room: RoomRecord, action: DrawingAction): ApiResult<null> {
@@ -191,12 +282,7 @@ export class ServerDrawingChannel implements DrawingChannelServer {
   }
 }
 
-function cloneActiveStroke(drawing: DrawingState, strokeId: string): DrawingStrokeOperation | undefined {
-  const stroke = drawing.activeStrokes.find((candidate) => candidate.id === strokeId);
-  if (!stroke) {
-    return undefined;
-  }
-
+function cloneActiveStrokeOperation(stroke: DrawingStrokeOperation): DrawingStrokeOperation {
   return {
     kind: 'stroke',
     id: stroke.id,
@@ -205,4 +291,25 @@ function cloneActiveStroke(drawing: DrawingState, strokeId: string): DrawingStro
     size: stroke.size,
     points: stroke.points.map((point) => ({ ...point })),
   };
+}
+
+function parseLobbyStrokeOwnerKey(key: string): { roomCode: string; strokeId: string } | null {
+  const separatorIndex = key.indexOf(':');
+  if (separatorIndex === -1) {
+    return null;
+  }
+
+  return {
+    roomCode: key.slice(0, separatorIndex),
+    strokeId: key.slice(separatorIndex + 1),
+  };
+}
+
+function cloneActiveStroke(drawing: DrawingState, strokeId: string): DrawingStrokeOperation | undefined {
+  const stroke = drawing.activeStrokes.find((candidate) => candidate.id === strokeId);
+  if (!stroke) {
+    return undefined;
+  }
+
+  return cloneActiveStrokeOperation(stroke);
 }

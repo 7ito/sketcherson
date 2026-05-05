@@ -109,6 +109,7 @@ export interface DrawingActionAppliedEvent {
   revision: number;
   stateRevision?: number;
   authoritativeStroke?: DrawingStrokeOperation;
+  finalizedStrokes?: DrawingStrokeOperation[];
 }
 
 export const DRAWING_MAX_EXTEND_POINTS = 128;

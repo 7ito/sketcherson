@@ -165,6 +165,32 @@ describe('drawingProtocol', () => {
     expect(gap.state).toBe(applied.state);
   });
 
+  it('applies remote events that finalize stale active strokes before the action', () => {
+    const drawing = createDrawingState();
+    const staleStroke = stroke({ id: 'stroke-1' });
+    drawing.activeStrokes = [staleStroke];
+    drawing.revision = 1;
+
+    const applied = applyRemoteDrawingEvent(drawing, {
+      code: 'ABCDEF',
+      action: {
+        type: 'beginStroke',
+        strokeId: 'stroke-2',
+        tool: 'pen',
+        color: '#000000',
+        size: 8,
+        point: { x: 30, y: 40 },
+      },
+      revision: 2,
+      finalizedStrokes: [staleStroke],
+    });
+
+    expect(applied.status).toBe('applied');
+    expect(applied.state.revision).toBe(2);
+    expect(applied.state.operations.map((operation) => operation.id)).toEqual(['stroke-1']);
+    expect(applied.state.activeStrokes.map((activeStroke) => activeStroke.id)).toEqual(['stroke-2']);
+  });
+
   it('applies coalesced remote extend gaps without dropping merged points', () => {
     const drawing = createDrawingState();
     drawing.activeStrokes = [stroke()];

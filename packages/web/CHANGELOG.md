@@ -1,5 +1,29 @@
 # @7ito/sketcherson-web
 
+## 0.3.10
+
+### Patch Changes
+
+- Fix quick successive strokes disappearing after delayed drawing acknowledgements.
+- Updated dependencies
+  - @7ito/sketcherson-common@0.3.9
+
+## 0.3.9
+
+### Patch Changes
+
+- Postgame summary fix
+- Updated dependencies
+  - @7ito/sketcherson-common@0.3.8
+
+## 0.3.8
+
+### Patch Changes
+
+- Postgame lobby fixes
+- Updated dependencies
+  - @7ito/sketcherson-common@0.3.7
+
 ## 0.3.7
 
 ### Patch Changes

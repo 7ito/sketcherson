@@ -37,7 +37,7 @@ export function createDrawingInputSession<TSuccess extends ExtendBatchSuccess = 
   options: DrawingInputSessionOptions<TSuccess>,
 ): DrawingInputSession<TSuccess> {
   let optimisticStroke: OptimisticStroke | null = null;
-  let beginStrokePromise: Promise<ApiResult<TSuccess>> | null = null;
+  const beginStrokePromises = new Map<string, Promise<ApiResult<TSuccess>>>();
   const makeStrokeId = options.createStrokeId ?? createStrokeId;
   const notifyOptimisticStrokeChange = () => options.onOptimisticStrokeChange?.(optimisticStroke);
 
@@ -54,9 +54,21 @@ export function createDrawingInputSession<TSuccess extends ExtendBatchSuccess = 
     onExtendBatchAcknowledged: options.onExtendBatchAcknowledged,
   });
 
-  const clearOptimisticStroke = () => {
+  const clearOptimisticStroke = (strokeId?: string) => {
+    if (strokeId && optimisticStroke?.id !== strokeId) {
+      return;
+    }
+
     optimisticStroke = null;
     notifyOptimisticStrokeChange();
+  };
+
+  const abortStroke = (strokeId: string) => {
+    if (controller.getActiveStrokeId() === strokeId) {
+      controller.abortActiveStroke();
+    }
+
+    clearOptimisticStroke(strokeId);
   };
 
   return {
@@ -81,14 +93,13 @@ export function createDrawingInputSession<TSuccess extends ExtendBatchSuccess = 
         size: input.size,
         point: input.point,
       });
-      beginStrokePromise = resultPromise;
+      beginStrokePromises.set(strokeId, resultPromise);
       const result = await resultPromise;
-      if (beginStrokePromise === resultPromise) {
-        beginStrokePromise = null;
+      if (beginStrokePromises.get(strokeId) === resultPromise) {
+        beginStrokePromises.delete(strokeId);
       }
       if (!result.ok) {
-        controller.abortActiveStroke();
-        clearOptimisticStroke();
+        abortStroke(strokeId);
       }
       return result;
     },
@@ -101,15 +112,17 @@ export function createDrawingInputSession<TSuccess extends ExtendBatchSuccess = 
     async end() {
       const strokeId = controller.endActiveStroke();
       if (!strokeId) return null;
-      const beginResult = await beginStrokePromise;
+      const beginResult = await beginStrokePromises.get(strokeId);
       if (beginResult && !beginResult.ok) return null;
       const result = await options.submitAction({ type: 'endStroke', strokeId });
-      clearOptimisticStroke();
-      controller.resetPendingExtend();
+      clearOptimisticStroke(strokeId);
+      if (!controller.getActiveStrokeId()) {
+        controller.resetPendingExtend();
+      }
       return result;
     },
     cancel() {
-      beginStrokePromise = null;
+      beginStrokePromises.clear();
       controller.abortActiveStroke();
       clearOptimisticStroke();
     },

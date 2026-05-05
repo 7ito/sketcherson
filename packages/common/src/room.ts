@@ -306,6 +306,7 @@ export interface DrawingActionSuccess {
   revision: number;
   stateRevision?: number;
   authoritativeStroke?: import('./drawing').DrawingStrokeOperation;
+  finalizedStrokes?: import('./drawing').DrawingStrokeOperation[];
 }
 
 export interface LobbyDrawingActionSuccess {
@@ -313,6 +314,7 @@ export interface LobbyDrawingActionSuccess {
   revision: number;
   stateRevision?: number;
   authoritativeStroke?: import('./drawing').DrawingStrokeOperation;
+  finalizedStrokes?: import('./drawing').DrawingStrokeOperation[];
 }
 
 export interface SubmitMessageSuccess {

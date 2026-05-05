@@ -475,7 +475,7 @@ export function createRoomClient(options: CreateRoomClientOptions): RoomClient {
         revision: result.ok ? result.data.revision : undefined,
       });
 
-      if (!result.ok && action.type === 'endStroke') {
+      if (shouldResyncAfterRejectedDrawingAction(result)) {
         recordDrawingResync({ roomCode: code, target: 'match', reason: 'action_rejected' });
         queueDrawingResync(code, 'match');
       }
@@ -499,7 +499,7 @@ export function createRoomClient(options: CreateRoomClientOptions): RoomClient {
         revision: result.ok ? result.data.revision : undefined,
       });
 
-      if (!result.ok && action.type === 'endStroke') {
+      if (shouldResyncAfterRejectedDrawingAction(result)) {
         recordDrawingResync({ roomCode: code, target: 'lobby', reason: 'action_rejected' });
         queueDrawingResync(code, 'lobby');
       }
@@ -519,6 +519,10 @@ export function createRoomClient(options: CreateRoomClientOptions): RoomClient {
       resetDrawingTransportBinding();
     },
   };
+}
+
+function shouldResyncAfterRejectedDrawingAction(result: ApiResult<unknown>): boolean {
+  return !result.ok && result.error.code !== 'RATE_LIMITED';
 }
 
 function createDrawingTransportAdapter(transport: RoomTransport): RoomDrawingTransport {
