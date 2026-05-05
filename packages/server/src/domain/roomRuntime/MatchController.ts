@@ -539,6 +539,18 @@ export class MatchController {
     }
 
     const activeTurn = match.activeTurn;
+    const appendPlayerChatMessage = (audience?: RoomFeedRecord['audience']): void => {
+      appendRoomFeedRecord(match.feed, {
+        id: this.ids.randomUUID(),
+        type: 'playerChat',
+        senderPlayerId: input.player.id,
+        senderNickname: input.player.nickname,
+        text: input.text,
+        createdAt: this.now(),
+        turnNumber: activeTurn?.turnNumber ?? null,
+        ...(audience ? { audience } : {}),
+      });
+    };
     const effectivePhase = this.getEffectiveMatchPhase(input.room);
 
     if (effectivePhase === 'round' && activeTurn) {
@@ -582,30 +594,23 @@ export class MatchController {
         this.rules.features.closeGuessFeedback &&
         guessEvaluation.closeGuess
       ) {
+        const closeGuessAudience = { type: 'player' as const, playerId: input.player.id };
+        appendPlayerChatMessage(input.room.settings.hideCloseGuesses ? closeGuessAudience : undefined);
+
         if (input.room.settings.showCloseGuessAlerts ?? true) {
           appendRoomFeedRecord(match.feed, this.createSystemFeedItem(
             { type: 'closeGuess', guesserNickname: input.player.nickname, kind: guessEvaluation.closeGuess.kind, message: guessEvaluation.closeGuess.message },
             activeTurn.turnNumber,
             this.now(),
-            { type: 'player', playerId: input.player.id },
+            closeGuessAudience,
           ));
         }
 
-        if (input.room.settings.hideCloseGuesses) {
-          return { ok: true };
-        }
+        return { ok: true };
       }
     }
 
-    appendRoomFeedRecord(match.feed, {
-      id: this.ids.randomUUID(),
-      type: 'playerChat',
-      senderPlayerId: input.player.id,
-      senderNickname: input.player.nickname,
-      text: input.text,
-      createdAt: this.now(),
-      turnNumber: activeTurn?.turnNumber ?? null,
-    });
+    appendPlayerChatMessage();
 
     return { ok: true };
   }

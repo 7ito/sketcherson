@@ -122,6 +122,22 @@ function createSequentialIds(ids: string[]): { randomUUID(): string } {
   };
 }
 
+const CLOSE_GUESS_TEST_GAME_PACK = defineGamePack({
+  definition: TEST_GAME_DEFINITION,
+  rules: defineDrawingGameRules({ features: { closeGuessFeedback: true } }),
+  promptRules: {
+    evaluateGuess({ normalizedGuess, defaultEvaluate }) {
+      const defaultResult = defaultEvaluate();
+
+      if (!defaultResult.correct && normalizedGuess === 'cloze') {
+        return { ...defaultResult, closeGuess: { kind: 'typo', message: 'Close!' } };
+      }
+
+      return defaultResult;
+    },
+  },
+});
+
 function createManualScheduler() {
   interface ScheduledTimer {
     handle: ReturnType<typeof setTimeout>;
@@ -1928,6 +1944,143 @@ describe('RoomRuntime', () => {
       text: 'xap',
       senderPlayerId: joinResult.data.playerId,
     });
+  });
+
+  it('places close guess feedback after the guessed chat message', () => {
+    vi.useFakeTimers();
+
+    const service = createRoomRuntimeDriver({
+      gamePack: CLOSE_GUESS_TEST_GAME_PACK,
+      countdownMs: 25,
+      revealMs: 25,
+      roundDurationOverrideMs: 60_000,
+      random: () => 0,
+    });
+    const createResult = service.createRoom('Host', 'socket-1', 'https://sketcherson.example');
+
+    if (!createResult.ok) {
+      throw new Error('Expected room creation to succeed');
+    }
+
+    const joinResult = service.joinRoom(createResult.data.room.code, 'Guest', 'socket-2', 'https://sketcherson.example');
+
+    if (!joinResult.ok) {
+      throw new Error('Expected room join to succeed');
+    }
+
+    const startResult = service.startRoom('socket-1', 'https://sketcherson.example');
+
+    if (!startResult.ok || !startResult.data.room.match?.currentTurn) {
+      throw new Error('Expected room start to succeed');
+    }
+
+    const participants = [
+      { playerId: createResult.data.playerId, socketId: 'socket-1', nickname: 'Host' },
+      { playerId: joinResult.data.playerId, socketId: 'socket-2', nickname: 'Guest' },
+    ];
+    const guesser = participants.find((participant) => participant.playerId !== startResult.data.room.match?.currentTurn?.drawerPlayerId);
+
+    if (!guesser) {
+      throw new Error('Expected a guesser to exist');
+    }
+
+    vi.advanceTimersByTime(30);
+
+    const guessResult = service.submitMessage(guesser.socketId, 'cloze', 'https://sketcherson.example');
+    expect(guessResult.ok).toBe(true);
+
+    if (!guessResult.ok || !guessResult.data.room.match) {
+      return;
+    }
+
+    const feedTail = guessResult.data.room.match.feed.slice(-2);
+    expect(feedTail[0]).toMatchObject({
+      type: 'playerChat',
+      text: 'cloze',
+      senderPlayerId: guesser.playerId,
+    });
+    expect(feedTail[1]).toMatchObject({
+      type: 'system',
+      event: { type: 'closeGuess', guesserNickname: guesser.nickname, message: 'Close!' },
+    });
+  });
+
+  it('keeps hidden close guesses private while preserving sender ordering', () => {
+    vi.useFakeTimers();
+
+    const service = createRoomRuntimeDriver({
+      gamePack: CLOSE_GUESS_TEST_GAME_PACK,
+      countdownMs: 25,
+      revealMs: 25,
+      roundDurationOverrideMs: 60_000,
+      random: () => 0,
+    });
+    const createResult = service.createRoom('Host', 'socket-1', 'https://sketcherson.example');
+
+    if (!createResult.ok) {
+      throw new Error('Expected room creation to succeed');
+    }
+
+    const joinResult = service.joinRoom(createResult.data.room.code, 'Guest', 'socket-2', 'https://sketcherson.example');
+
+    if (!joinResult.ok) {
+      throw new Error('Expected room join to succeed');
+    }
+
+    const settingsUpdate = service.updateLobbySettings(
+      'socket-1',
+      {
+        roundTimerSeconds: 90,
+        firstCorrectGuessTimeCapSeconds: 30,
+        guessingDelaySeconds: 0,
+        hideCloseGuesses: true,
+        showCloseGuessAlerts: true,
+        turnsPerPlayer: 3,
+        artEnabled: true,
+      },
+      'https://sketcherson.example',
+    );
+    expect(settingsUpdate.ok).toBe(true);
+
+    const startResult = service.startRoom('socket-1', 'https://sketcherson.example');
+
+    if (!startResult.ok || !startResult.data.room.match?.currentTurn) {
+      throw new Error('Expected room start to succeed');
+    }
+
+    const participants = [
+      { playerId: createResult.data.playerId, socketId: 'socket-1', nickname: 'Host' },
+      { playerId: joinResult.data.playerId, socketId: 'socket-2', nickname: 'Guest' },
+    ];
+    const guesser = participants.find((participant) => participant.playerId !== startResult.data.room.match?.currentTurn?.drawerPlayerId);
+    const otherPlayer = participants.find((participant) => participant.playerId === startResult.data.room.match?.currentTurn?.drawerPlayerId);
+
+    if (!guesser || !otherPlayer) {
+      throw new Error('Expected drawer and guesser to exist');
+    }
+
+    vi.advanceTimersByTime(30);
+
+    const guessResult = service.submitMessage(guesser.socketId, 'cloze', 'https://sketcherson.example');
+    expect(guessResult.ok).toBe(true);
+
+    if (!guessResult.ok || !guessResult.data.room.match) {
+      return;
+    }
+
+    const feedTail = guessResult.data.room.match.feed.slice(-2);
+    expect(feedTail[0]).toMatchObject({ type: 'playerChat', text: 'cloze', senderPlayerId: guesser.playerId });
+    expect(feedTail[1]).toMatchObject({ type: 'system', event: { type: 'closeGuess', message: 'Close!' } });
+
+    const otherState = service.getRoomStateForSocket(otherPlayer.socketId, createResult.data.room.code, 'https://sketcherson.example');
+    expect(otherState.ok).toBe(true);
+
+    if (!otherState.ok) {
+      return;
+    }
+
+    expect(otherState.data.room.match?.feed.some((item) => item.type === 'playerChat' && item.text === 'cloze')).toBe(false);
+    expect(otherState.data.room.match?.feed.some((item) => item.type === 'system' && item.event.type === 'closeGuess')).toBe(false);
   });
 
   it('ends the drawing turn immediately once every eligible guesser has answered correctly', () => {
