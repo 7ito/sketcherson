@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { defineGamePack } from './gamePack';
-import { createPromptEngine, isAcceptedFuzzyGuess } from './promptEngine';
+import {
+  createPromptEngine,
+  getDamerauLevenshteinDistance,
+  isAcceptedFuzzyGuess,
+  isWithinDamerauLevenshteinDistance,
+} from './promptEngine';
 import { TEST_GAME_DEFINITION, type TestGamePrompt } from './games/testGame';
 
 const TEST_GAME_PACK = defineGamePack<TestGamePrompt>({
@@ -98,6 +103,18 @@ describe('prompt engine', () => {
   it('exports the fuzzy guess helper for game packs', () => {
     expect(isAcceptedFuzzyGuess('charizard', 'charizrd')).toBe(true);
     expect(isAcceptedFuzzyGuess('mew', 'mewtwo')).toBe(false);
+  });
+
+  it('calculates reusable Damerau edit distances', () => {
+    expect(getDamerauLevenshteinDistance('dragon', 'dragon')).toBe(0);
+    expect(getDamerauLevenshteinDistance('dragon', 'dragons')).toBe(1);
+    expect(getDamerauLevenshteinDistance('dragon', 'dragn')).toBe(1);
+    expect(getDamerauLevenshteinDistance('dragon', 'dragin')).toBe(1);
+    expect(getDamerauLevenshteinDistance('dragon', 'dargon')).toBe(1);
+    expect(getDamerauLevenshteinDistance('dragon', 'dargno')).toBe(2);
+    expect(isWithinDamerauLevenshteinDistance('charizard', 'charzard', 1)).toBe(true);
+    expect(isWithinDamerauLevenshteinDistance('charizard', 'chzrd', 1)).toBe(false);
+    expect(getDamerauLevenshteinDistance('charizard', 'chzrd', 1)).toBe(2);
   });
 
   it('supports game-pack custom guess rules', () => {

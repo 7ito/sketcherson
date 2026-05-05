@@ -391,66 +391,73 @@ function hasSingleAdjacentTransposition(answer: string, guess: string): boolean 
 }
 
 function isWithinSingleDamerauEdit(answer: string, guess: string): boolean {
-  if (hasSingleAdjacentTransposition(answer, guess)) {
-    return true;
-  }
-
-  if (answer.length === guess.length) {
-    return hasSingleSubstitution(answer, guess);
-  }
-
-  if (Math.abs(answer.length - guess.length) !== 1) {
-    return false;
-  }
-
-  return hasSingleInsertionOrDeletion(answer, guess);
+  return isWithinDamerauLevenshteinDistance(answer, guess, 1) && answer !== guess;
 }
 
-function hasSingleSubstitution(answer: string, guess: string): boolean {
-  if (answer.length !== guess.length) {
-    return false;
-  }
-
-  let mismatchCount = 0;
-
-  for (let index = 0; index < answer.length; index += 1) {
-    if (answer[index] === guess[index]) {
-      continue;
-    }
-
-    mismatchCount += 1;
-    if (mismatchCount > 1) {
-      return false;
-    }
-  }
-
-  return mismatchCount === 1;
+export function isWithinDamerauLevenshteinDistance(left: string, right: string, maxDistance: number): boolean {
+  return getDamerauLevenshteinDistance(left, right, maxDistance) <= maxDistance;
 }
 
-function hasSingleInsertionOrDeletion(answer: string, guess: string): boolean {
-  const longerValue = answer.length > guess.length ? answer : guess;
-  const shorterValue = answer.length > guess.length ? guess : answer;
-  let longerIndex = 0;
-  let shorterIndex = 0;
-  let skippedCharacter = false;
-
-  while (longerIndex < longerValue.length && shorterIndex < shorterValue.length) {
-    if (longerValue[longerIndex] === shorterValue[shorterIndex]) {
-      longerIndex += 1;
-      shorterIndex += 1;
-      continue;
-    }
-
-    if (skippedCharacter) {
-      return false;
-    }
-
-    skippedCharacter = true;
-    longerIndex += 1;
+export function getDamerauLevenshteinDistance(left: string, right: string, maxDistance = Number.POSITIVE_INFINITY): number {
+  if (maxDistance < 0) {
+    return maxDistance + 1;
   }
 
-  return true;
+  if (left === right) {
+    return 0;
+  }
+
+  if (left.length === 0) {
+    return right.length;
+  }
+
+  if (right.length === 0) {
+    return left.length;
+  }
+
+  if (Math.abs(left.length - right.length) > maxDistance) {
+    return maxDistance + 1;
+  }
+
+  let twoRowsBack = Array.from({ length: right.length + 1 }, () => 0);
+  let previousRow = Array.from({ length: right.length + 1 }, (_, index) => index);
+
+  for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
+    const currentRow = [leftIndex];
+    let rowMinimum = currentRow[0] ?? leftIndex;
+
+    for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
+      const substitutionCost = left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1;
+      let distance = Math.min(
+        (previousRow[rightIndex] ?? 0) + 1,
+        (currentRow[rightIndex - 1] ?? 0) + 1,
+        (previousRow[rightIndex - 1] ?? 0) + substitutionCost,
+      );
+
+      if (
+        leftIndex > 1 &&
+        rightIndex > 1 &&
+        left[leftIndex - 1] === right[rightIndex - 2] &&
+        left[leftIndex - 2] === right[rightIndex - 1]
+      ) {
+        distance = Math.min(distance, (twoRowsBack[rightIndex - 2] ?? 0) + 1);
+      }
+
+      currentRow[rightIndex] = distance;
+      rowMinimum = Math.min(rowMinimum, distance);
+    }
+
+    if (rowMinimum > maxDistance) {
+      return maxDistance + 1;
+    }
+
+    twoRowsBack = previousRow;
+    previousRow = currentRow;
+  }
+
+  return previousRow[right.length] ?? maxDistance + 1;
 }
+
 
 function areQwertyAdjacent(leftKey: string, rightKey: string): boolean {
   return QWERTY_ADJACENT_KEYS.get(leftKey)?.has(rightKey) ?? false;
