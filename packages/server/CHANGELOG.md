@@ -1,5 +1,31 @@
 # @7ito/sketcherson-server
 
+## 0.3.2
+
+### Patch Changes
+
+- Updated dependencies
+  - @7ito/sketcherson-common@0.3.2
+
+## 0.3.1
+
+### Patch Changes
+
+- Drawing system performance refactor
+- Updated dependencies
+  - @7ito/sketcherson-common@0.3.1
+
+## 0.3.0
+
+### Minor Changes
+
+- Improve realtime drawing resilience with separated drawing traffic, coalesced live stroke updates for slower spectators, authoritative stroke completion, drawing snapshot recovery, and slimmer room/control payloads.
+
+### Patch Changes
+
+- Updated dependencies
+  - @7ito/sketcherson-common@0.3.0
+
 ## 0.2.5
 
 ### Patch Changes

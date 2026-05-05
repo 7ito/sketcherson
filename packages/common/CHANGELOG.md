@@ -1,5 +1,23 @@
 # @7ito/sketcherson-common
 
+## 0.3.2
+
+### Patch Changes
+
+- Add reusable Damerau edit-distance helpers for game-specific fuzzy guessing.
+
+## 0.3.1
+
+### Patch Changes
+
+- Drawing system performance refactor
+
+## 0.3.0
+
+### Minor Changes
+
+- Improve realtime drawing resilience with separated drawing traffic, coalesced live stroke updates for slower spectators, authoritative stroke completion, drawing snapshot recovery, and slimmer room/control payloads.
+
 ## 0.2.5
 
 ### Patch Changes
