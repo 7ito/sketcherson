@@ -269,11 +269,6 @@ export class ConnectionController {
       turnNumber: index + 1,
     }));
 
-    match.completedTurns = match.completedTurns.map((turn, index) => ({
-      ...turn,
-      turnNumber: index + 1,
-    }));
-
     if (match.activeTurn) {
       match.activeTurn.turnNumber = match.currentTurnIndex + 1;
     }

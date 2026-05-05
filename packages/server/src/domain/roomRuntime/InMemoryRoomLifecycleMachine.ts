@@ -7,7 +7,7 @@ import { isNicknameValid, normalizeNickname, normalizeNicknameForComparison } fr
 import { containsProfanity } from '@7ito/sketcherson-common/moderation';
 import { randomUUID } from 'node:crypto';
 import { cloneDrawingState } from '@7ito/sketcherson-common/drawingProtocol';
-import { applyDrawingAction, createDrawingState } from '../drawing';
+import { applyDrawingAction, createDrawingState, type AsyncSnapshotRenderer } from '../drawing';
 import { appendRoomFeedRecord, type ActiveTurnRecord, type RoomPlayerRecord, type RoomRecord } from './model';
 import { ConnectionController } from './ConnectionController';
 import { DrawingController } from './DrawingController';
@@ -37,6 +37,7 @@ export interface InMemoryRoomLifecycleMachineOptions {
   ids?: RoomIdGenerator;
   scheduler?: RoomSchedulerAdapter;
   renderDrawingSnapshot?: (drawing: DrawingState) => string | null;
+  asyncSnapshotRenderer?: AsyncSnapshotRenderer;
   gameRuntime?: ServerGameRuntime<any>;
   gameDefinition?: GameDefinition;
   gamePack?: GamePack<any>;
@@ -147,6 +148,7 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
         this.scheduleRoomPhaseTimer(room, delayMs, kind),
       freezeReconnectTimers: (room: RoomRecord) => this.freezeReconnectTimers(room),
       resumeReconnectTimers: (room: RoomRecord) => this.resumeReconnectTimers(room),
+      asyncSnapshotRenderer: options.asyncSnapshotRenderer,
     });
   }
 

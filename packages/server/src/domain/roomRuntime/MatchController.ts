@@ -26,6 +26,7 @@ export interface MatchControllerOptions {
   scheduleRoomTimer: (room: RoomRecord, delayMs: number, kind: RoomPhaseTimerKind) => void;
   freezeReconnectTimers: (room: RoomRecord) => void;
   resumeReconnectTimers: (room: RoomRecord) => void;
+  asyncSnapshotRenderer?: AsyncSnapshotRenderer;
 }
 
 export class MatchController {
@@ -55,7 +56,7 @@ export class MatchController {
     this.random = options.random;
     this.ids = options.ids;
     this.renderDrawingSnapshot = options.renderDrawingSnapshot;
-    this.asyncSnapshotRenderer = createAsyncSnapshotRenderer();
+    this.asyncSnapshotRenderer = options.asyncSnapshotRenderer ?? createAsyncSnapshotRenderer();
     this.promptEngine = options.promptEngine;
     this.rules = options.rules;
     this.countdownMs = options.countdownMs;
@@ -880,12 +881,15 @@ export class MatchController {
 
       const room = this.rooms.get(roomCode);
       const match = room?.match;
-      const activeTurn = match?.activeTurn;
-      if (!room || !match || !activeTurn || activeTurn.turnNumber !== turnNumber) {
+      if (!room || !match) {
         return;
       }
 
-      activeTurn.drawing.snapshotDataUrl = snapshotDataUrl;
+      const activeTurn = match.activeTurn;
+      if (activeTurn?.turnNumber === turnNumber) {
+        activeTurn.drawing.snapshotDataUrl = snapshotDataUrl;
+      }
+
       const completedTurn = match.completedTurns.find((turn) => turn.turnNumber === turnNumber);
       if (completedTurn) {
         completedTurn.finalImageDataUrl = snapshotDataUrl;

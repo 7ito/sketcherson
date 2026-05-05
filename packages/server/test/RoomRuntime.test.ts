@@ -1386,6 +1386,196 @@ describe('RoomRuntime', () => {
   });
 
 
+  it('keeps completed drawing cards for players removed before postgame', () => {
+    vi.useFakeTimers();
+
+    const service = createRoomRuntimeDriver({
+      countdownMs: 25,
+      revealMs: 25,
+      roundDurationOverrideMs: 50,
+      random: () => 0,
+    });
+    const createResult = service.createRoom('Host', 'socket-1', 'https://sketcherson.example');
+
+    if (!createResult.ok) {
+      throw new Error('Expected room creation to succeed');
+    }
+
+    const joinResult = service.joinRoom(createResult.data.room.code, 'Guest', 'socket-2', 'https://sketcherson.example');
+
+    if (!joinResult.ok) {
+      throw new Error('Expected room join to succeed');
+    }
+
+    const settingsUpdate = service.updateLobbySettings(
+      'socket-1',
+      {
+        roundTimerSeconds: 60,
+        firstCorrectGuessTimeCapSeconds: 30,
+        turnsPerPlayer: 1,
+        artEnabled: true,
+      },
+      'https://sketcherson.example',
+    );
+    expect(settingsUpdate.ok).toBe(true);
+
+    const startResult = service.startRoom('socket-1', 'https://sketcherson.example');
+    expect(startResult.ok).toBe(true);
+
+    if (!startResult.ok || !startResult.data.room.match?.currentTurn) {
+      return;
+    }
+
+    expect(startResult.data.room.match.currentTurn.drawerPlayerId).toBe(joinResult.data.playerId);
+
+    vi.advanceTimersByTime(30);
+
+    expect(service.applyDrawingAction(
+      'socket-2',
+      {
+        type: 'beginStroke',
+        strokeId: 'guest-stroke',
+        tool: 'pen',
+        color: '#101a35',
+        size: 6,
+        point: { x: 120, y: 120 },
+      },
+      'https://sketcherson.example',
+    ).ok).toBe(true);
+    expect(service.applyDrawingAction(
+      'socket-2',
+      {
+        type: 'endStroke',
+        strokeId: 'guest-stroke',
+      },
+      'https://sketcherson.example',
+    ).ok).toBe(true);
+
+    vi.advanceTimersByTime(60);
+
+    const revealState = service.getRoomState(createResult.data.room.code, 'https://sketcherson.example');
+    expect(revealState.ok).toBe(true);
+
+    if (!revealState.ok) {
+      return;
+    }
+
+    expect(revealState.data.room.status).toBe('reveal');
+    expect(revealState.data.room.match?.completedTurns[0]).toMatchObject({
+      drawerPlayerId: joinResult.data.playerId,
+      drawerNickname: 'Guest',
+      finalImageDataUrl: expect.stringMatching(/^data:image\/png;base64,/),
+    });
+
+    const kickResult = service.kickPlayer('socket-1', joinResult.data.playerId, 'https://sketcherson.example');
+    expect(kickResult.ok).toBe(true);
+
+    if (!kickResult.ok) {
+      return;
+    }
+
+    expect(kickResult.data.room.players.some((player) => player.id === joinResult.data.playerId)).toBe(false);
+    expect(kickResult.data.room.match?.scoreboard.some((entry) => entry.playerId === joinResult.data.playerId)).toBe(false);
+
+    vi.advanceTimersByTime(200);
+
+    const postgameState = service.getRoomState(createResult.data.room.code, 'https://sketcherson.example');
+    expect(postgameState.ok).toBe(true);
+
+    if (!postgameState.ok) {
+      return;
+    }
+
+    const removedPlayerTurn = postgameState.data.room.match?.completedTurns.find((turn) => turn.drawerPlayerId === joinResult.data.playerId);
+
+    expect(postgameState.data.room.status).toBe('postgame');
+    expect(removedPlayerTurn).toMatchObject({
+      drawerNickname: 'Guest',
+      finalImageDataUrl: expect.stringMatching(/^data:image\/png;base64,/),
+    });
+  });
+
+  it('applies delayed reveal snapshots to completed turns after the room reaches postgame', async () => {
+    const scheduler = createManualScheduler();
+    const snapshotResolvers: Array<(snapshotDataUrl: string | null) => void> = [];
+    const service = createRoomRuntimeDriver({
+      countdownMs: 1,
+      revealMs: 1,
+      roundDurationOverrideMs: 1,
+      random: () => 0,
+      scheduler: scheduler.adapter,
+      renderDrawingSnapshot: undefined,
+      asyncSnapshotRenderer: {
+        render: () => new Promise((resolve) => {
+          snapshotResolvers.push(resolve);
+        }),
+      },
+    });
+    const createResult = service.createRoom('Host', 'socket-1', 'https://sketcherson.example');
+
+    if (!createResult.ok) {
+      throw new Error('Expected room creation to succeed');
+    }
+
+    const joinResult = service.joinRoom(createResult.data.room.code, 'Guest', 'socket-2', 'https://sketcherson.example');
+
+    if (!joinResult.ok) {
+      throw new Error('Expected room join to succeed');
+    }
+
+    const settingsUpdate = service.updateLobbySettings(
+      'socket-1',
+      {
+        roundTimerSeconds: 60,
+        firstCorrectGuessTimeCapSeconds: 30,
+        turnsPerPlayer: 1,
+        artEnabled: true,
+      },
+      'https://sketcherson.example',
+    );
+    expect(settingsUpdate.ok).toBe(true);
+
+    const startResult = service.startRoom('socket-1', 'https://sketcherson.example');
+    expect(startResult.ok).toBe(true);
+
+    scheduler.runNext();
+    scheduler.runNext();
+    expect(snapshotResolvers).toHaveLength(1);
+
+    scheduler.runNext();
+    scheduler.runNext();
+    scheduler.runNext();
+    expect(snapshotResolvers).toHaveLength(2);
+
+    scheduler.runNext();
+
+    const postgameBeforeSnapshots = service.getRoomState(createResult.data.room.code, 'https://sketcherson.example');
+    expect(postgameBeforeSnapshots.ok).toBe(true);
+
+    if (!postgameBeforeSnapshots.ok) {
+      return;
+    }
+
+    expect(postgameBeforeSnapshots.data.room.status).toBe('postgame');
+    expect(postgameBeforeSnapshots.data.room.match?.completedTurns.map((turn) => turn.finalImageDataUrl)).toEqual([null, null]);
+
+    snapshotResolvers[0]?.('data:image/test;base64,first');
+    snapshotResolvers[1]?.('data:image/test;base64,second');
+    await Promise.resolve();
+
+    const postgameAfterSnapshots = service.getRoomState(createResult.data.room.code, 'https://sketcherson.example');
+    expect(postgameAfterSnapshots.ok).toBe(true);
+
+    if (!postgameAfterSnapshots.ok) {
+      return;
+    }
+
+    expect(postgameAfterSnapshots.data.room.match?.completedTurns.map((turn) => turn.finalImageDataUrl)).toEqual([
+      'data:image/test;base64,first',
+      'data:image/test;base64,second',
+    ]);
+  });
+
   it('accepts correct guesses, updates the live scoreboard, caps the round timer, and blocks repeat messages', () => {
     vi.useFakeTimers();
 
