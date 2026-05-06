@@ -1,5 +1,13 @@
 # @7ito/sketcherson-server
 
+## 0.3.12
+
+### Patch Changes
+
+- Drawing canvas fixes
+- Updated dependencies
+  - @7ito/sketcherson-common@0.3.12
+
 ## 0.3.11
 
 ### Patch Changes

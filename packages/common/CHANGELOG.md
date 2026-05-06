@@ -1,5 +1,11 @@
 # @7ito/sketcherson-common
 
+## 0.3.12
+
+### Patch Changes
+
+- Drawing canvas fixes
+
 ## 0.3.11
 
 ### Patch Changes
