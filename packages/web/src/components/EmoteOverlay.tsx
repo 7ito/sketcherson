@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { EmoteEvent } from '@7ito/sketcherson-common/room';
 import type { ResolvedEmoteItem } from '@7ito/sketcherson-common';
 
@@ -25,12 +26,31 @@ export function EmoteOverlay({ events, items }: { events: EmoteEvent[]; items: r
 }
 
 export function EmoteDock({ items, onSend }: { items: readonly ResolvedEmoteItem[]; onSend: (emoteId: string) => void }) {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
-    <div className="emote-dock">
-      <button type="button" className="emote-tab" aria-label="Open emotes">☺</button>
+    <div className={isOpen ? 'emote-dock emote-dock-open' : 'emote-dock'}>
+      <button
+        type="button"
+        className="emote-tab"
+        aria-label="Toggle emotes"
+        aria-expanded={isOpen}
+        onClick={() => setIsOpen((open) => !open)}
+      >
+        ☺
+      </button>
       <div className="emote-options">
         {items.map((item) => (
-          <button key={item.id} type="button" className="emote-option" onClick={() => onSend(item.id)} aria-label={item.label}>
+          <button
+            key={item.id}
+            type="button"
+            className="emote-option"
+            onClick={() => {
+              onSend(item.id);
+              setIsOpen(false);
+            }}
+            aria-label={item.label}
+          >
             {item.emoji ? item.emoji : <img src={item.imageUrl} alt="" />}
           </button>
         ))}

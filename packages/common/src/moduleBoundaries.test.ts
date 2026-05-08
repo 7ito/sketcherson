@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, extname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DRAWING_MAX_EXTEND_POINTS, applyDrawingActionToState, type DrawingState } from './drawing';
+import { areEmoteItemsValid, resolveEmoteConfig } from './emotes';
 import { createPromptEngine, normalizeGuessText } from './prompts';
 import { calculateGuesserScore } from './scoring';
 import { areLobbySettingsValidForGame, getFirstCorrectGuessTimeCapPresets } from './settings';
@@ -156,6 +157,32 @@ describe('guess helpers', () => {
     expect(promptEngine.isCorrectGuess('robot', 'robt')).toBe(false);
     expect(promptEngine.isCorrectGuess('robot', 'bot')).toBe(true);
     expect(promptEngine.isCorrectGuess('robot', 'bat')).toBe(false);
+  });
+});
+
+describe('emote config helpers', () => {
+  it('resolves custom emoji and image emotes with accessible labels', () => {
+    expect(resolveEmoteConfig({
+      enabled: true,
+      items: [
+        { id: 'spark', emoji: '✨', label: 'Sparkle' },
+        { id: 'mascot', imageUrl: '/emotes/mascot.png', label: 'Mascot cheer' },
+      ],
+    })).toEqual({
+      enabled: true,
+      items: [
+        { id: 'spark', emoji: '✨', label: 'Sparkle' },
+        { id: 'mascot', imageUrl: '/emotes/mascot.png', label: 'Mascot cheer' },
+      ],
+    });
+  });
+
+  it('requires custom emotes to have labels and exactly one visual source', () => {
+    expect(areEmoteItemsValid([{ id: 'spark', emoji: '✨', label: 'Sparkle' }])).toBe(true);
+    expect(areEmoteItemsValid([{ id: 'mascot', imageUrl: '/emotes/mascot.png', label: 'Mascot cheer' }])).toBe(true);
+    expect(areEmoteItemsValid([{ id: 'missing-source', label: 'Missing source' }])).toBe(false);
+    expect(areEmoteItemsValid([{ id: 'double-source', emoji: '✨', imageUrl: '/emotes/spark.png', label: 'Double source' }])).toBe(false);
+    expect(areEmoteItemsValid([{ id: 'missing-label', emoji: '✨', label: '' }])).toBe(false);
   });
 });
 

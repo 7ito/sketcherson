@@ -146,6 +146,45 @@ describe('DrawingCanvas', () => {
     expect(canvasElement).toHaveFocus();
   });
 
+  it('renders custom emote labels, image items, touch toggling, and animation-facing state', () => {
+    const onSendEmote = vi.fn();
+
+    const { container } = render(
+      <DrawingCanvas
+        drawing={buildDrawingState()}
+        roomStatus="lobby"
+        canDraw={false}
+        onSubmitAction={buildSubmitActionMock()}
+        emoteItems={[
+          { id: 'spark', emoji: '✨', label: 'Sparkle' },
+          { id: 'mascot', imageUrl: '/emotes/mascot.png', label: 'Mascot cheer' },
+        ]}
+        emoteEvents={[
+          { roomCode: 'ABCDEF', eventId: 'event-1', emoteId: 'spark', x: 0.25, y: 0.82, createdAt: '2026-05-08T00:00:00.000Z' },
+          { roomCode: 'ABCDEF', eventId: 'event-2', emoteId: 'mascot', x: 0.75, y: 0.88, createdAt: '2026-05-08T00:00:01.000Z' },
+        ]}
+        onSendEmote={onSendEmote}
+      />,
+    );
+
+    const toggle = screen.getByRole('button', { name: 'Toggle emotes' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(container.querySelector('.emote-dock')).toHaveClass('emote-dock-open');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mascot cheer' }));
+    expect(onSendEmote).toHaveBeenCalledWith('mascot');
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(container.querySelector('.emote-dock')).not.toHaveClass('emote-dock-open');
+
+    const bubbles = container.querySelectorAll('.emote-bubble');
+    expect(bubbles).toHaveLength(2);
+    expect(bubbles[0]).toHaveStyle({ left: '25%', top: '82%' });
+    expect(bubbles[1].querySelector('img')).toHaveAttribute('src', '/emotes/mascot.png');
+  });
+
   it('keeps the local stroke alive after a failed extend ack so the stroke can still complete', async () => {
     vi.useFakeTimers();
     window.PointerEvent = MouseEvent as typeof PointerEvent;

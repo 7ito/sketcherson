@@ -1651,7 +1651,8 @@ label span {
 }
 
 .emote-dock:hover .emote-options,
-.emote-dock:focus-within .emote-options {
+.emote-dock:focus-within .emote-options,
+.emote-dock-open .emote-options {
   display: flex;
 }
 
