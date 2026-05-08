@@ -1,9 +1,12 @@
 import { resolveDrawingGameRules, type ResolvedDrawingGameRules } from './drawingGameRules';
+import type { ResolvedEmoteConfig } from './emotes';
 import type { GameDefinition } from './gameDefinition';
 import { createPromptEngine } from './promptEngine';
 import type { FirstCorrectGuessTimeCapPreset, LobbySettings, RerollsPerTurnPreset, RoundTimerPreset } from './room';
 
-export function normalizeLobbySettingsForGame(gameDefinition: GameDefinition, settings: LobbySettings, rules: ResolvedDrawingGameRules = resolveDrawingGameRules()): LobbySettings {
+const DISABLED_EMOTES: ResolvedEmoteConfig = { enabled: false, items: [] };
+
+export function normalizeLobbySettingsForGame(gameDefinition: GameDefinition, settings: LobbySettings, rules: ResolvedDrawingGameRules = resolveDrawingGameRules(), emotes: ResolvedEmoteConfig = DISABLED_EMOTES): LobbySettings {
   const defaultEnabledCollectionIds = createPromptEngine({ definition: gameDefinition }).normalizeCollectionIds();
 
   return Object.assign({}, {
@@ -11,7 +14,9 @@ export function normalizeLobbySettingsForGame(gameDefinition: GameDefinition, se
     firstCorrectGuessTimeCapSeconds: rules.settings.firstCorrectGuessTimeCapSeconds.default,
     guessingDelaySeconds: rules.settings.guessingDelaySeconds.default,
     turnsPerPlayer: rules.settings.turnsPerPlayer.default,
-  }, rules.features.reroll ? {
+  }, emotes.enabled || settings.emotesEnabled !== undefined ? {
+    emotesEnabled: emotes.enabled && (settings.emotesEnabled ?? true),
+  } : {}, rules.features.reroll ? {
     rerollsPerTurn: rules.settings.rerollsPerTurn.default,
   } : {}, rules.features.closeGuessFeedback ? {
     hideCloseGuesses: false,
@@ -24,8 +29,8 @@ export function normalizeLobbySettingsForGame(gameDefinition: GameDefinition, se
   });
 }
 
-export function areLobbySettingsValidForGame(gameDefinition: GameDefinition, settings: LobbySettings, rules: ResolvedDrawingGameRules = resolveDrawingGameRules()): boolean {
-  const normalizedSettings = normalizeLobbySettingsForGame(gameDefinition, settings, rules);
+export function areLobbySettingsValidForGame(gameDefinition: GameDefinition, settings: LobbySettings, rules: ResolvedDrawingGameRules = resolveDrawingGameRules(), emotes: ResolvedEmoteConfig = DISABLED_EMOTES): boolean {
+  const normalizedSettings = normalizeLobbySettingsForGame(gameDefinition, settings, rules, emotes);
   const rerollsPerTurn = normalizedSettings.rerollsPerTurn ?? rules.settings.rerollsPerTurn.default;
 
   return (
@@ -36,11 +41,12 @@ export function areLobbySettingsValidForGame(gameDefinition: GameDefinition, set
     (!normalizedSettings.showCloseGuessAlerts || rules.features.closeGuessFeedback) &&
     rules.settings.turnsPerPlayer.options.includes(normalizedSettings.turnsPerPlayer) &&
     (!rules.features.reroll || rules.settings.rerollsPerTurn.options.includes(rerollsPerTurn)) &&
+    (!normalizedSettings.emotesEnabled || emotes.enabled) &&
     createPromptEngine({ definition: gameDefinition }).areCollectionIdsValid(settings.enabledCollectionIds ?? normalizedSettings.enabledCollectionIds)
   );
 }
 
-export function defaultLobbySettingsForGame(gameDefinition: GameDefinition, rules: ResolvedDrawingGameRules = resolveDrawingGameRules()): LobbySettings {
+export function defaultLobbySettingsForGame(gameDefinition: GameDefinition, rules: ResolvedDrawingGameRules = resolveDrawingGameRules(), emotes: ResolvedEmoteConfig = DISABLED_EMOTES): LobbySettings {
   return normalizeLobbySettingsForGame(gameDefinition, {
     roundTimerSeconds: rules.settings.roundTimerSeconds.default,
     firstCorrectGuessTimeCapSeconds: rules.settings.firstCorrectGuessTimeCapSeconds.default,
@@ -48,7 +54,8 @@ export function defaultLobbySettingsForGame(gameDefinition: GameDefinition, rule
     turnsPerPlayer: rules.settings.turnsPerPlayer.default,
     ...(rules.features.reroll ? { rerollsPerTurn: rules.settings.rerollsPerTurn.default as RerollsPerTurnPreset } : {}),
     artEnabled: true,
-  }, rules);
+    emotesEnabled: emotes.enabled,
+  }, rules, emotes);
 }
 
 export function getFirstCorrectGuessTimeCapPresets(roundTimerSeconds: RoundTimerPreset, rules: ResolvedDrawingGameRules = resolveDrawingGameRules()): FirstCorrectGuessTimeCapPreset[] {

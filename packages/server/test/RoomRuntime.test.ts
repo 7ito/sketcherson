@@ -716,6 +716,7 @@ describe('RoomRuntime', () => {
       turnsPerPlayer: 3,
       rerollsPerTurn: 1,
       artEnabled: true,
+      emotesEnabled: false,
       enabledCollectionIds: ['troop', 'building', 'spell'],
     });
     expect(result.data.room.players[0]).toMatchObject({

@@ -215,6 +215,30 @@ describe('lobby settings helpers', () => {
       }),
     ).toBe(false);
   });
+
+  it('defaults and validates the room emote toggle from resolved game config', () => {
+    const enabledEmotes = { enabled: true, items: [{ id: 'laugh', emoji: '😂', label: 'Laugh' }] };
+
+    expect(areLobbySettingsValidForGame(TEST_GAME_DEFINITION, {
+      roundTimerSeconds: 60,
+      firstCorrectGuessTimeCapSeconds: 60,
+      guessingDelaySeconds: 5,
+      turnsPerPlayer: 3,
+      artEnabled: true,
+      emotesEnabled: true,
+      enabledCollectionIds: ['creatures'],
+    })).toBe(false);
+
+    expect(areLobbySettingsValidForGame(TEST_GAME_DEFINITION, {
+      roundTimerSeconds: 60,
+      firstCorrectGuessTimeCapSeconds: 60,
+      guessingDelaySeconds: 5,
+      turnsPerPlayer: 3,
+      artEnabled: true,
+      emotesEnabled: true,
+      enabledCollectionIds: ['creatures'],
+    }, undefined, enabledEmotes)).toBe(true);
+  });
 });
 
 describe('drawing state helpers', () => {

@@ -125,9 +125,9 @@ export function createServerGameRuntime<TPrompt extends PromptEntry>(
     prompts,
     rules,
     settings: {
-      defaults: () => defaultLobbySettingsForGame(definition, rules),
-      normalize: (settings) => normalizeLobbySettingsForGame(definition, settings, rules),
-      validate: (settings) => areLobbySettingsValidForGame(definition, settings, rules),
+      defaults: () => defaultLobbySettingsForGame(definition, rules, uiConfig.emotes),
+      normalize: (settings) => normalizeLobbySettingsForGame(definition, settings, rules, uiConfig.emotes),
+      validate: (settings) => areLobbySettingsValidForGame(definition, settings, rules, uiConfig.emotes),
       firstCorrectGuessCaps: (roundTimerSeconds) => getFirstCorrectGuessTimeCapPresets(roundTimerSeconds, rules),
     },
     ui: {

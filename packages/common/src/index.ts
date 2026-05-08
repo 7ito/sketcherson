@@ -6,6 +6,7 @@ export * from './game';
 export * from './drawingGameRules';
 export * from './prompts';
 export * from './settings';
+export * from './emotes';
 export * from './room';
 export * from './roomEvents';
 export * from './drawing';

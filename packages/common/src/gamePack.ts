@@ -1,4 +1,5 @@
 import type { DrawingGameRulesConfig } from './drawingGameRules';
+import { resolveEmoteConfig, type EmoteConfig, type ResolvedEmoteConfig } from './emotes';
 import type { AuthoredAudienceGame } from './gameAuthoring';
 import type { GameDefinition } from './gameDefinition';
 import type { PromptRules } from './promptEngine';
@@ -151,6 +152,7 @@ export interface ShellCopyOverrides {
     hideCloseGuessesFromOtherPlayersLabel: string;
     showCloseGuessAlertsLabel: string;
     referenceArtToggleLabel: string;
+    emotesToggleLabel: string;
   }>;
   drawing?: Partial<{
     referenceImagePlaceholder: string;
@@ -314,6 +316,7 @@ export interface GamePackUiDefaults {
   skin?: ShellSkinConfig;
   copy?: ShellCopyOverrides;
   presentation?: ShellPresentationConfig;
+  emotes?: EmoteConfig;
   notices?: readonly ShellNoticeConfig[];
 }
 
@@ -341,6 +344,7 @@ export interface ResolvedShellUiConfig {
     feed: Required<FeedCopy>;
   };
   presentation: ResolvedShellPresentationConfig;
+  emotes: ResolvedEmoteConfig;
   notices: readonly ShellNoticeConfig[];
   nicknamePlaceholders: {
     create: string;
@@ -574,6 +578,7 @@ export function resolveShellUiConfig<TPrompt extends PromptEntry>(gamePack: Game
         hideCloseGuessesFromOtherPlayersLabel: settingsCopy.hideCloseGuessesFromOtherPlayersLabel ?? 'Hide close guesses from other players',
         showCloseGuessAlertsLabel: settingsCopy.showCloseGuessAlertsLabel ?? 'Show close guess alerts',
         referenceArtToggleLabel: settingsCopy.referenceArtToggleLabel ?? definition.terminology.referenceArtLabel,
+        emotesToggleLabel: settingsCopy.emotesToggleLabel ?? 'emotes',
       },
       drawing: {
         referenceImagePlaceholder: drawingCopy.referenceImagePlaceholder ?? `No ${definition.terminology.referenceArtLabel} available`,
@@ -700,6 +705,7 @@ export function resolveShellUiConfig<TPrompt extends PromptEntry>(gamePack: Game
         cardStyle: presentation.components?.cardStyle ?? 'solid',
       },
     },
+    emotes: resolveEmoteConfig(gamePack.ui?.emotes),
     notices: gamePack.ui?.notices ?? [
       {
         id: 'legal-notice',

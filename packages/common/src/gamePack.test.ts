@@ -422,11 +422,34 @@ describe('shell app config', () => {
         },
         components: { buttonStyle: 'chunky', badgeStyle: 'tag', cardStyle: 'solid' },
       },
+      emotes: {
+        enabled: false,
+        items: [],
+      },
       notices: [],
       nicknamePlaceholders: {
         create: 'HostName',
         join: 'Player Two',
       },
+    });
+  });
+
+  it('resolves opt-in default emote configuration', () => {
+    const uiConfig = resolveShellUiConfig({
+      ...TEST_GAME_PACK,
+      ui: {
+        emotes: { enabled: true },
+      },
+    });
+
+    expect(uiConfig.emotes).toEqual({
+      enabled: true,
+      items: [
+        { id: 'laugh', emoji: '😂', label: 'Laugh' },
+        { id: 'thumbs-up', emoji: '👍', label: 'Thumbs up' },
+        { id: 'cry', emoji: '😢', label: 'Cry' },
+        { id: 'angry', emoji: '😡', label: 'Angry' },
+      ],
     });
   });
 });

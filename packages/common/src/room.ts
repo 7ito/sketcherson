@@ -39,6 +39,7 @@ export interface LobbySettings {
   turnsPerPlayer: TurnsPerPlayerPreset;
   rerollsPerTurn?: RerollsPerTurnPreset;
   artEnabled: boolean;
+  emotesEnabled?: boolean;
   enabledCollectionIds?: string[];
 }
 

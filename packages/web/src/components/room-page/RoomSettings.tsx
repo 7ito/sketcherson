@@ -251,6 +251,23 @@ export function SharedSettingsFields({
           <span>{capitalizeFirst(SHELL_SETTINGS_COPY.referenceArtToggleLabel)}</span>
         </label>
 
+        {GAME_WEB_CONFIG.ui.emotes?.enabled ? (
+          <label className="lobby-toggle-row">
+            <input
+              type="checkbox"
+              checked={settings.emotesEnabled ?? true}
+              disabled={disabled}
+              onChange={(event) =>
+                onChange({
+                  ...settings,
+                  emotesEnabled: event.target.checked,
+                })
+              }
+            />
+            <span>{capitalizeFirst(SHELL_SETTINGS_COPY.emotesToggleLabel)}</span>
+          </label>
+        ) : null}
+
           </>
         ) : null}
         {section !== 'match' ? <CollectionSettingsField variant="lobby" settings={settings} disabled={disabled} onChange={onChange} /> : null}
