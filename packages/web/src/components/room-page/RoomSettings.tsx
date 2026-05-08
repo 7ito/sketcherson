@@ -12,6 +12,7 @@ import {
 
 const SHELL_SETTINGS_COPY = GAME_WEB_CONFIG.ui.copy.settings;
 const GAME_SETTINGS_RULES = GAME_RUNTIME.rules.settings;
+type LobbySettingsSection = 'all' | 'match' | 'collections';
 const getFirstCorrectGuessTimeCapOptions = (roundTimerSeconds: LobbySettings['roundTimerSeconds']) =>
   Array.from(new Set([...GAME_SETTINGS_RULES.firstCorrectGuessTimeCapSeconds.options, roundTimerSeconds]))
     .filter((preset) => preset <= roundTimerSeconds)
@@ -93,16 +94,20 @@ export function SharedSettingsFields({
   settings,
   disabled,
   onChange,
+  section = 'all',
 }: {
   variant: 'lobby' | 'postgame';
   settings: LobbySettings;
   disabled?: boolean;
   onChange: (settings: LobbySettings) => void;
+  section?: LobbySettingsSection;
 }) {
   if (variant === 'lobby') {
     return (
       <>
-        <div className="lobby-settings-row">
+        {section !== 'collections' ? (
+          <>
+            <div className="lobby-settings-row">
           <label className="lobby-setting">
             <span className="lobby-setting-label">{SHELL_SETTINGS_COPY.roundTimerLabel}</span>
             <select
@@ -246,7 +251,9 @@ export function SharedSettingsFields({
           <span>{capitalizeFirst(SHELL_SETTINGS_COPY.referenceArtToggleLabel)}</span>
         </label>
 
-        <CollectionSettingsField variant="lobby" settings={settings} disabled={disabled} onChange={onChange} />
+          </>
+        ) : null}
+        {section !== 'match' ? <CollectionSettingsField variant="lobby" settings={settings} disabled={disabled} onChange={onChange} /> : null}
       </>
     );
   }
@@ -376,15 +383,19 @@ export function SettingsSummary({
   variant,
   settings,
   helperText,
+  section = 'all',
 }: {
   variant: 'lobby' | 'postgame';
   settings: LobbySettings;
   helperText: string;
+  section?: LobbySettingsSection;
 }) {
   if (variant === 'lobby') {
     return (
       <div className="lobby-settings-readonly">
-        <div className="lobby-settings-row">
+        {section !== 'collections' ? (
+          <>
+            <div className="lobby-settings-row">
           <div className="lobby-setting-display">
             <span className="lobby-setting-label">{SHELL_SETTINGS_COPY.roundTimerLabel}</span>
             <span className="lobby-setting-value">{settings.roundTimerSeconds}s</span>
@@ -416,11 +427,15 @@ export function SettingsSummary({
           <span className="lobby-setting-label">{capitalizeFirst(SHELL_SETTINGS_COPY.referenceArtToggleLabel)}</span>
           <span className="lobby-setting-value">{settings.artEnabled ? 'Enabled' : 'Disabled'}</span>
         </div>
-        <div className="lobby-setting-display">
-          <span className="lobby-setting-label">{capitalizeFirst(GAME_TERMINOLOGY.collectionPlural)}</span>
-          <span className="lobby-setting-value">{getEnabledCollectionNames(settings)}</span>
-        </div>
-        <p className="helper-text" style={{ textAlign: 'center', marginTop: '0.25rem' }}>{helperText}</p>
+          </>
+        ) : null}
+        {section !== 'match' ? (
+          <div className="lobby-setting-display">
+            <span className="lobby-setting-label">{capitalizeFirst(GAME_TERMINOLOGY.collectionPlural)}</span>
+            <span className="lobby-setting-value">{getEnabledCollectionNames(settings)}</span>
+          </div>
+        ) : null}
+        {section === 'all' ? <p className="helper-text" style={{ textAlign: 'center', marginTop: '0.25rem' }}>{helperText}</p> : null}
       </div>
     );
   }

@@ -1,5 +1,19 @@
 # @7ito/sketcherson-web
 
+## 0.3.15
+
+### Patch Changes
+
+- Expose separate lobby match settings and collections panels to web extension slots.
+
+## 0.3.14
+
+### Patch Changes
+
+- Various fixes: drawing canvas scaling, restart button, rerolls
+- Updated dependencies
+  - @7ito/sketcherson-common@0.3.13
+
 ## 0.3.13
 
 ### Patch Changes

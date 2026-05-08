@@ -18,6 +18,8 @@ export type LobbySettingsSlotProps = {
   settingsError: string;
   onChange: (settings: LobbySettings) => Promise<void>;
   defaultPanel: ReactNode;
+  matchSettingsPanel: ReactNode;
+  collectionsPanel: ReactNode;
 };
 
 export type LobbySettingsPanelSlotProps = LobbySettingsSlotProps;

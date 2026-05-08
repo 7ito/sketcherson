@@ -165,7 +165,7 @@ export function GameApp() {
 }
 ```
 
-The default UI is used when a slot is omitted. `lobbySettingsPanel` replaces the lobby match settings panel while leaving the start button and chat controls in the shell. Its props include the room, current player, editable settings draft, save state, `onChange`, and `defaultPanel` for composition.
+The default UI is used when a slot is omitted. `lobbySettingsPanel` replaces the lobby match settings panel while leaving the start button and chat controls in the shell. Its props include the room, current player, editable settings draft, save state, `onChange`, `defaultPanel` for full-panel composition, and separate `matchSettingsPanel` and `collectionsPanel` nodes for tabbed or split layouts.
 
 ## Migration note
 

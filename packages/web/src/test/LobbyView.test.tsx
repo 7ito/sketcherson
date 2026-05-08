@@ -1,9 +1,10 @@
 import type { DrawingState } from '@7ito/sketcherson-common/drawing';
 import type { ApiResult, LobbyDrawingActionSuccess, LobbySettings, RoomState } from '@7ito/sketcherson-common/room';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { buildLobbyInviteUrl, LobbyView } from '../components/room-page/LobbyView';
 import { WebExtensionSlotsProvider, type SketchersonWebSlots } from '../components/WebExtensionSlots';
+import { GAME_DEFINITION } from '../game';
 
 function buildDrawingState(): DrawingState {
   return {
@@ -154,5 +155,48 @@ describe('LobbyView extension slots', () => {
 
     expect(screen.getByText('Custom settings wrapper')).toBeInTheDocument();
     expect(screen.getByText('Round timer')).toBeInTheDocument();
+  });
+
+  it('passes separate match settings and collections panels to the slot', () => {
+    renderLobbyView({
+      slots: {
+        lobbySettingsPanel: ({ matchSettingsPanel, collectionsPanel }) => (
+          <section aria-label="Tabbed lobby settings">
+            <div aria-label="Match settings tab">{matchSettingsPanel}</div>
+            <div aria-label="Collections tab">{collectionsPanel}</div>
+          </section>
+        ),
+      },
+    });
+
+    const matchSettingsTab = screen.getByLabelText('Match settings tab');
+    const collectionsTab = screen.getByLabelText('Collections tab');
+
+    expect(within(matchSettingsTab).getByText('Round timer')).toBeInTheDocument();
+    expect(within(matchSettingsTab).queryByText(GAME_DEFINITION.terminology.collectionPlural, { exact: false })).not.toBeInTheDocument();
+    expect(within(collectionsTab).getByText(GAME_DEFINITION.terminology.collectionPlural, { exact: false })).toBeInTheDocument();
+    expect(within(collectionsTab).queryByText('Round timer')).not.toBeInTheDocument();
+  });
+
+  it('passes separate readonly match settings and collections panels to the slot', () => {
+    renderLobbyView({
+      currentPlayerId: 'guest-1',
+      slots: {
+        lobbySettingsPanel: ({ matchSettingsPanel, collectionsPanel }) => (
+          <section aria-label="Readonly tabbed lobby settings">
+            <div aria-label="Readonly match settings tab">{matchSettingsPanel}</div>
+            <div aria-label="Readonly collections tab">{collectionsPanel}</div>
+          </section>
+        ),
+      },
+    });
+
+    const matchSettingsTab = screen.getByLabelText('Readonly match settings tab');
+    const collectionsTab = screen.getByLabelText('Readonly collections tab');
+
+    expect(within(matchSettingsTab).getByText('Round timer')).toBeInTheDocument();
+    expect(within(matchSettingsTab).queryByText(GAME_DEFINITION.terminology.collectionPlural, { exact: false })).not.toBeInTheDocument();
+    expect(within(collectionsTab).getByText(GAME_DEFINITION.terminology.collectionPlural, { exact: false })).toBeInTheDocument();
+    expect(within(collectionsTab).queryByText('Round timer')).not.toBeInTheDocument();
   });
 });

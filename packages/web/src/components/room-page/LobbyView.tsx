@@ -155,16 +155,48 @@ export function LobbyView({
     });
   };
 
+  const defaultLobbyMatchSettingsPanel = isViewerHost ? (
+    <SharedSettingsFields
+      variant="lobby"
+      section="match"
+      settings={settingsDraft}
+      disabled={settingsDisabled}
+      onChange={(nextSettings) => {
+        void handleSettingsChange(nextSettings);
+      }}
+    />
+  ) : (
+    <SettingsSummary
+      variant="lobby"
+      section="match"
+      settings={room.settings}
+      helperText={SHELL_LOBBY_COPY.onlyHostCanChangeSettings}
+    />
+  );
+
+  const defaultLobbyCollectionsPanel = isViewerHost ? (
+    <SharedSettingsFields
+      variant="lobby"
+      section="collections"
+      settings={settingsDraft}
+      disabled={settingsDisabled}
+      onChange={(nextSettings) => {
+        void handleSettingsChange(nextSettings);
+      }}
+    />
+  ) : (
+    <SettingsSummary
+      variant="lobby"
+      section="collections"
+      settings={room.settings}
+      helperText={SHELL_LOBBY_COPY.onlyHostCanChangeSettings}
+    />
+  );
+
   const defaultLobbySettingsPanel = isViewerHost ? (
     <div className="lobby-settings-form">
-      <SharedSettingsFields
-        variant="lobby"
-        settings={settingsDraft}
-        disabled={settingsDisabled}
-        onChange={(nextSettings) => {
-          void handleSettingsChange(nextSettings);
-        }}
-      />
+      {defaultLobbyMatchSettingsPanel}
+      {defaultLobbyCollectionsPanel}
       {settingsError ? <p className="error-text">{settingsError}</p> : null}
       {isSavingSettings ? <p className="helper-text">{SHELL_COMMON_COPY.saving}</p> : null}
     </div>
@@ -189,6 +221,8 @@ export function LobbyView({
       settingsError={settingsError}
       onChange={handleSettingsChange}
       defaultPanel={defaultLobbySettingsPanel}
+      matchSettingsPanel={defaultLobbyMatchSettingsPanel}
+      collectionsPanel={defaultLobbyCollectionsPanel}
     />
   ) : defaultLobbySettingsPanel;
 

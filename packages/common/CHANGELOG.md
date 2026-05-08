@@ -1,5 +1,11 @@
 # @7ito/sketcherson-common
 
+## 0.3.13
+
+### Patch Changes
+
+- Various fixes: drawing canvas scaling, restart button, rerolls
+
 ## 0.3.12
 
 ### Patch Changes
