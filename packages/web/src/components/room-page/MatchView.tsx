@@ -5,7 +5,7 @@ import { formatShellCopy } from '@7ito/sketcherson-common/game';
 import { GAME_RUNTIME, GAME_WEB_CONFIG } from '../../game';
 import { soundEffects } from '../../lib/soundEffects';
 import { useUserSettings } from '../../lib/userSettings';
-import { useRoomDrawing } from '../../providers/RoomSessionProvider';
+import { useRoomDrawing, useRoomEmotes } from '../../providers/RoomSessionProvider';
 import { DrawingCanvas } from '../DrawingCanvas';
 import { GameLogo } from '../GameLogo';
 import {
@@ -40,6 +40,7 @@ export function MatchView({
   onSubmitDrawingAction,
   onSubmitMessage,
   onOpenSettings,
+  onSendEmote,
 }: {
   room: RoomState;
   currentPlayerId: string;
@@ -52,9 +53,11 @@ export function MatchView({
   onSubmitDrawingAction: (action: DrawingAction) => Promise<ApiResult<DrawingActionSuccess>>;
   onSubmitMessage: (text: string) => Promise<string | null>;
   onOpenSettings: () => void;
+  onSendEmote: (emoteId: string) => void;
 }) {
   const slots = useWebExtensionSlots();
   const matchDrawing = useRoomDrawing('match', room);
+  const emoteEvents = useRoomEmotes();
   const [userSettings] = useUserSettings();
   const currentTurn = room.match?.currentTurn ?? null;
   const phaseEndsAt = room.match?.phaseEndsAt ?? null;
@@ -95,6 +98,7 @@ export function MatchView({
   );
   const canPauseMatch = GAME_RUNTIME.rules.features.pause;
   const canDraw = Boolean(isCurrentDrawer && room.status === 'round' && currentTurn);
+  const canUseMatchEmotes = Boolean(GAME_WEB_CONFIG.ui.emotes.enabled && room.settings.emotesEnabled && !isCurrentDrawer && ['countdown', 'round', 'reveal', 'paused'].includes(room.status));
   const latestCompletedTurn = room.match?.completedTurns[room.match.completedTurns.length - 1] ?? null;
   const revealSummary = effectivePhase === 'reveal' ? latestCompletedTurn : null;
   const playersById = useMemo(() => new Map(room.players.map((player) => [player.id, player])), [room.players]);
@@ -451,6 +455,9 @@ export function MatchView({
           roomStatus={room.status}
           canDraw={canDraw}
           onSubmitAction={onSubmitDrawingAction}
+          emoteItems={canUseMatchEmotes ? GAME_WEB_CONFIG.ui.emotes.items : []}
+          emoteEvents={emoteEvents.filter((event) => event.roomCode === room.code)}
+          onSendEmote={onSendEmote}
         />
 
         {/* Right: Chat + Info */}

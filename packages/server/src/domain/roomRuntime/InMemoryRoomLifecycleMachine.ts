@@ -760,7 +760,7 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
     }
 
     const room = actorRoom.value.room;
-    const emotes = this.gameRuntime.ui.emotes;
+    const emotes = this.gameRuntime.ui.config().emotes;
 
     if (!emotes.enabled) {
       return { ok: false, error: { code: 'FORBIDDEN', message: 'Emotes are not enabled for this game.' } };
@@ -772,6 +772,11 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
 
     if (!emotes.items.some((item) => item.id === emoteId)) {
       return { ok: false, error: { code: 'INVALID_EMOTE', message: 'That emote is not available.' } };
+    }
+
+    const activeDrawerPlayerId = room.match?.activeTurn?.drawerPlayerId ?? null;
+    if (room.status !== 'lobby' && activeDrawerPlayerId === actorRoom.value.playerId) {
+      return { ok: false, error: { code: 'FORBIDDEN', message: 'Active drawers cannot send emotes during a match.' } };
     }
 
     const rateLimitError = this.rateLimiter.consume('emote', socketId);

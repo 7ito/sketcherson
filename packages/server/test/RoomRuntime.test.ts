@@ -72,6 +72,10 @@ class RoomRuntimeTestDriver {
     return this.runtime.applyLobbyDrawingAction({ connectionId, origin, payload: { action } });
   }
 
+  public sendEmote(connectionId: string, emoteId: string, origin: string) {
+    return this.runtime.sendEmote({ connectionId, origin, payload: { emoteId } });
+  }
+
   public getRoomState(code: string, origin: string) {
     return this.runtime.getRoomState({ code, origin });
   }
@@ -121,6 +125,13 @@ function createSequentialIds(ids: string[]): { randomUUID(): string } {
     },
   };
 }
+
+const EMOTE_TEST_GAME_PACK = defineGamePack({
+  definition: TEST_GAME_DEFINITION,
+  ui: {
+    emotes: { enabled: true },
+  },
+});
 
 const CLOSE_GUESS_TEST_GAME_PACK = defineGamePack({
   definition: TEST_GAME_DEFINITION,
@@ -691,6 +702,57 @@ describe('RoomRuntime', () => {
       return;
     }
     expect(guessResult.data.room.match?.currentTurn?.correctGuessPlayerIds).toContain(createResult.data.playerId);
+  });
+
+  it('allows match guessers to send emotes and rejects the active drawer', () => {
+    const service = createRoomRuntimeDriver({
+      gamePack: EMOTE_TEST_GAME_PACK,
+      random: () => 0,
+      ids: createSequentialIds([
+        'host-player-id',
+        'host-session-token',
+        'host-lobby-message-id',
+        'guest-player-id',
+        'guest-session-token',
+        'guest-lobby-message-id',
+        'host-start-message-id',
+        'guest-start-message-id',
+        'round-header-message-id',
+        'drawing-message-id',
+        'guest-emote-id',
+      ]),
+    });
+
+    const createResult = service.createRoom('Host', 'socket-1', 'https://sketcherson.example');
+    expect(createResult.ok).toBe(true);
+    if (!createResult.ok) return;
+
+    const joinResult = service.joinRoom(createResult.data.room.code, 'Guest', 'socket-2', 'https://sketcherson.example');
+    expect(joinResult.ok).toBe(true);
+    const startResult = service.startRoom('socket-1', 'https://sketcherson.example');
+    expect(startResult.ok).toBe(true);
+
+    if (!startResult.ok) return;
+    if (!joinResult.ok) return;
+    const drawerSocket = startResult.data.room.match?.currentTurn?.drawerPlayerId === joinResult.data.playerId ? 'socket-2' : 'socket-1';
+    const guesserSocket = drawerSocket === 'socket-1' ? 'socket-2' : 'socket-1';
+
+    const drawerResult = service.sendEmote(drawerSocket, 'laugh', 'https://sketcherson.example');
+    expect(drawerResult.ok).toBe(false);
+    if (!drawerResult.ok) {
+      expect(drawerResult.error).toMatchObject({ code: 'FORBIDDEN', message: 'Active drawers cannot send emotes during a match.' });
+    }
+
+    const guesserResult = service.sendEmote(guesserSocket, 'laugh', 'https://sketcherson.example');
+    expect(guesserResult.ok).toBe(true);
+    if (!guesserResult.ok) return;
+    expect(guesserResult.data.event).toMatchObject({
+      roomCode: createResult.data.room.code,
+      eventId: 'guest-emote-id',
+      emoteId: 'laugh',
+      x: 0,
+      y: 0.8,
+    });
   });
 
   it('creates a room with a host, a reclaimable session, and default settings', () => {
