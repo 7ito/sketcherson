@@ -76,6 +76,10 @@ class RoomRuntimeTestDriver {
     return this.runtime.sendEmote({ connectionId, origin, payload: { emoteId } });
   }
 
+  public sendEmoteOutcome(connectionId: string, emoteId: string, origin: string) {
+    return this.runtime.sendEmoteOutcome({ connectionId, origin, payload: { emoteId } });
+  }
+
   public getRoomState(code: string, origin: string) {
     return this.runtime.getRoomState({ code, origin });
   }
@@ -702,6 +706,108 @@ describe('RoomRuntime', () => {
       return;
     }
     expect(guessResult.data.room.match?.currentTurn?.correctGuessPlayerIds).toContain(createResult.data.playerId);
+  });
+
+  it('rejects unavailable emotes before broadcasting them', () => {
+    const enabledService = createRoomRuntimeDriver({
+      gamePack: EMOTE_TEST_GAME_PACK,
+    });
+    const enabledRoom = enabledService.createRoom('Host', 'socket-1', 'https://sketcherson.example');
+    expect(enabledRoom.ok).toBe(true);
+    if (!enabledRoom.ok) return;
+
+    const unknownEmote = enabledService.sendEmoteOutcome('socket-1', 'missing-emote', 'https://sketcherson.example');
+    expect(unknownEmote.response.ok).toBe(false);
+    expect(unknownEmote.effects).toEqual([]);
+    if (!unknownEmote.response.ok) {
+      expect(unknownEmote.response.error).toMatchObject({ code: 'INVALID_EMOTE', message: 'That emote is not available.' });
+    }
+
+    const disabledRoomSetting = enabledService.updateLobbySettings('socket-1', {
+      ...enabledRoom.data.room.settings,
+      emotesEnabled: false,
+    }, 'https://sketcherson.example');
+    expect(disabledRoomSetting.ok).toBe(true);
+
+    const roomDisabledEmote = enabledService.sendEmoteOutcome('socket-1', 'laugh', 'https://sketcherson.example');
+    expect(roomDisabledEmote.response.ok).toBe(false);
+    expect(roomDisabledEmote.effects).toEqual([]);
+    if (!roomDisabledEmote.response.ok) {
+      expect(roomDisabledEmote.response.error).toMatchObject({ code: 'FORBIDDEN', message: 'Emotes are disabled for this room.' });
+    }
+
+    const disabledGameService = createRoomRuntimeDriver();
+    const disabledGameRoom = disabledGameService.createRoom('Host', 'socket-1', 'https://sketcherson.example');
+    expect(disabledGameRoom.ok).toBe(true);
+    if (!disabledGameRoom.ok) return;
+
+    const gameDisabledEmote = disabledGameService.sendEmoteOutcome('socket-1', 'laugh', 'https://sketcherson.example');
+    expect(gameDisabledEmote.response.ok).toBe(false);
+    expect(gameDisabledEmote.effects).toEqual([]);
+    if (!gameDisabledEmote.response.ok) {
+      expect(gameDisabledEmote.response.error).toMatchObject({ code: 'FORBIDDEN', message: 'Emotes are not enabled for this game.' });
+    }
+  });
+
+  it('rate limits emotes separately from chat and drawing buckets', () => {
+    vi.useFakeTimers();
+
+    const service = createRoomRuntimeDriver({
+      gamePack: EMOTE_TEST_GAME_PACK,
+      random: () => 0,
+      ids: createSequentialIds([
+        'host-player-id',
+        'host-session-token',
+        'host-lobby-message-id',
+        'chat-message-id',
+        'emote-id-1',
+        'emote-id-2',
+        'emote-id-3',
+        'emote-id-4',
+        'emote-id-5',
+        'emote-id-6',
+        'emote-id-7',
+        'emote-id-8',
+        'emote-id-9',
+      ]),
+    });
+
+    const createResult = service.createRoom('Host', 'socket-1', 'https://sketcherson.example');
+    expect(createResult.ok).toBe(true);
+    if (!createResult.ok) return;
+
+    const initialChatResult = service.submitMessage('socket-1', 'chat before emotes', 'https://sketcherson.example');
+    expect(initialChatResult.ok).toBe(true);
+
+    const drawingResult = service.applyLobbyDrawingAction('socket-1', {
+      type: 'beginStroke',
+      strokeId: 'lobby-stroke-before-emotes',
+      tool: 'pen',
+      color: '#101a35',
+      size: 6,
+      point: { x: 10, y: 10 },
+    }, 'https://sketcherson.example');
+    expect(drawingResult.ok).toBe(true);
+
+    for (let attempt = 0; attempt < 7; attempt += 1) {
+      const emoteResult = service.sendEmote('socket-1', 'laugh', 'https://sketcherson.example');
+      expect(emoteResult.ok).toBe(true);
+    }
+
+    const rateLimitedEmote = service.sendEmoteOutcome('socket-1', 'laugh', 'https://sketcherson.example');
+    expect(rateLimitedEmote.response.ok).toBe(false);
+    expect(rateLimitedEmote.effects).toEqual([]);
+    if (!rateLimitedEmote.response.ok) {
+      expect(rateLimitedEmote.response.error).toMatchObject({ code: 'RATE_LIMITED', message: 'Too many emotes. Slow down for a moment.' });
+    }
+
+    const chatResult = service.submitMessage('socket-1', 'chat still works', 'https://sketcherson.example');
+    expect(chatResult.ok).toBe(true);
+
+    vi.advanceTimersByTime(4_001);
+
+    const recoveredEmote = service.sendEmote('socket-1', 'laugh', 'https://sketcherson.example');
+    expect(recoveredEmote.ok).toBe(true);
   });
 
   it('allows match guessers to send emotes and rejects the active drawer', () => {
