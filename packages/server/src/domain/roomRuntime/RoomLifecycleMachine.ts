@@ -1,4 +1,4 @@
-import type { ApiResult, CreateRoomSuccess, DrawingActionSuccess, DrawingSnapshotSuccess, JoinRoomSuccess, LobbyDrawingActionSuccess, LobbySettings, PauseRoomSuccess, ReclaimRoomSuccess, RestartRoomSuccess, ResumeRoomSuccess, RerollTurnSuccess, RoomStateSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@7ito/sketcherson-common/room';
+import type { ApiResult, CreateRoomSuccess, DrawingActionSuccess, DrawingSnapshotSuccess, JoinRoomSuccess, LobbyDrawingActionSuccess, LobbySettings, PauseRoomSuccess, ReclaimRoomSuccess, RestartRoomSuccess, ResumeRoomSuccess, RerollTurnSuccess, RoomStateSuccess, SendEmoteSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@7ito/sketcherson-common/room';
 import type { DrawingAction } from '@7ito/sketcherson-common/drawing';
 import type { RoomTimerFiredInput } from './timers';
 import type { ActorInput, BroadcastTarget, ConnectionInput, EmptyActorInput, KickPlayerResult } from './transport';
@@ -15,6 +15,7 @@ export type RoomCommand =
   | ({ type: 'kickPlayer' } & ActorInput<{ playerId: string }>)
   | ({ type: 'rerollTurn' } & EmptyActorInput)
   | ({ type: 'submitMessage' } & ActorInput<{ text: string }>)
+  | ({ type: 'sendEmote' } & ActorInput<{ emoteId: string }>)
   | ({ type: 'applyDrawingAction' } & ActorInput<{ action: DrawingAction }>)
   | ({ type: 'applyLobbyDrawingAction' } & ActorInput<{ action: DrawingAction }>)
   | { type: 'disconnect'; connectionId: string }
@@ -32,6 +33,7 @@ export type RoomCommandResult =
   | KickPlayerResult
   | ApiResult<RerollTurnSuccess>
   | ApiResult<SubmitMessageSuccess>
+  | ApiResult<SendEmoteSuccess>
   | ApiResult<DrawingActionSuccess>
   | ApiResult<LobbyDrawingActionSuccess>
   | string

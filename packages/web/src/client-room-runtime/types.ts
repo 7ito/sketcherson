@@ -1,4 +1,4 @@
-import type { ApiResult, CreateRoomSuccess, DrawingActionSuccess, JoinRoomSuccess, KickPlayerSuccess, LobbyDrawingActionSuccess, LobbySettings, PauseRoomSuccess, ReclaimRoomSuccess, RestartRoomSuccess, ResumeRoomSuccess, RoomState, RoomStateSuccess, RerollTurnSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@7ito/sketcherson-common/room';
+import type { ApiResult, CreateRoomSuccess, DrawingActionSuccess, EmoteEvent, JoinRoomSuccess, KickPlayerSuccess, LobbyDrawingActionSuccess, LobbySettings, PauseRoomSuccess, ReclaimRoomSuccess, RestartRoomSuccess, ResumeRoomSuccess, RoomState, RoomStateSuccess, RerollTurnSuccess, SendEmoteSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@7ito/sketcherson-common/room';
 import type { DrawingAction, DrawingState } from '@7ito/sketcherson-common/drawing';
 
 export interface JoinedSession {
@@ -31,6 +31,7 @@ export interface RoomClientSnapshot {
   connectionNotice: ConnectionNotice | null;
   lobbyDrawing: DrawingState | null;
   matchDrawing: DrawingState | null;
+  emoteEvents: EmoteEvent[];
 }
 
 export interface RoomClient {
@@ -50,5 +51,6 @@ export interface RoomClient {
   submitDrawingAction(code: string, action: DrawingAction): Promise<ApiResult<DrawingActionSuccess>>;
   submitLobbyDrawingAction(code: string, action: DrawingAction): Promise<ApiResult<LobbyDrawingActionSuccess>>;
   submitRoomMessage(code: string, text: string): Promise<ApiResult<SubmitMessageSuccess>>;
+  sendEmote(code: string, emoteId: string): Promise<ApiResult<SendEmoteSuccess>>;
   destroy(): void;
 }

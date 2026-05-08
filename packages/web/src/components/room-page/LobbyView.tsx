@@ -5,7 +5,7 @@ import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { formatShellCopy } from '@7ito/sketcherson-common/game';
 import { GAME_DEFINITION, GAME_WEB_CONFIG } from '../../game';
 import { useUserSettings } from '../../lib/userSettings';
-import { useRoomDrawing } from '../../providers/RoomSessionProvider';
+import { useRoomDrawing, useRoomEmotes } from '../../providers/RoomSessionProvider';
 import { DrawingCanvas } from '../DrawingCanvas';
 import { GameLogo } from '../GameLogo';
 import { useWebExtensionSlots } from '../WebExtensionSlots';
@@ -42,6 +42,7 @@ export function LobbyView({
   onSubmitLobbyDrawingAction,
   onSubmitMessage,
   onOpenSettings,
+  onSendEmote,
 }: {
   room: RoomState;
   currentPlayerId: string;
@@ -52,8 +53,10 @@ export function LobbyView({
   onSubmitLobbyDrawingAction: (action: DrawingAction) => Promise<ApiResult<LobbyDrawingActionSuccess>>;
   onSubmitMessage: (text: string) => Promise<string | null>;
   onOpenSettings: () => void;
+  onSendEmote: (emoteId: string) => void;
 }) {
   const lobbyDrawing = useRoomDrawing('lobby', room);
+  const emoteEvents = useRoomEmotes();
   const slots = useWebExtensionSlots();
   const [userSettings] = useUserSettings();
   const [copyState, setCopyState] = useState<'idle' | 'copied'>('idle');
@@ -322,6 +325,9 @@ export function LobbyView({
           canDraw={true}
           onSubmitAction={onSubmitLobbyDrawingAction}
           target="lobby"
+          emoteItems={GAME_WEB_CONFIG.ui.emotes.enabled && room.settings.emotesEnabled ? GAME_WEB_CONFIG.ui.emotes.items : []}
+          emoteEvents={emoteEvents.filter((event) => event.roomCode === room.code)}
+          onSendEmote={onSendEmote}
         />
 
         {/* Right: Settings + Chat */}

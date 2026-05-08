@@ -1,9 +1,11 @@
-import type { ApiResult, RoomStatus } from '@7ito/sketcherson-common/room';
+import type { ApiResult, EmoteEvent, RoomStatus } from '@7ito/sketcherson-common/room';
+import type { ResolvedEmoteItem } from '@7ito/sketcherson-common';
 import { formatShellCopy } from '@7ito/sketcherson-common/game';
 import { DRAWING_BRUSH_SIZES, DRAWING_CANVAS_HEIGHT, DRAWING_CANVAS_WIDTH, DRAWING_COLORS, type DrawingAction, type DrawingState } from '@7ito/sketcherson-common/drawing';
 import { useDrawingSession, type DrawingSessionActionSuccess, type DrawingSessionTarget } from '../client-drawing-session';
 import { GAME_WEB_CONFIG } from '../game';
 import { Toast } from './Toast';
+import { EmoteDock, EmoteOverlay } from './EmoteOverlay';
 
 const SHELL_DRAWING_TOOLBAR_COPY = GAME_WEB_CONFIG.ui.copy.drawingToolbar;
 
@@ -14,6 +16,9 @@ export function DrawingCanvas({
   canDraw,
   onSubmitAction,
   target = 'match',
+  emoteItems = [],
+  emoteEvents = [],
+  onSendEmote,
 }: {
   roomCode?: string;
   target?: DrawingSessionTarget;
@@ -21,6 +26,9 @@ export function DrawingCanvas({
   roomStatus: RoomStatus;
   canDraw: boolean;
   onSubmitAction: (action: DrawingAction) => Promise<ApiResult<DrawingSessionActionSuccess>>;
+  emoteItems?: readonly ResolvedEmoteItem[];
+  emoteEvents?: EmoteEvent[];
+  onSendEmote?: (emoteId: string) => void;
 }) {
   const session = useDrawingSession({
     roomCode,
@@ -62,6 +70,8 @@ export function DrawingCanvas({
             onPointerLeave={session.canvasHandlers.onPointerLeave}
             onPointerCancel={session.canvasHandlers.onPointerCancel}
           />
+          {emoteItems.length ? <EmoteOverlay events={emoteEvents} items={emoteItems} /> : null}
+          {emoteItems.length && onSendEmote ? <EmoteDock items={emoteItems} onSend={onSendEmote} /> : null}
         </div>
       </div>
 

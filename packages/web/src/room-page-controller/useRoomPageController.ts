@@ -16,6 +16,7 @@ export interface RoomPageActions {
   submitMessage(text: string): Promise<string | null>;
   submitDrawingAction(action: DrawingAction): Promise<ApiResult<DrawingActionSuccess>>;
   submitLobbyDrawingAction(action: DrawingAction): Promise<ApiResult<LobbyDrawingActionSuccess>>;
+  sendEmote(emoteId: string): void;
 }
 
 export interface JoinRoomModel {
@@ -82,6 +83,7 @@ export function useRoomPageController({ codeParam, roomSession }: UseRoomPageCon
     submitLobbyDrawingAction,
     submitRoomMessage,
     updateLobbySettings,
+    sendEmote,
   } = roomSession;
   const [lookupState, setLookupState] = useState<'loading' | 'ready' | 'not-found' | 'recovery-failed' | 'removed'>('loading');
   const [lookedUpRoom, setLookedUpRoom] = useState<RoomState | null>(null);
@@ -104,8 +106,11 @@ export function useRoomPageController({ codeParam, roomSession }: UseRoomPageCon
       submitMessage: toErrorMessageActionWithArg((text: string) => submitRoomMessage(code, text)),
       submitDrawingAction: (action) => submitDrawingAction(code, action),
       submitLobbyDrawingAction: (action) => submitLobbyDrawingAction(code, action),
+      sendEmote: (emoteId) => {
+        void sendEmote(code, emoteId);
+      },
     }),
-    [code, kickPlayer, pauseRoom, rerollTurn, restartRoom, resumeRoom, startRoom, submitDrawingAction, submitLobbyDrawingAction, submitRoomMessage, updateLobbySettings],
+    [code, kickPlayer, pauseRoom, rerollTurn, restartRoom, resumeRoom, sendEmote, startRoom, submitDrawingAction, submitLobbyDrawingAction, submitRoomMessage, updateLobbySettings],
   );
 
   useEffect(() => {

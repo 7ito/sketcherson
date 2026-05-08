@@ -1,4 +1,4 @@
-import type { ApiResult, CreateRoomSuccess, DrawingActionSuccess, JoinRoomSuccess, KickPlayerSuccess, LobbyDrawingActionSuccess, LobbySettings, PauseRoomSuccess, ReclaimRoomSuccess, RestartRoomSuccess, ResumeRoomSuccess, RoomState, RoomStateSuccess, RerollTurnSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@7ito/sketcherson-common/room';
+import type { ApiResult, CreateRoomSuccess, DrawingActionSuccess, EmoteEvent, JoinRoomSuccess, KickPlayerSuccess, LobbyDrawingActionSuccess, LobbySettings, PauseRoomSuccess, ReclaimRoomSuccess, RestartRoomSuccess, ResumeRoomSuccess, RoomState, RoomStateSuccess, RerollTurnSuccess, SendEmoteSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@7ito/sketcherson-common/room';
 import type { DrawingAction, DrawingState } from '@7ito/sketcherson-common/drawing';
 import { createContext, useContext, useEffect, useMemo, useRef, useSyncExternalStore, type ReactNode } from 'react';
 import {
@@ -39,11 +39,13 @@ export interface RoomSessionContextValue {
   submitDrawingAction: (code: string, action: DrawingAction) => Promise<ApiResult<DrawingActionSuccess>>;
   submitLobbyDrawingAction: (code: string, action: DrawingAction) => Promise<ApiResult<LobbyDrawingActionSuccess>>;
   submitRoomMessage: (code: string, text: string) => Promise<ApiResult<SubmitMessageSuccess>>;
+  sendEmote: (code: string, emoteId: string) => Promise<ApiResult<SendEmoteSuccess>>;
 }
 
 interface RoomDrawingContextValue {
   lobbyDrawing: DrawingState | null;
   matchDrawing: DrawingState | null;
+  emoteEvents: EmoteEvent[];
 }
 
 export const RoomSessionContext = createContext<RoomSessionContextValue | null>(null);
@@ -139,6 +141,7 @@ export function RoomSessionProvider({ children }: { children: ReactNode }): Reac
       submitDrawingAction: client.submitDrawingAction,
       submitLobbyDrawingAction: client.submitLobbyDrawingAction,
       submitRoomMessage: client.submitRoomMessage,
+      sendEmote: client.sendEmote,
     }),
     [client, snapshot],
   );
@@ -147,8 +150,9 @@ export function RoomSessionProvider({ children }: { children: ReactNode }): Reac
     () => ({
       lobbyDrawing: snapshot.lobbyDrawing,
       matchDrawing: snapshot.matchDrawing,
+      emoteEvents: snapshot.emoteEvents,
     }),
-    [snapshot.lobbyDrawing, snapshot.matchDrawing],
+    [snapshot.lobbyDrawing, snapshot.matchDrawing, snapshot.emoteEvents],
   );
 
   return (
@@ -176,4 +180,9 @@ export function useRoomDrawing(target: 'match' | 'lobby', fallbackRoom?: RoomSta
   }
 
   return target === 'lobby' ? context.lobbyDrawing : context.matchDrawing;
+}
+
+export function useRoomEmotes(): EmoteEvent[] {
+  const context = useContext(RoomDrawingContext);
+  return context?.emoteEvents ?? [];
 }

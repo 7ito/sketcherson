@@ -30,6 +30,9 @@ import type {
   StartRoomSuccess,
   SubmitMessageRequest,
   SubmitMessageSuccess,
+  SendEmoteRequest,
+  SendEmoteSuccess,
+  EmoteEvent,
   UpdateLobbySettingsRequest,
   UpdateLobbySettingsSuccess,
 } from './room';
@@ -110,6 +113,10 @@ export interface RoomClientToServerEvents {
     request: SubmitMessageRequest;
     response: ApiResult<SubmitMessageSuccess>;
   };
+  'room:sendEmote': {
+    request: SendEmoteRequest;
+    response: ApiResult<SendEmoteSuccess>;
+  };
 }
 
 export interface RoomServerToClientEvents {
@@ -120,6 +127,7 @@ export interface RoomServerToClientEvents {
   };
   'room:drawingActionApplied': DrawingActionAppliedEvent;
   'room:lobbyDrawingActionApplied': DrawingActionAppliedEvent;
+  'room:emote': EmoteEvent;
 }
 
 export type RoomClientEventName = keyof RoomClientToServerEvents;

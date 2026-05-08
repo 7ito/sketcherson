@@ -115,6 +115,9 @@ export function createGameServer(options?: Partial<CreateGameServerOptions<any>>
             target: effect.target,
           });
           break;
+        case 'broadcastEmote':
+          io.to(effect.roomCode).emit('room:emote', effect.event);
+          break;
       }
     }
   };
@@ -464,6 +467,20 @@ export function createGameServer(options?: Partial<CreateGameServerOptions<any>>
       },
       {
         mapFailurePayload: (payload) => ({ code: payload.code }),
+        broadcastOnSuccess: false,
+      },
+    );
+
+    registerRoomAction(
+      'room:sendEmote',
+      'room.sendEmote',
+      (payload) => {
+        const outcome = roomRuntime.sendEmoteOutcome({ connectionId: socket.id, origin: appOrigin, payload: { emoteId: payload.emoteId } });
+        applyRoomRuntimeEffects(outcome.effects);
+        return outcome.response;
+      },
+      {
+        mapFailurePayload: (payload) => ({ code: payload.code, emoteId: payload.emoteId }),
         broadcastOnSuccess: false,
       },
     );

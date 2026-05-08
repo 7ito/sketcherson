@@ -1,4 +1,4 @@
-import type { ApiError, ApiResult, CreateRoomSuccess, JoinRoomSuccess, KickPlayerSuccess, PauseRoomSuccess, ReclaimRoomSuccess, ResumeRoomSuccess, RoomState, RoomStateSuccess, RerollTurnSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@7ito/sketcherson-common/room';
+import type { ApiError, ApiResult, CreateRoomSuccess, EmoteEvent, JoinRoomSuccess, KickPlayerSuccess, PauseRoomSuccess, ReclaimRoomSuccess, ResumeRoomSuccess, RoomState, RoomStateSuccess, RerollTurnSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@7ito/sketcherson-common/room';
 import type { DrawingActionAppliedEvent } from '@7ito/sketcherson-common/drawing';
 import type { RoomClientEventName, RoomRequest, RoomResponse } from '@7ito/sketcherson-common/roomEvents';
 import {
@@ -41,6 +41,7 @@ const INITIAL_SNAPSHOT: RoomClientSnapshot = {
   connectionNotice: null,
   lobbyDrawing: null,
   matchDrawing: null,
+  emoteEvents: [],
 };
 
 export function createRoomClient(options: CreateRoomClientOptions): RoomClient {
@@ -337,6 +338,14 @@ export function createRoomClient(options: CreateRoomClientOptions): RoomClient {
     }
   };
 
+  const handleEmote = (payload: EmoteEvent) => {
+    if (activeRoomRef?.code !== payload.roomCode) {
+      return;
+    }
+
+    patchSnapshot({ emoteEvents: [...snapshot.emoteEvents, payload].slice(-12) });
+  };
+
   const handleConnect = () => {
     patchSnapshot({ connectionNotice: null });
 
@@ -379,6 +388,7 @@ export function createRoomClient(options: CreateRoomClientOptions): RoomClient {
   unsubscribeCallbacks.push(
     transport.on('room:state', handleRoomState),
     transport.on('room:kicked', handleRoomKicked),
+    transport.on('room:emote', handleEmote),
     drawingTransport.on('room:drawingActionApplied', (payload) => handleDrawingActionApplied(payload, 'match')),
     drawingTransport.on('room:lobbyDrawingActionApplied', (payload) => handleDrawingActionApplied(payload, 'lobby')),
     transport.onConnectionEvent('connect', handleConnect),
@@ -512,6 +522,9 @@ export function createRoomClient(options: CreateRoomClientOptions): RoomClient {
     async submitRoomMessage(code, text) {
       return runRoomMutation('room:submitMessage', { code, text }, code);
     },
+    async sendEmote(code, emoteId) {
+      return transport.emitWithAck('room:sendEmote', { code, emoteId });
+    },
     destroy() {
       for (const unsubscribe of unsubscribeCallbacks) {
         unsubscribe();
@@ -553,4 +566,3 @@ function buildRecoveryMessage(code: string, error: ApiError): string {
 
   return `Could not restore your room session for ${code}. ${error.message}`;
 }
-

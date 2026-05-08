@@ -1,5 +1,5 @@
 import type { ActorInput, BroadcastTarget, ConnectionInput, EmptyActorInput, KickPlayerResult } from './transport';
-import type { ApiResult, CreateRoomSuccess, DrawingActionSuccess, DrawingSnapshotSuccess, JoinRoomSuccess, KickPlayerSuccess, LobbyDrawingActionSuccess, LobbySettings, PauseRoomSuccess, ReclaimRoomSuccess, RestartRoomSuccess, ResumeRoomSuccess, RerollTurnSuccess, RoomStateSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@7ito/sketcherson-common/room';
+import type { ApiResult, CreateRoomSuccess, DrawingActionSuccess, DrawingSnapshotSuccess, EmoteEvent, JoinRoomSuccess, KickPlayerSuccess, LobbyDrawingActionSuccess, LobbySettings, PauseRoomSuccess, ReclaimRoomSuccess, RestartRoomSuccess, ResumeRoomSuccess, RerollTurnSuccess, RoomStateSuccess, SendEmoteSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@7ito/sketcherson-common/room';
 import type { DrawingAction, DrawingActionAppliedEvent } from '@7ito/sketcherson-common/drawing';
 import { InMemoryRoomLifecycleMachine, type InMemoryRoomLifecycleMachineOptions } from './InMemoryRoomLifecycleMachine';
 import type { RoomCommand, RoomCommandResult, RoomLifecycleMachine, RoomQuery, RoomQueryResult } from './RoomLifecycleMachine';
@@ -16,7 +16,8 @@ export type RoomRuntimeEffect =
   | { type: 'leaveTransportRoom'; connectionId: string; roomCode: string }
   | { type: 'emit'; connectionId: string; event: string; payload: unknown }
   | { type: 'broadcastRoomState'; roomCode: string; targets: BroadcastTarget[] }
-  | { type: 'broadcastDrawingAction'; roomCode: string; event: DrawingActionAppliedEvent; target: 'match' | 'lobby' };
+  | { type: 'broadcastDrawingAction'; roomCode: string; event: DrawingActionAppliedEvent; target: 'match' | 'lobby' }
+  | { type: 'broadcastEmote'; roomCode: string; event: EmoteEvent };
 
 export type { ActorInput, BroadcastTarget, ConnectionInput, EmptyActorInput, KickPlayerResult };
 
@@ -202,6 +203,18 @@ export class RoomRuntime {
     return {
       response,
       effects: response.ok ? [this.createBroadcastRoomStateEffect(response.data.room.code, input.origin, { drawingPayload: 'omit' })] : [],
+    };
+  }
+
+  public sendEmote(input: ActorInput<{ emoteId: string }>): ApiResult<SendEmoteSuccess> {
+    return this.dispatch<ApiResult<SendEmoteSuccess>>({ type: 'sendEmote', ...input });
+  }
+
+  public sendEmoteOutcome(input: ActorInput<{ emoteId: string }>): RoomCommandOutcome<SendEmoteSuccess> {
+    const response = this.sendEmote(input);
+    return {
+      response,
+      effects: response.ok ? [{ type: 'broadcastEmote', roomCode: response.data.event.roomCode, event: response.data.event }] : [],
     };
   }
 

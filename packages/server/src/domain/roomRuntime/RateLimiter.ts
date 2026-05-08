@@ -1,6 +1,6 @@
 import type { ApiResult } from '@7ito/sketcherson-common/room';
 
-export type RateLimitScope = 'chat' | 'drawing' | 'join';
+export type RateLimitScope = 'chat' | 'drawing' | 'join' | 'emote';
 
 interface RateLimitPolicy {
   maxAttempts: number;
@@ -28,6 +28,11 @@ const RATE_LIMIT_POLICIES: Record<RateLimitScope, RateLimitPolicy> = {
     maxAttempts: 480,
     windowMs: 4_000,
     message: 'Too many drawing updates. Slow down for a moment.',
+  },
+  emote: {
+    maxAttempts: 7,
+    windowMs: 4_000,
+    message: 'Too many emotes. Slow down for a moment.',
   },
 };
 

@@ -129,6 +129,7 @@ export function RoomPage() {
           onSubmitLobbyDrawingAction={screen.actions.submitLobbyDrawingAction}
           onSubmitMessage={screen.actions.submitMessage}
           onOpenSettings={openSettings}
+          onSendEmote={screen.actions.sendEmote}
         />
       </>
     );

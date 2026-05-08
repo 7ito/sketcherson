@@ -1,7 +1,7 @@
 import type { GameDefinition, GamePack, ServerGameRuntime } from '@7ito/sketcherson-common/game';
 import { createServerGameRuntime } from '@7ito/sketcherson-common/game';
 import { createPromptEngine, type PromptEngine } from '@7ito/sketcherson-common/prompts';
-import { MAX_CHAT_MESSAGE_LENGTH, PAUSE_MAX_DURATION_SECONDS, PAUSE_REPAUSE_COOLDOWN_SECONDS, PRE_ROUND_COUNTDOWN_SECONDS, RECONNECT_GRACE_PERIOD_SECONDS, REVEAL_DURATION_SECONDS, normalizeRoomCode, type ApiResult, type CreateRoomSuccess, type DrawingActionSuccess, type LobbyDrawingActionSuccess, type JoinRoomSuccess, type LiveRoomStatus, type LobbySettings, type ReclaimRoomSuccess, type RestartRoomSuccess, type RoomState, type RoomStateSuccess, type PauseRoomSuccess, type ResumeRoomSuccess, type RerollTurnSuccess, type ScoreboardEntry, type StartRoomSuccess, type SubmitMessageSuccess, type UpdateLobbySettingsSuccess } from '@7ito/sketcherson-common/room';
+import { MAX_CHAT_MESSAGE_LENGTH, PAUSE_MAX_DURATION_SECONDS, PAUSE_REPAUSE_COOLDOWN_SECONDS, PRE_ROUND_COUNTDOWN_SECONDS, RECONNECT_GRACE_PERIOD_SECONDS, REVEAL_DURATION_SECONDS, normalizeRoomCode, type ApiResult, type CreateRoomSuccess, type DrawingActionSuccess, type LobbyDrawingActionSuccess, type JoinRoomSuccess, type LiveRoomStatus, type LobbySettings, type ReclaimRoomSuccess, type RestartRoomSuccess, type RoomState, type RoomStateSuccess, type PauseRoomSuccess, type ResumeRoomSuccess, type RerollTurnSuccess, type ScoreboardEntry, type SendEmoteSuccess, type StartRoomSuccess, type SubmitMessageSuccess, type UpdateLobbySettingsSuccess } from '@7ito/sketcherson-common/room';
 import type { DrawingAction, DrawingState } from '@7ito/sketcherson-common/drawing';
 import { isNicknameValid, normalizeNickname, normalizeNicknameForComparison } from '@7ito/sketcherson-common/identity';
 import { containsProfanity } from '@7ito/sketcherson-common/moderation';
@@ -192,6 +192,8 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
         return this.rerollTurn(command);
       case 'submitMessage':
         return this.submitMessage(command);
+      case 'sendEmote':
+        return this.sendEmote(command);
       case 'applyDrawingAction':
         return this.applyDrawingAction(command);
       case 'applyLobbyDrawingAction':
@@ -745,6 +747,49 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
       ok: true,
       data: {
         room: this.toRoomState(currentRoom, origin, player.id, 'omit'),
+      },
+    };
+  }
+
+  public sendEmote(input: ActorInput<{ emoteId: string }>): ApiResult<SendEmoteSuccess> {
+    const { connectionId: socketId, payload: { emoteId } } = input;
+    const actorRoom = this.getActorRoom(socketId);
+
+    if (!actorRoom.ok) {
+      return actorRoom;
+    }
+
+    const room = actorRoom.value.room;
+    const emotes = this.gameRuntime.ui.emotes;
+
+    if (!emotes.enabled) {
+      return { ok: false, error: { code: 'FORBIDDEN', message: 'Emotes are not enabled for this game.' } };
+    }
+
+    if (!room.settings.emotesEnabled) {
+      return { ok: false, error: { code: 'FORBIDDEN', message: 'Emotes are disabled for this room.' } };
+    }
+
+    if (!emotes.items.some((item) => item.id === emoteId)) {
+      return { ok: false, error: { code: 'INVALID_EMOTE', message: 'That emote is not available.' } };
+    }
+
+    const rateLimitError = this.rateLimiter.consume('emote', socketId);
+    if (rateLimitError) {
+      return rateLimitError;
+    }
+
+    return {
+      ok: true,
+      data: {
+        event: {
+          roomCode: room.code,
+          eventId: this.ids.randomUUID(),
+          emoteId,
+          createdAt: this.now(),
+          x: this.random(),
+          y: 0.8 + this.random() * 0.15,
+        },
       },
     };
   }

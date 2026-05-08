@@ -255,6 +255,11 @@ export interface SubmitMessageRequest {
   text: string;
 }
 
+export interface SendEmoteRequest {
+  code: string;
+  emoteId: string;
+}
+
 export interface CreateRoomSuccess {
   playerId: string;
   sessionToken: string;
@@ -334,4 +339,17 @@ export interface LobbyDrawingActionSuccess {
 
 export interface SubmitMessageSuccess {
   room: RoomState;
+}
+
+export interface EmoteEvent {
+  roomCode: string;
+  eventId: string;
+  emoteId: string;
+  createdAt: number;
+  x: number;
+  y: number;
+}
+
+export interface SendEmoteSuccess {
+  event: EmoteEvent;
 }
