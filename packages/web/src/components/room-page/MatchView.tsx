@@ -1,4 +1,4 @@
-import { MAX_CHAT_MESSAGE_LENGTH, type ApiResult, type CurrentTurnState, type DrawingActionSuccess, type RoomState } from '@7ito/sketcherson-common/room';
+import { MAX_CHAT_MESSAGE_LENGTH, type ApiResult, type CurrentTurnState, type DrawingActionSuccess, type LobbySettings, type RoomState } from '@7ito/sketcherson-common/room';
 import type { DrawingAction } from '@7ito/sketcherson-common/drawing';
 import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { formatShellCopy } from '@7ito/sketcherson-common/game';
@@ -40,6 +40,7 @@ export function MatchView({
   onSubmitDrawingAction,
   onSubmitMessage,
   onOpenSettings,
+  onSaveSettings,
   onSendEmote,
 }: {
   room: RoomState;
@@ -53,7 +54,8 @@ export function MatchView({
   onSubmitDrawingAction: (action: DrawingAction) => Promise<ApiResult<DrawingActionSuccess>>;
   onSubmitMessage: (text: string) => Promise<string | null>;
   onOpenSettings: () => void;
-  onSendEmote: (emoteId: string) => void;
+  onSaveSettings: (settings: LobbySettings) => Promise<string | null>;
+  onSendEmote: (emoteId: string) => Promise<string | null>;
 }) {
   const slots = useWebExtensionSlots();
   const matchDrawing = useRoomDrawing('match', room);
@@ -82,6 +84,8 @@ export function MatchView({
   const [kickingPlayerId, setKickingPlayerId] = useState<string | null>(null);
   const [isRestarting, setIsRestarting] = useState(false);
   const [restartError, setRestartError] = useState('');
+  const [isUpdatingEmotes, setIsUpdatingEmotes] = useState(false);
+  const [emoteToggleError, setEmoteToggleError] = useState('');
   const restartDialogRef = useRef<HTMLDialogElement>(null);
   const roundWarningTurnRef = useRef<number | null>(null);
 
@@ -98,7 +102,8 @@ export function MatchView({
   );
   const canPauseMatch = GAME_RUNTIME.rules.features.pause;
   const canDraw = Boolean(isCurrentDrawer && room.status === 'round' && currentTurn);
-  const canUseMatchEmotes = Boolean(GAME_WEB_CONFIG.ui.emotes.enabled && room.settings.emotesEnabled && !isCurrentDrawer && ['countdown', 'round', 'reveal', 'paused'].includes(room.status));
+  const canRenderMatchEmotes = Boolean(GAME_WEB_CONFIG.ui.emotes.enabled && room.settings.emotesEnabled && ['countdown', 'round', 'reveal', 'paused'].includes(room.status));
+  const canUseMatchEmotes = Boolean(canRenderMatchEmotes && !isCurrentDrawer);
   const latestCompletedTurn = room.match?.completedTurns[room.match.completedTurns.length - 1] ?? null;
   const revealSummary = effectivePhase === 'reveal' ? latestCompletedTurn : null;
   const playersById = useMemo(() => new Map(room.players.map((player) => [player.id, player])), [room.players]);
@@ -198,6 +203,17 @@ export function MatchView({
     } else {
       restartDialogRef.current?.close();
     }
+  };
+
+  const handleToggleMatchEmotes = async () => {
+    setEmoteToggleError('');
+    setIsUpdatingEmotes(true);
+    const errorMessage = await onSaveSettings({
+      ...room.settings,
+      emotesEnabled: !(room.settings.emotesEnabled ?? false),
+    });
+    setIsUpdatingEmotes(false);
+    if (errorMessage) setEmoteToggleError(errorMessage);
   };
 
   const focusChatInput = () => {
@@ -455,9 +471,9 @@ export function MatchView({
           roomStatus={room.status}
           canDraw={canDraw}
           onSubmitAction={onSubmitDrawingAction}
-          emoteItems={canUseMatchEmotes ? GAME_WEB_CONFIG.ui.emotes.items : []}
-          emoteEvents={emoteEvents.filter((event) => event.roomCode === room.code)}
-          onSendEmote={onSendEmote}
+          emoteItems={canRenderMatchEmotes ? GAME_WEB_CONFIG.ui.emotes.items : []}
+          emoteEvents={emoteEvents.filter((event) => event.roomCode === room.code && event.target === 'match')}
+          onSendEmote={canUseMatchEmotes ? onSendEmote : undefined}
         />
 
         {/* Right: Chat + Info */}
@@ -473,7 +489,7 @@ export function MatchView({
           </div>
 
           {/* Contextual info section */}
-          {(revealSummary || (isViewerHost && canPauseMatch) || pauseState || isGuessingDelayActive) ? (
+          {(revealSummary || (isViewerHost && (canPauseMatch || GAME_WEB_CONFIG.ui.emotes.enabled)) || pauseState || isGuessingDelayActive) ? (
             <div className="chat-panel-info">
               {/* Reveal summary */}
               {revealSummary ? (
@@ -514,43 +530,59 @@ export function MatchView({
               ) : null}
 
               {/* Host controls */}
-              {isViewerHost && canPauseMatch ? (
+              {isViewerHost && (canPauseMatch || GAME_WEB_CONFIG.ui.emotes.enabled) ? (
                 <div className="chat-info-card" style={{ position: 'relative' }}>
                   <span className="card-label">{SHELL_MATCH_COPY.hostControlsHeader}</span>
-                  <button
-                    type="button"
-                    className="restart-match-button"
-                    title="Restart match"
-                    onClick={() => restartDialogRef.current?.showModal()}
-                  >
-                    ↺
-                  </button>
-                  {room.status === 'paused' ? (
+                  {canPauseMatch ? (
                     <button
                       type="button"
-                      className="secondary-button compact-button"
-                      onClick={handleResume}
-                      disabled={isResuming || isPauseCountdownRunning}
-                      style={{ marginTop: '0.3rem' }}
+                      className="restart-match-button"
+                      title="Restart match"
+                      onClick={() => restartDialogRef.current?.showModal()}
                     >
-                      {isPauseCountdownRunning ? SHELL_MATCH_COPY.resumeCountdown : SHELL_MATCH_COPY.resumeMatch}
+                      ↺
                     </button>
-                  ) : (
-                    <>
+                  ) : null}
+                  {GAME_WEB_CONFIG.ui.emotes.enabled ? (
+                    <label className="lobby-toggle-row" style={{ marginTop: '0.35rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={room.settings.emotesEnabled ?? false}
+                        disabled={isUpdatingEmotes}
+                        onChange={() => void handleToggleMatchEmotes()}
+                      />
+                      <span>{capitalizeFirst(GAME_WEB_CONFIG.ui.copy.settings.emotesToggleLabel)}</span>
+                    </label>
+                  ) : null}
+                  {emoteToggleError ? <p className="error-text" style={{ fontSize: '0.72rem' }}>{emoteToggleError}</p> : null}
+                  {canPauseMatch ? (
+                    room.status === 'paused' ? (
                       <button
                         type="button"
                         className="secondary-button compact-button"
-                        onClick={handlePause}
-                        disabled={isPausing || Boolean(pauseCooldownSeconds && pauseCooldownSeconds > 0)}
+                        onClick={handleResume}
+                        disabled={isResuming || isPauseCountdownRunning}
                         style={{ marginTop: '0.3rem' }}
                       >
-                        {isPausing ? SHELL_MATCH_COPY.pausingMatch : SHELL_MATCH_COPY.pauseMatch}
+                        {isPauseCountdownRunning ? SHELL_MATCH_COPY.resumeCountdown : SHELL_MATCH_COPY.resumeMatch}
                       </button>
-                      {pauseCooldownSeconds && pauseCooldownSeconds > 0 ? (
-                        <span className="card-helper">{formatShellCopy(SHELL_MATCH_COPY.pauseCooldownHelper, { seconds: pauseCooldownSeconds })}</span>
-                      ) : null}
-                    </>
-                  )}
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          className="secondary-button compact-button"
+                          onClick={handlePause}
+                          disabled={isPausing || Boolean(pauseCooldownSeconds && pauseCooldownSeconds > 0)}
+                          style={{ marginTop: '0.3rem' }}
+                        >
+                          {isPausing ? SHELL_MATCH_COPY.pausingMatch : SHELL_MATCH_COPY.pauseMatch}
+                        </button>
+                        {pauseCooldownSeconds && pauseCooldownSeconds > 0 ? (
+                          <span className="card-helper">{formatShellCopy(SHELL_MATCH_COPY.pauseCooldownHelper, { seconds: pauseCooldownSeconds })}</span>
+                        ) : null}
+                      </>
+                    )
+                  ) : null}
                   {pauseError ? <p className="error-text" style={{ fontSize: '0.72rem' }}>{pauseError}</p> : null}
                 </div>
               ) : null}

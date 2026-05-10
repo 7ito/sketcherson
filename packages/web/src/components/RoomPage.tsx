@@ -110,6 +110,7 @@ export function RoomPage() {
           onSubmitDrawingAction={screen.actions.submitDrawingAction}
           onSubmitMessage={screen.actions.submitMessage}
           onOpenSettings={openSettings}
+          onSaveSettings={screen.actions.saveSettings}
           onSendEmote={screen.actions.sendEmote}
         />
       </>

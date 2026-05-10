@@ -160,8 +160,8 @@ describe('DrawingCanvas', () => {
           { id: 'mascot', imageUrl: '/emotes/mascot.png', label: 'Mascot cheer' },
         ]}
         emoteEvents={[
-          { roomCode: 'ABCDEF', eventId: 'event-1', emoteId: 'spark', x: 0.25, y: 0.82, createdAt: '2026-05-08T00:00:00.000Z' },
-          { roomCode: 'ABCDEF', eventId: 'event-2', emoteId: 'mascot', x: 0.75, y: 0.88, createdAt: '2026-05-08T00:00:01.000Z' },
+          { roomCode: 'ABCDEF', target: 'lobby', eventId: 'event-1', emoteId: 'spark', x: 0.25, y: 0.82, createdAt: Date.now(), receivedAt: Date.now() },
+          { roomCode: 'ABCDEF', target: 'lobby', eventId: 'event-2', emoteId: 'mascot', x: 0.75, y: 0.88, createdAt: Date.now(), receivedAt: Date.now() },
         ]}
         onSendEmote={onSendEmote}
       />,
@@ -179,10 +179,32 @@ describe('DrawingCanvas', () => {
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
     expect(container.querySelector('.emote-dock')).not.toHaveClass('emote-dock-open');
 
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    fireEvent.pointerDown(document.body);
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+
     const bubbles = container.querySelectorAll('.emote-bubble');
     expect(bubbles).toHaveLength(2);
     expect(bubbles[0]).toHaveStyle({ left: '25%', top: '82%' });
     expect(bubbles[1].querySelector('img')).toHaveAttribute('src', '/emotes/mascot.png');
+  });
+
+  it('shows emote send failures to the sender', async () => {
+    render(
+      <DrawingCanvas
+        drawing={buildDrawingState()}
+        roomStatus="lobby"
+        canDraw={false}
+        onSubmitAction={buildSubmitActionMock()}
+        emoteItems={[{ id: 'laugh', emoji: '😂', label: 'Laugh' }]}
+        onSendEmote={vi.fn().mockResolvedValue('Too many emotes. Slow down for a moment.')}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Laugh' }));
+
+    expect(await screen.findByText('Too many emotes. Slow down for a moment.')).toBeInTheDocument();
   });
 
   it('keeps the local stroke alive after a failed extend ack so the stroke can still complete', async () => {

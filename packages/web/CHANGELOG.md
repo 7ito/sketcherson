@@ -1,5 +1,13 @@
 # @7ito/sketcherson-web
 
+## 0.3.16
+
+### Patch Changes
+
+- Settings update
+- Updated dependencies
+  - @7ito/sketcherson-common@0.3.14
+
 ## 0.3.15
 
 ### Patch Changes

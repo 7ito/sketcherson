@@ -5,7 +5,7 @@ import { DRAWING_MAX_EXTEND_POINTS, applyDrawingActionToState, type DrawingState
 import { areEmoteItemsValid, resolveEmoteConfig } from './emotes';
 import { createPromptEngine, normalizeGuessText } from './prompts';
 import { calculateGuesserScore } from './scoring';
-import { areLobbySettingsValidForGame, getFirstCorrectGuessTimeCapPresets } from './settings';
+import { areLobbySettingsValidForGame, defaultLobbySettingsForGame, getFirstCorrectGuessTimeCapPresets } from './settings';
 import { buildGameCookieName, buildGameStorageKey } from './storage';
 import { TEST_GAME_DEFINITION } from './games/testGame';
 import { describe, expect, it } from 'vitest';
@@ -174,6 +174,8 @@ describe('emote config helpers', () => {
         { id: 'spark', emoji: '✨', label: 'Sparkle' },
         { id: 'mascot', imageUrl: '/emotes/mascot.png', label: 'Mascot cheer' },
       ],
+      maxVisible: 12,
+      durationMs: 1800,
     });
   });
 
@@ -183,6 +185,15 @@ describe('emote config helpers', () => {
     expect(areEmoteItemsValid([{ id: 'missing-source', label: 'Missing source' }])).toBe(false);
     expect(areEmoteItemsValid([{ id: 'double-source', emoji: '✨', imageUrl: '/emotes/spark.png', label: 'Double source' }])).toBe(false);
     expect(areEmoteItemsValid([{ id: 'missing-label', emoji: '✨', label: '' }])).toBe(false);
+    expect(areEmoteItemsValid([{ id: 'blank-label', emoji: '✨', label: '   ' }])).toBe(false);
+    expect(areEmoteItemsValid([
+      { id: 'spark', emoji: '✨', label: 'Sparkle' },
+      { id: ' spark ', emoji: '✨', label: 'Sparkle duplicate' },
+    ])).toBe(false);
+    expect(() => resolveEmoteConfig({
+      enabled: true,
+      items: [{ id: 'double-source', emoji: '✨', imageUrl: '/emotes/spark.png', label: 'Double source' }],
+    })).toThrow('Emote items must have unique IDs, labels, and exactly one visual source.');
   });
 });
 
@@ -244,7 +255,9 @@ describe('lobby settings helpers', () => {
   });
 
   it('defaults and validates the room emote toggle from resolved game config', () => {
-    const enabledEmotes = { enabled: true, items: [{ id: 'laugh', emoji: '😂', label: 'Laugh' }] };
+    const enabledEmotes = { enabled: true, items: [{ id: 'laugh', emoji: '😂', label: 'Laugh' }], maxVisible: 12, durationMs: 1800 };
+
+    expect(defaultLobbySettingsForGame(TEST_GAME_DEFINITION).emotesEnabled).toBeUndefined();
 
     expect(areLobbySettingsValidForGame(TEST_GAME_DEFINITION, {
       roundTimerSeconds: 60,

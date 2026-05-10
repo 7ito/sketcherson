@@ -343,6 +343,7 @@ export interface SubmitMessageSuccess {
 
 export interface EmoteEvent {
   roomCode: string;
+  target: 'lobby' | 'match';
   eventId: string;
   emoteId: string;
   createdAt: number;

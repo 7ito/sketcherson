@@ -1,11 +1,11 @@
-import { normalizeLobbySettingsForGame } from '@7ito/sketcherson-common/settings';
 import type { LobbySettings } from '@7ito/sketcherson-common/room';
-import { GAME_DEFINITION, GAME_RUNTIME, GAME_WEB_CONFIG } from '../../game';
+import { GAME_RUNTIME, GAME_WEB_CONFIG } from '../../game';
 import {
   capitalizeFirst,
   clampFirstCorrectGuessTimeCapSeconds,
   GAME_TERMINOLOGY,
   getEnabledCollectionNames,
+  normalizeGameLobbySettings,
   PROMPT_COLLECTIONS,
   updateEnabledCollectionSettings,
 } from './helpers';
@@ -58,7 +58,7 @@ export function CollectionSettingsField({
   variant: 'lobby' | 'postgame';
   onChange: (settings: LobbySettings) => void;
 }) {
-  const normalizedSettings = normalizeLobbySettingsForGame(GAME_DEFINITION, settings);
+  const normalizedSettings = normalizeGameLobbySettings(settings);
   const enabledCollectionIds = normalizedSettings.enabledCollectionIds ?? [];
   const hasSingleCollectionEnabled = enabledCollectionIds.length <= 1;
 
@@ -390,6 +390,23 @@ export function SharedSettingsFields({
         />
         <span>Enable {SHELL_SETTINGS_COPY.referenceArtToggleLabel} for the active drawer and answer reveal</span>
       </label>
+
+      {GAME_WEB_CONFIG.ui.emotes?.enabled ? (
+        <label className="checkbox-row">
+          <input
+            type="checkbox"
+            checked={settings.emotesEnabled ?? true}
+            disabled={disabled}
+            onChange={(event) =>
+              onChange({
+                ...settings,
+                emotesEnabled: event.target.checked,
+              })
+            }
+          />
+          <span>Enable {SHELL_SETTINGS_COPY.emotesToggleLabel}</span>
+        </label>
+      ) : null}
 
       <CollectionSettingsField variant="postgame" settings={settings} disabled={disabled} onChange={onChange} />
     </>

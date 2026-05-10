@@ -1,11 +1,20 @@
 import type { PromptCollection } from '@7ito/sketcherson-common/prompts';
-import { normalizeLobbySettingsForGame } from '@7ito/sketcherson-common/settings';
 import type { CurrentTurnState, FirstCorrectGuessTimeCapPreset, LobbySettings, RoomPlayer, RoomState, RoundTimerPreset } from '@7ito/sketcherson-common/room';
+import { normalizeLobbySettingsForGame } from '@7ito/sketcherson-common/settings';
 import { useEffect, useRef, useState } from 'react';
 import { GAME_DEFINITION, GAME_RUNTIME, GAME_WEB_CONFIG } from '../../game';
 
 export const GAME_TERMINOLOGY = GAME_DEFINITION.terminology;
 export const PROMPT_COLLECTIONS: readonly PromptCollection[] = GAME_DEFINITION.promptCatalog.collections;
+
+export function normalizeGameLobbySettings(settings: LobbySettings): LobbySettings {
+  return normalizeLobbySettingsForGame(
+    GAME_DEFINITION,
+    settings,
+    GAME_RUNTIME.rules as unknown as Parameters<typeof normalizeLobbySettingsForGame>[2],
+    GAME_WEB_CONFIG.ui.emotes,
+  );
+}
 
 export function capitalizeFirst(value: string): string {
   return value ? `${value.charAt(0).toUpperCase()}${value.slice(1)}` : value;
@@ -131,19 +140,19 @@ export function clampFirstCorrectGuessTimeCapSeconds(
 }
 
 export function updateEnabledCollectionSettings(settings: LobbySettings, collectionId: string, enabled: boolean): LobbySettings {
-  const normalizedSettings = normalizeLobbySettingsForGame(GAME_DEFINITION, settings);
+  const normalizedSettings = normalizeGameLobbySettings(settings);
   const nextCollectionIds = enabled
     ? [...normalizedSettings.enabledCollectionIds!, collectionId]
     : normalizedSettings.enabledCollectionIds!.filter((selectedCollectionId) => selectedCollectionId !== collectionId);
 
-  return normalizeLobbySettingsForGame(GAME_DEFINITION, {
+  return normalizeGameLobbySettings({
     ...normalizedSettings,
     enabledCollectionIds: nextCollectionIds,
   });
 }
 
 export function getEnabledCollectionNames(settings: LobbySettings): string {
-  const enabledCollectionIdSet = new Set(normalizeLobbySettingsForGame(GAME_DEFINITION, settings).enabledCollectionIds);
+  const enabledCollectionIdSet = new Set(normalizeGameLobbySettings(settings).enabledCollectionIds);
 
   return (
     PROMPT_COLLECTIONS.filter((collection) => enabledCollectionIdSet.has(collection.id))

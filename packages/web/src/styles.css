@@ -1605,11 +1605,12 @@ label span {
   inset: 0;
   pointer-events: none;
   overflow: hidden;
+  container-type: size;
 }
 
 .emote-bubble {
   position: absolute;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
   font-size: clamp(1.8rem, 7cqw, 4rem);
   filter: drop-shadow(0 6px 10px rgb(0 0 0 / 0.25));
   animation: emote-pop 1.8s ease-out forwards;
@@ -1663,9 +1664,9 @@ label span {
 }
 
 @keyframes emote-pop {
-  0% { opacity: 0; transform: translate(-50%, 20%) scale(0.65) rotate(-5deg); }
-  15% { opacity: 1; transform: translate(-50%, -50%) scale(1.08) rotate(3deg); }
-  100% { opacity: 0; transform: translate(-50%, -160%) scale(1) rotate(-3deg); }
+  0% { opacity: 0; transform: translateX(-50%) translateY(0) scale(0.65) rotate(-5deg); }
+  15% { opacity: 1; transform: translateX(-50%) translateY(-3cqh) scale(1.08) rotate(3deg); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-20cqh) scale(1) rotate(-3deg); }
 }
 
 .toolbar-strip {

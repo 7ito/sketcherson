@@ -1,8 +1,7 @@
-import { normalizeLobbySettingsForGame } from '@7ito/sketcherson-common/settings';
 import { formatShellCopy } from '@7ito/sketcherson-common/game';
 import { MAX_CHAT_MESSAGE_LENGTH, MIN_PLAYERS_TO_START, type CompletedTurnState, type LobbySettings, type RoomState } from '@7ito/sketcherson-common/room';
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { GAME_DEFINITION, GAME_WEB_CONFIG } from '../../game';
+import { GAME_WEB_CONFIG } from '../../game';
 import { useUserSettings } from '../../lib/userSettings';
 import { GameLogo } from '../GameLogo';
 import { ShellNotice } from '../ShellNotice';
@@ -10,6 +9,7 @@ import {
   buildPlayerAccentMap,
   canHostKickPlayer,
   getPlayerAccentStyle,
+  normalizeGameLobbySettings,
   useAutoScrollToBottom,
 } from './helpers';
 import { legacyChatMessagesToRoomFeed, renderStructuredRoomFeed } from './roomFeed';
@@ -86,7 +86,7 @@ export function PostgameView({
   onOpenSettings: () => void;
 }) {
   const [userSettings] = useUserSettings();
-  const [settingsDraft, setSettingsDraft] = useState(() => normalizeLobbySettingsForGame(GAME_DEFINITION, room.settings));
+  const [settingsDraft, setSettingsDraft] = useState(() => normalizeGameLobbySettings(room.settings));
   const [settingsError, setSettingsError] = useState('');
   const [playAgainError, setPlayAgainError] = useState('');
   const [isStarting, setIsStarting] = useState(false);
@@ -112,7 +112,7 @@ export function PostgameView({
   const winnerCopyParts = SHELL_POSTGAME_COPY.winner.split('{nickname}');
 
   useEffect(() => {
-    setSettingsDraft(normalizeLobbySettingsForGame(GAME_DEFINITION, room.settings));
+    setSettingsDraft(normalizeGameLobbySettings(room.settings));
   }, [room.settings]);
 
   const autoSaveSettings = useCallback(

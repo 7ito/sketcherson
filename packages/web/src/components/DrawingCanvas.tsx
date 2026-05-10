@@ -1,8 +1,10 @@
-import type { ApiResult, EmoteEvent, RoomStatus } from '@7ito/sketcherson-common/room';
+import { useState } from 'react';
+import type { ApiResult, RoomStatus } from '@7ito/sketcherson-common/room';
 import type { ResolvedEmoteItem } from '@7ito/sketcherson-common';
 import { formatShellCopy } from '@7ito/sketcherson-common/game';
 import { DRAWING_BRUSH_SIZES, DRAWING_CANVAS_HEIGHT, DRAWING_CANVAS_WIDTH, DRAWING_COLORS, type DrawingAction, type DrawingState } from '@7ito/sketcherson-common/drawing';
 import { useDrawingSession, type DrawingSessionActionSuccess, type DrawingSessionTarget } from '../client-drawing-session';
+import type { RoomClientEmoteEvent } from '../client-room-runtime';
 import { GAME_WEB_CONFIG } from '../game';
 import { Toast } from './Toast';
 import { EmoteDock, EmoteOverlay } from './EmoteOverlay';
@@ -18,6 +20,8 @@ export function DrawingCanvas({
   target = 'match',
   emoteItems = [],
   emoteEvents = [],
+  emoteMaxVisible = GAME_WEB_CONFIG.ui.emotes.maxVisible,
+  emoteDurationMs = GAME_WEB_CONFIG.ui.emotes.durationMs,
   onSendEmote,
 }: {
   roomCode?: string;
@@ -27,8 +31,10 @@ export function DrawingCanvas({
   canDraw: boolean;
   onSubmitAction: (action: DrawingAction) => Promise<ApiResult<DrawingSessionActionSuccess>>;
   emoteItems?: readonly ResolvedEmoteItem[];
-  emoteEvents?: EmoteEvent[];
-  onSendEmote?: (emoteId: string) => void;
+  emoteEvents?: RoomClientEmoteEvent[];
+  emoteMaxVisible?: number;
+  emoteDurationMs?: number;
+  onSendEmote?: (emoteId: string) => Promise<string | null> | string | null | void;
 }) {
   const session = useDrawingSession({
     roomCode,
@@ -38,6 +44,7 @@ export function DrawingCanvas({
     canDraw,
     submitAction: onSubmitAction,
   });
+  const [emoteError, setEmoteError] = useState('');
   const canRedo = target === 'match' && Boolean(drawing?.undoneOperations.length);
   const {
     selectedTool,
@@ -52,6 +59,23 @@ export function DrawingCanvas({
     redo,
     clear,
   } = session.controls;
+
+  const handleSendEmote = async (emoteId: string) => {
+    if (!onSendEmote) {
+      return;
+    }
+
+    setEmoteError('');
+
+    try {
+      const error = await onSendEmote(emoteId);
+      if (error) {
+        setEmoteError(error);
+      }
+    } catch {
+      setEmoteError('Could not send emote. Try again.');
+    }
+  };
 
   return (
     <div className="canvas-area">
@@ -70,8 +94,8 @@ export function DrawingCanvas({
             onPointerLeave={session.canvasHandlers.onPointerLeave}
             onPointerCancel={session.canvasHandlers.onPointerCancel}
           />
-          {emoteItems.length ? <EmoteOverlay events={emoteEvents} items={emoteItems} /> : null}
-          {emoteItems.length && onSendEmote ? <EmoteDock items={emoteItems} onSend={onSendEmote} /> : null}
+          {emoteItems.length ? <EmoteOverlay events={emoteEvents} items={emoteItems} maxVisible={emoteMaxVisible} durationMs={emoteDurationMs} /> : null}
+          {emoteItems.length && onSendEmote ? <EmoteDock items={emoteItems} onSend={handleSendEmote} /> : null}
         </div>
       </div>
 
@@ -193,6 +217,7 @@ export function DrawingCanvas({
       ) : null}
 
       {actionError ? <Toast message={actionError} onDismiss={clearActionError} /> : null}
+      {emoteError ? <Toast message={emoteError} onDismiss={() => setEmoteError('')} /> : null}
     </div>
   );
 }

@@ -10,6 +10,7 @@ const entries = [
   'src/gameDefinition.ts',
   'src/prompts.ts',
   'src/settings.ts',
+  'src/emotes.ts',
   'src/room.ts',
   'src/roomEvents.ts',
   'src/drawing.ts',

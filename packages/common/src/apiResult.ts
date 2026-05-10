@@ -9,6 +9,7 @@ export interface ApiError {
     | 'NOT_ENOUGH_PLAYERS'
     | 'INVALID_STATE'
     | 'INVALID_DRAW_ACTION'
+    | 'INVALID_EMOTE'
     | 'NOT_DRAWER'
     | 'REROLL_UNAVAILABLE'
     | 'INVALID_MESSAGE'

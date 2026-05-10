@@ -1,5 +1,11 @@
 # @7ito/sketcherson-common
 
+## 0.3.14
+
+### Patch Changes
+
+- Settings update
+
 ## 0.3.13
 
 ### Patch Changes

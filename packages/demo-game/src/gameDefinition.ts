@@ -41,6 +41,7 @@ export const DEMO_GAME = defineAudienceGame<DemoPrompt>({
     iconFileName: 'demo-icon.svg',
   },
   ui: {
+    emotes: { enabled: true },
     nicknamePlaceholders: {
       create: 'DoodleHost',
       join: 'SketchGuest',

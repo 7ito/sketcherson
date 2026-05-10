@@ -343,7 +343,7 @@ export function createRoomClient(options: CreateRoomClientOptions): RoomClient {
       return;
     }
 
-    patchSnapshot({ emoteEvents: [...snapshot.emoteEvents, payload].slice(-12) });
+    patchSnapshot({ emoteEvents: [...snapshot.emoteEvents, { ...payload, receivedAt: Date.now() }].slice(-50) });
   };
 
   const handleConnect = () => {

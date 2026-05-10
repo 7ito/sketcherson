@@ -11,6 +11,7 @@ import { applyDrawingAction, createDrawingState, type AsyncSnapshotRenderer } fr
 import { appendRoomFeedRecord, type ActiveTurnRecord, type RoomPlayerRecord, type RoomRecord } from './model';
 import { ConnectionController } from './ConnectionController';
 import { DrawingController } from './DrawingController';
+import { EmoteController } from './EmoteController';
 import { MatchController } from './MatchController';
 import type { RoomPhaseTimerKind } from './timers';
 import { RateLimiter } from './RateLimiter';
@@ -49,6 +50,7 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
   private readonly scheduler: RoomScheduler;
   private readonly connectionController: ConnectionController;
   private readonly drawingController: DrawingController;
+  private readonly emoteController: EmoteController;
   private readonly matchController: MatchController;
   private readonly projector: RoomProjector;
   private readonly countdownMs: number;
@@ -118,6 +120,13 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
       consumeDrawingRateLimit: (connectionId: string) => this.rateLimiter.consume('drawing', connectionId),
       touchRoom: (room: RoomRecord) => this.touchRoom(room),
       lobbyDrawingEnabled: this.gameRuntime.rules.features.lobbyDrawing,
+    });
+    this.emoteController = new EmoteController({
+      getEmoteConfig: () => this.gameRuntime.ui.config().emotes,
+      consumeEmoteRateLimit: (connectionId: string) => this.rateLimiter.consume('emote', connectionId),
+      ids: this.ids,
+      now: this.now,
+      random: this.random,
     });
     this.projector = new RoomProjector({
       referenceArtEnabled: this.referenceArtEnabled,
@@ -415,7 +424,11 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
       };
     }
 
-    if (!['lobby', 'postgame'].includes(room.value.room.status)) {
+    const normalizedSettings = this.gameRuntime.settings.normalize(settings);
+    const canUpdateFullSettings = ['lobby', 'postgame'].includes(room.value.room.status);
+    const canUpdateOnlyEmotes = !canUpdateFullSettings && this.isOnlyEmotesSettingChange(room.value.room.settings, normalizedSettings);
+
+    if (!canUpdateFullSettings && !canUpdateOnlyEmotes) {
       return {
         ok: false,
         error: {
@@ -425,7 +438,9 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
       };
     }
 
-    room.value.room.settings = this.gameRuntime.settings.normalize(settings);
+    room.value.room.settings = canUpdateFullSettings
+      ? normalizedSettings
+      : { ...room.value.room.settings, emotesEnabled: normalizedSettings.emotesEnabled };
     this.touchRoom(room.value.room);
 
     return {
@@ -751,52 +766,21 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
     };
   }
 
-  public sendEmote(input: ActorInput<{ emoteId: string }>): ApiResult<SendEmoteSuccess> {
-    const { connectionId: socketId, payload: { emoteId } } = input;
+  public sendEmote(input: ActorInput<{ code?: string; emoteId: string }>): ApiResult<SendEmoteSuccess> {
+    const { connectionId: socketId, payload: { code, emoteId } } = input;
     const actorRoom = this.getActorRoom(socketId);
 
     if (!actorRoom.ok) {
       return actorRoom;
     }
 
-    const room = actorRoom.value.room;
-    const emotes = this.gameRuntime.ui.config().emotes;
-
-    if (!emotes.enabled) {
-      return { ok: false, error: { code: 'FORBIDDEN', message: 'Emotes are not enabled for this game.' } };
-    }
-
-    if (!room.settings.emotesEnabled) {
-      return { ok: false, error: { code: 'FORBIDDEN', message: 'Emotes are disabled for this room.' } };
-    }
-
-    if (!emotes.items.some((item) => item.id === emoteId)) {
-      return { ok: false, error: { code: 'INVALID_EMOTE', message: 'That emote is not available.' } };
-    }
-
-    const activeDrawerPlayerId = room.match?.activeTurn?.drawerPlayerId ?? null;
-    if (room.status !== 'lobby' && activeDrawerPlayerId === actorRoom.value.playerId) {
-      return { ok: false, error: { code: 'FORBIDDEN', message: 'Active drawers cannot send emotes during a match.' } };
-    }
-
-    const rateLimitError = this.rateLimiter.consume('emote', socketId);
-    if (rateLimitError) {
-      return rateLimitError;
-    }
-
-    return {
-      ok: true,
-      data: {
-        event: {
-          roomCode: room.code,
-          eventId: this.ids.randomUUID(),
-          emoteId,
-          createdAt: this.now(),
-          x: this.random(),
-          y: 0.8 + this.random() * 0.15,
-        },
-      },
-    };
+    return this.emoteController.sendEmote({
+      room: actorRoom.value.room,
+      playerId: actorRoom.value.playerId,
+      connectionId: socketId,
+      code,
+      emoteId,
+    });
   }
 
   public getRoomState(input: { code: string; origin: string; viewerConnectionId?: string }): ApiResult<RoomStateSuccess> {
@@ -1040,6 +1024,31 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
     }
 
     return false;
+  }
+
+  private isOnlyEmotesSettingChange(current: LobbySettings, next: LobbySettings): boolean {
+    return current.roundTimerSeconds === next.roundTimerSeconds &&
+      current.firstCorrectGuessTimeCapSeconds === next.firstCorrectGuessTimeCapSeconds &&
+      current.guessingDelaySeconds === next.guessingDelaySeconds &&
+      current.hideCloseGuesses === next.hideCloseGuesses &&
+      current.showCloseGuessAlerts === next.showCloseGuessAlerts &&
+      current.turnsPerPlayer === next.turnsPerPlayer &&
+      current.rerollsPerTurn === next.rerollsPerTurn &&
+      current.artEnabled === next.artEnabled &&
+      this.areStringArraysEqual(current.enabledCollectionIds, next.enabledCollectionIds) &&
+      current.emotesEnabled !== next.emotesEnabled;
+  }
+
+  private areStringArraysEqual(left: readonly string[] | undefined, right: readonly string[] | undefined): boolean {
+    if (left === right) {
+      return true;
+    }
+
+    if (!left || !right || left.length !== right.length) {
+      return false;
+    }
+
+    return left.every((value, index) => value === right[index]);
   }
 
   private notifyRoomChanged(roomCode: string): void {

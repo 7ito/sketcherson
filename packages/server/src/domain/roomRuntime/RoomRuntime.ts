@@ -206,11 +206,11 @@ export class RoomRuntime {
     };
   }
 
-  public sendEmote(input: ActorInput<{ emoteId: string }>): ApiResult<SendEmoteSuccess> {
+  public sendEmote(input: ActorInput<{ code?: string; emoteId: string }>): ApiResult<SendEmoteSuccess> {
     return this.dispatch<ApiResult<SendEmoteSuccess>>({ type: 'sendEmote', ...input });
   }
 
-  public sendEmoteOutcome(input: ActorInput<{ emoteId: string }>): RoomCommandOutcome<SendEmoteSuccess> {
+  public sendEmoteOutcome(input: ActorInput<{ code?: string; emoteId: string }>): RoomCommandOutcome<SendEmoteSuccess> {
     const response = this.sendEmote(input);
     return {
       response,

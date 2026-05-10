@@ -4,19 +4,17 @@ import type { GameDefinition } from './gameDefinition';
 import { createPromptEngine } from './promptEngine';
 import type { FirstCorrectGuessTimeCapPreset, LobbySettings, RerollsPerTurnPreset, RoundTimerPreset } from './room';
 
-const DISABLED_EMOTES: ResolvedEmoteConfig = { enabled: false, items: [] };
+const DISABLED_EMOTES: ResolvedEmoteConfig = { enabled: false, items: [], maxVisible: 12, durationMs: 1_800 };
 
 export function normalizeLobbySettingsForGame(gameDefinition: GameDefinition, settings: LobbySettings, rules: ResolvedDrawingGameRules = resolveDrawingGameRules(), emotes: ResolvedEmoteConfig = DISABLED_EMOTES): LobbySettings {
   const defaultEnabledCollectionIds = createPromptEngine({ definition: gameDefinition }).normalizeCollectionIds();
 
-  return Object.assign({}, {
+  const normalizedSettings = Object.assign({}, {
     roundTimerSeconds: rules.settings.roundTimerSeconds.default,
     firstCorrectGuessTimeCapSeconds: rules.settings.firstCorrectGuessTimeCapSeconds.default,
     guessingDelaySeconds: rules.settings.guessingDelaySeconds.default,
     turnsPerPlayer: rules.settings.turnsPerPlayer.default,
-  }, emotes.enabled || settings.emotesEnabled !== undefined ? {
-    emotesEnabled: emotes.enabled && (settings.emotesEnabled ?? true),
-  } : {}, rules.features.reroll ? {
+  }, rules.features.reroll ? {
     rerollsPerTurn: rules.settings.rerollsPerTurn.default,
   } : {}, rules.features.closeGuessFeedback ? {
     hideCloseGuesses: false,
@@ -27,6 +25,14 @@ export function normalizeLobbySettingsForGame(gameDefinition: GameDefinition, se
         ? defaultEnabledCollectionIds
         : createPromptEngine({ definition: gameDefinition }).normalizeCollectionIds(settings.enabledCollectionIds),
   });
+
+  if (emotes.enabled) {
+    normalizedSettings.emotesEnabled = settings.emotesEnabled ?? true;
+  } else {
+    delete normalizedSettings.emotesEnabled;
+  }
+
+  return normalizedSettings;
 }
 
 export function areLobbySettingsValidForGame(gameDefinition: GameDefinition, settings: LobbySettings, rules: ResolvedDrawingGameRules = resolveDrawingGameRules(), emotes: ResolvedEmoteConfig = DISABLED_EMOTES): boolean {
@@ -41,7 +47,7 @@ export function areLobbySettingsValidForGame(gameDefinition: GameDefinition, set
     (!normalizedSettings.showCloseGuessAlerts || rules.features.closeGuessFeedback) &&
     rules.settings.turnsPerPlayer.options.includes(normalizedSettings.turnsPerPlayer) &&
     (!rules.features.reroll || rules.settings.rerollsPerTurn.options.includes(rerollsPerTurn)) &&
-    (!normalizedSettings.emotesEnabled || emotes.enabled) &&
+    (!(settings.emotesEnabled ?? false) || emotes.enabled) &&
     createPromptEngine({ definition: gameDefinition }).areCollectionIdsValid(settings.enabledCollectionIds ?? normalizedSettings.enabledCollectionIds)
   );
 }

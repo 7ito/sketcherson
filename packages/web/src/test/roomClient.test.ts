@@ -257,6 +257,48 @@ describe('room client runtime', () => {
     expect(client.getSnapshot().lobbyDrawing?.activeStrokes[0]?.points).toEqual([{ x: 10, y: 20 }]);
   });
 
+  it('records transient emote events for the active room only', () => {
+    const { client, transport } = createTestClient();
+    const room = buildRoomState('ABCDEF', 'Guest', createDrawingState());
+    transport.emitServerEvent('room:state', room);
+
+    transport.emitServerEvent('room:emote', {
+      roomCode: 'ZZZZZZ',
+      target: 'lobby',
+      eventId: 'wrong-room-emote',
+      emoteId: 'laugh',
+      createdAt: 100,
+      x: 0.2,
+      y: 0.8,
+    });
+
+    expect(client.getSnapshot().emoteEvents).toEqual([]);
+
+    transport.emitServerEvent('room:emote', {
+      roomCode: 'ABCDEF',
+      target: 'lobby',
+      eventId: 'emote-1',
+      emoteId: 'laugh',
+      createdAt: 100,
+      x: 0.25,
+      y: 0.82,
+    });
+
+    expect(client.getSnapshot().activeRoom).toBe(room);
+    expect(client.getSnapshot().emoteEvents).toEqual([
+      expect.objectContaining({
+        roomCode: 'ABCDEF',
+        target: 'lobby',
+        eventId: 'emote-1',
+        emoteId: 'laugh',
+        createdAt: 100,
+        x: 0.25,
+        y: 0.82,
+        receivedAt: expect.any(Number),
+      }),
+    ]);
+  });
+
   it('waits for the dedicated drawing transport bind before submitting drawing actions', async () => {
     const { client, transport, drawingTransport } = createTestClient({ useSeparateDrawingTransport: true });
     const room = buildRoomState('ABCDEF', 'Guest');

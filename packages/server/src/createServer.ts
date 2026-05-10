@@ -475,7 +475,7 @@ export function createGameServer(options?: Partial<CreateGameServerOptions<any>>
       'room:sendEmote',
       'room.sendEmote',
       (payload) => {
-        const outcome = roomRuntime.sendEmoteOutcome({ connectionId: socket.id, origin: appOrigin, payload: { emoteId: payload.emoteId } });
+        const outcome = roomRuntime.sendEmoteOutcome({ connectionId: socket.id, origin: appOrigin, payload: { code: payload.code, emoteId: payload.emoteId } });
         applyRoomRuntimeEffects(outcome.effects);
         return outcome.response;
       },

@@ -1,6 +1,6 @@
 import { applyDrawingActionToState, type DrawingActionAppliedEvent } from '@7ito/sketcherson-common/drawing';
-import { createServerGameRuntime } from '@7ito/sketcherson-common/game';
-import type { ApiResult, CreateRoomSuccess, DrawingActionSuccess, JoinRoomSuccess, ReclaimRoomSuccess, RoomState, RerollTurnSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@7ito/sketcherson-common/room';
+import { createServerGameRuntime, defineGamePack } from '@7ito/sketcherson-common/game';
+import type { ApiResult, CreateRoomSuccess, DrawingActionSuccess, EmoteEvent, JoinRoomSuccess, ReclaimRoomSuccess, RoomState, RerollTurnSuccess, SendEmoteSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@7ito/sketcherson-common/room';
 import { io as ioClient, type Socket } from 'socket.io-client';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createGameServer, type GameServer } from '../src/createServer';
@@ -89,6 +89,13 @@ function applyDrawingEventToRoomHistory(history: RoomState[], event: DrawingActi
 }
 
 const GAME_RUNTIME = createServerGameRuntime(DEMO_GAME_PACK);
+const EMOTE_GAME_RUNTIME = createServerGameRuntime(defineGamePack({
+  ...DEMO_GAME_PACK,
+  ui: {
+    ...DEMO_GAME_PACK.ui,
+    emotes: { enabled: true },
+  },
+}));
 
 function createRealtimeGameServer(options: Parameters<typeof createGameServer>[0] = {}): GameServer {
   return createGameServer({
@@ -157,6 +164,55 @@ describe('room realtime flow', () => {
     expect(hostLobbyState).toEqual(guestLobbyState);
     expect(hostLobbyState.players.map((player) => player.nickname)).toEqual(['Host', 'Guest']);
     expect(hostLobbyState.players.every((player) => player.reconnectBy === null)).toBe(true);
+  });
+
+  it('broadcasts an accepted lobby emote with the same normalized position to room clients', async () => {
+    server = createRealtimeGameServer({
+      appOrigin: 'http://localhost:4173',
+      corsOrigin: '*',
+      gameRuntime: EMOTE_GAME_RUNTIME,
+      random: () => 0,
+    });
+    const port = await server.start(0);
+    const baseUrl = `http://127.0.0.1:${port}`;
+
+    const hostSocket = ioClient(baseUrl, { transports: ['websocket'] });
+    const guestSocket = ioClient(baseUrl, { transports: ['websocket'] });
+    sockets.push(hostSocket, guestSocket);
+
+    await Promise.all([
+      new Promise<void>((resolve) => hostSocket.on('connect', () => resolve())),
+      new Promise<void>((resolve) => guestSocket.on('connect', () => resolve())),
+    ]);
+
+    const createResult = await new Promise<{ ok: true; data: CreateRoomSuccess }>((resolve) => {
+      hostSocket.emit('room:create', { nickname: 'Host' }, resolve);
+    });
+
+    await new Promise<{ ok: true; data: JoinRoomSuccess }>((resolve) => {
+      guestSocket.emit('room:join', { code: createResult.data.room.code, nickname: 'Guest' }, resolve);
+    });
+
+    const hostEmotePromise = new Promise<EmoteEvent>((resolve) => hostSocket.once('room:emote', resolve));
+    const guestEmotePromise = new Promise<EmoteEvent>((resolve) => guestSocket.once('room:emote', resolve));
+
+    const sendResult = await new Promise<ApiResult<SendEmoteSuccess>>((resolve) => {
+      guestSocket.emit('room:sendEmote', { code: createResult.data.room.code, emoteId: 'laugh' }, resolve);
+    });
+
+    expect(sendResult.ok).toBe(true);
+    if (!sendResult.ok) return;
+
+    const [hostEmote, guestEmote] = await Promise.all([hostEmotePromise, guestEmotePromise]);
+    expect(hostEmote).toEqual(sendResult.data.event);
+    expect(guestEmote).toEqual(sendResult.data.event);
+    expect(hostEmote).toMatchObject({
+      roomCode: createResult.data.room.code,
+      target: 'lobby',
+      emoteId: 'laugh',
+      x: 0.08,
+      y: 0.97,
+    });
   });
 
   it('plays through the full match skeleton and lets the active drawer reroll once', async () => {

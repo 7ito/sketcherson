@@ -425,6 +425,8 @@ describe('shell app config', () => {
       emotes: {
         enabled: false,
         items: [],
+        maxVisible: 12,
+        durationMs: 1800,
       },
       notices: [],
       nicknamePlaceholders: {
@@ -447,9 +449,11 @@ describe('shell app config', () => {
       items: [
         { id: 'laugh', emoji: '😂', label: 'Laugh' },
         { id: 'thumbs-up', emoji: '👍', label: 'Thumbs up' },
-        { id: 'cry', emoji: '😢', label: 'Cry' },
+        { id: 'cry', emoji: '😭', label: 'Cry' },
         { id: 'angry', emoji: '😡', label: 'Angry' },
       ],
+      maxVisible: 12,
+      durationMs: 1800,
     });
   });
 });

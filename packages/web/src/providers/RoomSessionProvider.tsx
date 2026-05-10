@@ -1,4 +1,4 @@
-import type { ApiResult, CreateRoomSuccess, DrawingActionSuccess, EmoteEvent, JoinRoomSuccess, KickPlayerSuccess, LobbyDrawingActionSuccess, LobbySettings, PauseRoomSuccess, ReclaimRoomSuccess, RestartRoomSuccess, ResumeRoomSuccess, RoomState, RoomStateSuccess, RerollTurnSuccess, SendEmoteSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@7ito/sketcherson-common/room';
+import type { ApiResult, CreateRoomSuccess, DrawingActionSuccess, JoinRoomSuccess, KickPlayerSuccess, LobbyDrawingActionSuccess, LobbySettings, PauseRoomSuccess, ReclaimRoomSuccess, RestartRoomSuccess, ResumeRoomSuccess, RoomState, RoomStateSuccess, RerollTurnSuccess, SendEmoteSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@7ito/sketcherson-common/room';
 import type { DrawingAction, DrawingState } from '@7ito/sketcherson-common/drawing';
 import { createContext, useContext, useEffect, useMemo, useRef, useSyncExternalStore, type ReactNode } from 'react';
 import {
@@ -10,6 +10,7 @@ import {
   type ConnectionNotice,
   type JoinedSession,
   type RoomClient,
+  type RoomClientEmoteEvent,
   type RoomExitNotice,
   type SessionRecoveryError,
 } from '../client-room-runtime';
@@ -45,7 +46,7 @@ export interface RoomSessionContextValue {
 interface RoomDrawingContextValue {
   lobbyDrawing: DrawingState | null;
   matchDrawing: DrawingState | null;
-  emoteEvents: EmoteEvent[];
+  emoteEvents: RoomClientEmoteEvent[];
 }
 
 export const RoomSessionContext = createContext<RoomSessionContextValue | null>(null);
@@ -182,7 +183,7 @@ export function useRoomDrawing(target: 'match' | 'lobby', fallbackRoom?: RoomSta
   return target === 'lobby' ? context.lobbyDrawing : context.matchDrawing;
 }
 
-export function useRoomEmotes(): EmoteEvent[] {
+export function useRoomEmotes(): RoomClientEmoteEvent[] {
   const context = useContext(RoomDrawingContext);
   return context?.emoteEvents ?? [];
 }

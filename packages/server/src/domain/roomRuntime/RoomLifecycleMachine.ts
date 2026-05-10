@@ -15,7 +15,7 @@ export type RoomCommand =
   | ({ type: 'kickPlayer' } & ActorInput<{ playerId: string }>)
   | ({ type: 'rerollTurn' } & EmptyActorInput)
   | ({ type: 'submitMessage' } & ActorInput<{ text: string }>)
-  | ({ type: 'sendEmote' } & ActorInput<{ emoteId: string }>)
+  | ({ type: 'sendEmote' } & ActorInput<{ code?: string; emoteId: string }>)
   | ({ type: 'applyDrawingAction' } & ActorInput<{ action: DrawingAction }>)
   | ({ type: 'applyLobbyDrawingAction' } & ActorInput<{ action: DrawingAction }>)
   | { type: 'disconnect'; connectionId: string }

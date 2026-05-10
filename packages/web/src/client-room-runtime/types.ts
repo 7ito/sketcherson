@@ -23,6 +23,10 @@ export interface ConnectionNotice {
   message: string;
 }
 
+export interface RoomClientEmoteEvent extends EmoteEvent {
+  receivedAt: number;
+}
+
 export interface RoomClientSnapshot {
   activeRoom: RoomState | null;
   joinedSession: JoinedSession | null;
@@ -31,7 +35,7 @@ export interface RoomClientSnapshot {
   connectionNotice: ConnectionNotice | null;
   lobbyDrawing: DrawingState | null;
   matchDrawing: DrawingState | null;
-  emoteEvents: EmoteEvent[];
+  emoteEvents: RoomClientEmoteEvent[];
 }
 
 export interface RoomClient {

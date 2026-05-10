@@ -1,9 +1,8 @@
-import { normalizeLobbySettingsForGame } from '@7ito/sketcherson-common/settings';
 import { buildShareUrl, MAX_CHAT_MESSAGE_LENGTH, MIN_PLAYERS_TO_START, type ApiResult, type LobbyDrawingActionSuccess, type LobbySettings, type RoomState } from '@7ito/sketcherson-common/room';
 import type { DrawingAction } from '@7ito/sketcherson-common/drawing';
 import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { formatShellCopy } from '@7ito/sketcherson-common/game';
-import { GAME_DEFINITION, GAME_WEB_CONFIG } from '../../game';
+import { GAME_WEB_CONFIG } from '../../game';
 import { useUserSettings } from '../../lib/userSettings';
 import { useRoomDrawing, useRoomEmotes } from '../../providers/RoomSessionProvider';
 import { DrawingCanvas } from '../DrawingCanvas';
@@ -13,6 +12,7 @@ import {
   buildPlayerAccentMap,
   canHostKickPlayer,
   getPlayerAccentStyle,
+  normalizeGameLobbySettings,
   PlayerConnectionBadge,
   useAutoScrollToBottom,
 } from './helpers';
@@ -53,14 +53,14 @@ export function LobbyView({
   onSubmitLobbyDrawingAction: (action: DrawingAction) => Promise<ApiResult<LobbyDrawingActionSuccess>>;
   onSubmitMessage: (text: string) => Promise<string | null>;
   onOpenSettings: () => void;
-  onSendEmote: (emoteId: string) => void;
+  onSendEmote: (emoteId: string) => Promise<string | null>;
 }) {
   const lobbyDrawing = useRoomDrawing('lobby', room);
   const emoteEvents = useRoomEmotes();
   const slots = useWebExtensionSlots();
   const [userSettings] = useUserSettings();
   const [copyState, setCopyState] = useState<'idle' | 'copied'>('idle');
-  const [settingsDraft, setSettingsDraft] = useState(() => normalizeLobbySettingsForGame(GAME_DEFINITION, room.settings));
+  const [settingsDraft, setSettingsDraft] = useState(() => normalizeGameLobbySettings(room.settings));
   const [settingsError, setSettingsError] = useState('');
   const [startError, setStartError] = useState('');
   const [isSavingSettings, setIsSavingSettings] = useState(false);
@@ -83,7 +83,7 @@ export function LobbyView({
   const playerAccentColors = useMemo(() => buildPlayerAccentMap(room.players), [room.players]);
 
   useEffect(() => {
-    setSettingsDraft(normalizeLobbySettingsForGame(GAME_DEFINITION, room.settings));
+    setSettingsDraft(normalizeGameLobbySettings(room.settings));
   }, [room.settings]);
 
   const handleCopy = async () => {
@@ -326,7 +326,7 @@ export function LobbyView({
           onSubmitAction={onSubmitLobbyDrawingAction}
           target="lobby"
           emoteItems={GAME_WEB_CONFIG.ui.emotes.enabled && room.settings.emotesEnabled ? GAME_WEB_CONFIG.ui.emotes.items : []}
-          emoteEvents={emoteEvents.filter((event) => event.roomCode === room.code)}
+          emoteEvents={emoteEvents.filter((event) => event.roomCode === room.code && event.target === 'lobby')}
           onSendEmote={onSendEmote}
         />
 

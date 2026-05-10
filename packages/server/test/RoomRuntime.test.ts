@@ -810,6 +810,51 @@ describe('RoomRuntime', () => {
     expect(recoveredEmote.ok).toBe(true);
   });
 
+  it('lets the host toggle emotes during a match without changing other settings', () => {
+    const service = createRoomRuntimeDriver({
+      gamePack: EMOTE_TEST_GAME_PACK,
+      random: () => 0,
+      ids: createSequentialIds([
+        'host-player-id',
+        'host-session-token',
+        'host-lobby-message-id',
+        'guest-player-id',
+        'guest-session-token',
+        'guest-lobby-message-id',
+        'host-start-message-id',
+        'guest-start-message-id',
+        'round-header-message-id',
+        'drawing-message-id',
+      ]),
+    });
+
+    const createResult = service.createRoom('Host', 'socket-1', 'https://sketcherson.example');
+    expect(createResult.ok).toBe(true);
+    if (!createResult.ok) return;
+
+    const joinResult = service.joinRoom(createResult.data.room.code, 'Guest', 'socket-2', 'https://sketcherson.example');
+    expect(joinResult.ok).toBe(true);
+    if (!joinResult.ok) return;
+
+    const startResult = service.startRoom('socket-1', 'https://sketcherson.example');
+    expect(startResult.ok).toBe(true);
+    if (!startResult.ok) return;
+
+    const disabledEmotes = service.updateLobbySettings('socket-1', {
+      ...startResult.data.room.settings,
+      emotesEnabled: false,
+    }, 'https://sketcherson.example');
+    expect(disabledEmotes.ok).toBe(true);
+    if (!disabledEmotes.ok) return;
+    expect(disabledEmotes.data.room.settings.emotesEnabled).toBe(false);
+
+    const otherSettingChange = service.updateLobbySettings('socket-1', {
+      ...disabledEmotes.data.room.settings,
+      roundTimerSeconds: 120,
+    }, 'https://sketcherson.example');
+    expect(otherSettingChange.ok).toBe(false);
+  });
+
   it('allows match guessers to send emotes and rejects the active drawer', () => {
     const service = createRoomRuntimeDriver({
       gamePack: EMOTE_TEST_GAME_PACK,
@@ -856,8 +901,9 @@ describe('RoomRuntime', () => {
       roomCode: createResult.data.room.code,
       eventId: 'guest-emote-id',
       emoteId: 'laugh',
-      x: 0,
-      y: 0.8,
+      target: 'match',
+      x: 0.08,
+      y: 0.97,
     });
   });
 
@@ -884,7 +930,6 @@ describe('RoomRuntime', () => {
       turnsPerPlayer: 3,
       rerollsPerTurn: 1,
       artEnabled: true,
-      emotesEnabled: false,
       enabledCollectionIds: ['troop', 'building', 'spell'],
     });
     expect(result.data.room.players[0]).toMatchObject({

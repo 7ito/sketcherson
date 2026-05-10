@@ -16,7 +16,7 @@ export interface RoomPageActions {
   submitMessage(text: string): Promise<string | null>;
   submitDrawingAction(action: DrawingAction): Promise<ApiResult<DrawingActionSuccess>>;
   submitLobbyDrawingAction(action: DrawingAction): Promise<ApiResult<LobbyDrawingActionSuccess>>;
-  sendEmote(emoteId: string): void;
+  sendEmote(emoteId: string): Promise<string | null>;
 }
 
 export interface JoinRoomModel {
@@ -106,9 +106,7 @@ export function useRoomPageController({ codeParam, roomSession }: UseRoomPageCon
       submitMessage: toErrorMessageActionWithArg((text: string) => submitRoomMessage(code, text)),
       submitDrawingAction: (action) => submitDrawingAction(code, action),
       submitLobbyDrawingAction: (action) => submitLobbyDrawingAction(code, action),
-      sendEmote: (emoteId) => {
-        void sendEmote(code, emoteId);
-      },
+      sendEmote: toErrorMessageActionWithArg((emoteId: string) => sendEmote(code, emoteId)),
     }),
     [code, kickPlayer, pauseRoom, rerollTurn, restartRoom, resumeRoom, sendEmote, startRoom, submitDrawingAction, submitLobbyDrawingAction, submitRoomMessage, updateLobbySettings],
   );
