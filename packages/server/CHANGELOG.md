@@ -1,5 +1,13 @@
 # @7ito/sketcherson-server
 
+## 0.3.17
+
+### Patch Changes
+
+- Emote update
+- Updated dependencies
+  - @7ito/sketcherson-common@0.3.17
+
 ## 0.3.16
 
 ### Patch Changes

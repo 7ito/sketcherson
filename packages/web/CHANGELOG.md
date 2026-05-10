@@ -1,5 +1,19 @@
 # @7ito/sketcherson-web
 
+## 0.3.21
+
+### Patch Changes
+
+- Make emote overlay and dock visuals unselectable.
+
+## 0.3.20
+
+### Patch Changes
+
+- Emote update
+- Updated dependencies
+  - @7ito/sketcherson-common@0.3.17
+
 ## 0.3.19
 
 ### Patch Changes
