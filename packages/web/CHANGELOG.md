@@ -1,5 +1,13 @@
 # @7ito/sketcherson-web
 
+## 0.3.17
+
+### Patch Changes
+
+- Add emote controls, overlay rendering, and hover-based dock polish.
+- Updated dependencies
+  - @7ito/sketcherson-common@0.3.15
+
 ## 0.3.16
 
 ### Patch Changes

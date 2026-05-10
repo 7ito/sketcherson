@@ -146,7 +146,7 @@ describe('DrawingCanvas', () => {
     expect(canvasElement).toHaveFocus();
   });
 
-  it('renders custom emote labels, image items, touch toggling, and animation-facing state', () => {
+  it('renders custom emote labels, image items, and animation-facing state', () => {
     const onSendEmote = vi.fn();
 
     const { container } = render(
@@ -167,26 +167,15 @@ describe('DrawingCanvas', () => {
       />,
     );
 
-    const toggle = screen.getByRole('button', { name: 'Toggle emotes' });
-    expect(toggle).toHaveAttribute('aria-expanded', 'false');
-
-    fireEvent.click(toggle);
-    expect(toggle).toHaveAttribute('aria-expanded', 'true');
-    expect(container.querySelector('.emote-dock')).toHaveClass('emote-dock-open');
+    expect(container.querySelector('.emote-dock')).toBeInTheDocument();
+    expect(container.querySelector('.emote-tab')).toHaveTextContent('☺');
 
     fireEvent.click(screen.getByRole('button', { name: 'Mascot cheer' }));
     expect(onSendEmote).toHaveBeenCalledWith('mascot');
-    expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    expect(container.querySelector('.emote-dock')).not.toHaveClass('emote-dock-open');
-
-    fireEvent.click(toggle);
-    expect(toggle).toHaveAttribute('aria-expanded', 'true');
-    fireEvent.pointerDown(document.body);
-    expect(toggle).toHaveAttribute('aria-expanded', 'false');
 
     const bubbles = container.querySelectorAll('.emote-bubble');
     expect(bubbles).toHaveLength(2);
-    expect(bubbles[0]).toHaveStyle({ left: '25%', top: '82%' });
+    expect(bubbles[0]).toHaveStyle({ left: '25%', bottom: '0%' });
     expect(bubbles[1].querySelector('img')).toHaveAttribute('src', '/emotes/mascot.png');
   });
 

@@ -1,5 +1,13 @@
 # @7ito/sketcherson-server
 
+## 0.3.15
+
+### Patch Changes
+
+- Add emote runtime handling, rate limiting, broadcasts, and coverage.
+- Updated dependencies
+  - @7ito/sketcherson-common@0.3.15
+
 ## 0.3.14
 
 ### Patch Changes

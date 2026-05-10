@@ -342,6 +342,7 @@ describe('RoomPage', () => {
         turnsPerPlayer: 3,
         rerollsPerTurn: 1,
         artEnabled: true,
+        emotesEnabled: true,
         enabledCollectionIds: ['troop', 'building', 'spell'],
       });
     });
@@ -458,6 +459,7 @@ describe('RoomPage', () => {
         turnsPerPlayer: 1,
         rerollsPerTurn: 1,
         artEnabled: true,
+        emotesEnabled: true,
         enabledCollectionIds: ['troop', 'building', 'spell'],
       });
     });
@@ -573,6 +575,7 @@ describe('RoomPage', () => {
         turnsPerPlayer: 3,
         rerollsPerTurn: 1,
         artEnabled: true,
+        emotesEnabled: true,
         enabledCollectionIds: ['troop', 'building', 'spell'],
       });
     });
@@ -694,6 +697,7 @@ describe('RoomPage', () => {
         turnsPerPlayer: 3,
         rerollsPerTurn: 1,
         artEnabled: true,
+        emotesEnabled: true,
         enabledCollectionIds: ['building', 'spell'],
       });
     });

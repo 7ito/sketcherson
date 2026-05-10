@@ -1,5 +1,11 @@
 # @7ito/sketcherson-common
 
+## 0.3.15
+
+### Patch Changes
+
+- Add emote configuration, room settings, and realtime room protocol support.
+
 ## 0.3.14
 
 ### Patch Changes

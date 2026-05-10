@@ -736,7 +736,7 @@ describe('RoomRuntime', () => {
       expect(roomDisabledEmote.response.error).toMatchObject({ code: 'FORBIDDEN', message: 'Emotes are disabled for this room.' });
     }
 
-    const disabledGameService = createRoomRuntimeDriver();
+    const disabledGameService = createRoomRuntimeDriver({ gameDefinition: TEST_GAME_DEFINITION });
     const disabledGameRoom = disabledGameService.createRoom('Host', 'socket-1', 'https://sketcherson.example');
     expect(disabledGameRoom.ok).toBe(true);
     if (!disabledGameRoom.ok) return;
@@ -930,6 +930,7 @@ describe('RoomRuntime', () => {
       turnsPerPlayer: 3,
       rerollsPerTurn: 1,
       artEnabled: true,
+      emotesEnabled: true,
       enabledCollectionIds: ['troop', 'building', 'spell'],
     });
     expect(result.data.room.players[0]).toMatchObject({
@@ -2437,6 +2438,7 @@ describe('RoomRuntime', () => {
       turnsPerPlayer: 2,
       rerollsPerTurn: 1,
       artEnabled: false,
+      emotesEnabled: true,
       enabledCollectionIds: ['troop', 'building', 'spell'],
     });
     expect(rematchResult.data.room.match.currentTurn.turnNumber).toBe(1);
