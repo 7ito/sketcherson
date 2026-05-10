@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { EmoteEvent } from '@7ito/sketcherson-common/room';
 import type { ResolvedEmoteItem } from '@7ito/sketcherson-common';
 
@@ -67,45 +67,16 @@ export function EmoteOverlay({
 }
 
 export function EmoteDock({ items, onSend }: { items: readonly ResolvedEmoteItem[]; onSend: (emoteId: string) => Promise<void> | void }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const dockRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!isOpen) {
-      return undefined;
-    }
-
-    const closeOnOutsidePointer = (event: PointerEvent) => {
-      if (!dockRef.current?.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener('pointerdown', closeOnOutsidePointer);
-    return () => document.removeEventListener('pointerdown', closeOnOutsidePointer);
-  }, [isOpen]);
-
   return (
-    <div ref={dockRef} className={isOpen ? 'emote-dock emote-dock-open' : 'emote-dock'}>
-      <button
-        type="button"
-        className="emote-tab"
-        aria-label="Toggle emotes"
-        aria-expanded={isOpen}
-        onClick={() => setIsOpen((open) => !open)}
-      >
-        ☺
-      </button>
+    <div className="emote-dock">
+      <span className="emote-tab" aria-hidden="true">☺</span>
       <div className="emote-options">
         {items.map((item) => (
           <button
             key={item.id}
             type="button"
             className="emote-option"
-            onClick={() => {
-              void onSend(item.id);
-              setIsOpen(false);
-            }}
+            onClick={() => void onSend(item.id)}
             aria-label={item.label}
           >
             {item.emoji ? item.emoji : <img src={item.imageUrl} alt="" />}
