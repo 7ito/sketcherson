@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import type { EmoteEvent } from '@7ito/sketcherson-common/room';
 import type { ResolvedEmoteItem } from '@7ito/sketcherson-common';
 
@@ -6,6 +6,28 @@ export type RenderableEmoteEvent = EmoteEvent & { receivedAt?: number };
 
 const DEFAULT_EMOTE_DURATION_MS = 1_800;
 const DEFAULT_MAX_VISIBLE_EMOTES = 12;
+const EMOTE_DOCK_ITEM_SIZE = '2.1rem';
+const EMOTE_DOCK_GAP = '0.15rem';
+const EMOTE_DOCK_PADDING_INLINE = '0.25rem';
+
+type EmoteDockStyle = CSSProperties & Record<`--${string}`, string>;
+
+function createEmoteDockStyle(itemCount: number): EmoteDockStyle {
+  const expandedWidthParts = [
+    ...Array.from({ length: itemCount }, () => 'var(--emote-size)'),
+    ...Array.from({ length: Math.max(0, itemCount - 1) }, () => 'var(--emote-gap)'),
+    'var(--emote-padding-inline)',
+    'var(--emote-padding-inline)',
+  ];
+
+  return {
+    '--emote-count': String(itemCount),
+    '--emote-size': `var(--sketcherson-emote-size, ${EMOTE_DOCK_ITEM_SIZE})`,
+    '--emote-gap': `var(--sketcherson-emote-gap, ${EMOTE_DOCK_GAP})`,
+    '--emote-padding-inline': `var(--sketcherson-emote-padding-inline, ${EMOTE_DOCK_PADDING_INLINE})`,
+    '--emote-expanded-width': `calc(${expandedWidthParts.join(' + ')})`,
+  };
+}
 
 export function EmoteOverlay({
   events,
@@ -68,7 +90,7 @@ export function EmoteOverlay({
 
 export function EmoteDock({ items, onSend }: { items: readonly ResolvedEmoteItem[]; onSend: (emoteId: string) => Promise<void> | void }) {
   return (
-    <div className="emote-dock">
+    <div className="emote-dock" style={createEmoteDockStyle(items.length)}>
       <span className="emote-tab" aria-hidden="true">☺</span>
       <div className="emote-options">
         {items.map((item) => (

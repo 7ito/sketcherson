@@ -179,6 +179,34 @@ describe('DrawingCanvas', () => {
     expect(bubbles[1].querySelector('img')).toHaveAttribute('src', '/emotes/mascot.png');
   });
 
+  it('sets item-count-aware emote dock sizing variables', () => {
+    const { container } = render(
+      <DrawingCanvas
+        drawing={buildDrawingState()}
+        roomStatus="lobby"
+        canDraw={false}
+        onSubmitAction={buildSubmitActionMock()}
+        emoteItems={[
+          { id: 'one', emoji: '1️⃣', label: 'One' },
+          { id: 'two', emoji: '2️⃣', label: 'Two' },
+          { id: 'three', emoji: '3️⃣', label: 'Three' },
+          { id: 'four', emoji: '4️⃣', label: 'Four' },
+          { id: 'five', emoji: '5️⃣', label: 'Five' },
+        ]}
+        onSendEmote={vi.fn()}
+      />,
+    );
+
+    const dock = container.querySelector<HTMLElement>('.emote-dock');
+    expect(dock).toBeInTheDocument();
+    expect(dock?.style.getPropertyValue('--emote-count')).toBe('5');
+    expect(dock?.style.getPropertyValue('--emote-size')).toBe('var(--sketcherson-emote-size, 2.1rem)');
+    expect(dock?.style.getPropertyValue('--emote-gap')).toBe('var(--sketcherson-emote-gap, 0.15rem)');
+    expect(dock?.style.getPropertyValue('--emote-padding-inline')).toBe('var(--sketcherson-emote-padding-inline, 0.25rem)');
+    expect(dock?.style.getPropertyValue('--emote-expanded-width')).toBe('calc(var(--emote-size) + var(--emote-size) + var(--emote-size) + var(--emote-size) + var(--emote-size) + var(--emote-gap) + var(--emote-gap) + var(--emote-gap) + var(--emote-gap) + var(--emote-padding-inline) + var(--emote-padding-inline))');
+    expect(screen.getAllByRole('button')).toHaveLength(5);
+  });
+
   it('shows emote send failures to the sender', async () => {
     render(
       <DrawingCanvas

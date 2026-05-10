@@ -1,5 +1,19 @@
 # @7ito/sketcherson-web
 
+## 0.3.19
+
+### Patch Changes
+
+- Make the emote dock expand based on configured emote count.
+
+## 0.3.18
+
+### Patch Changes
+
+- Emote update
+- Updated dependencies
+  - @7ito/sketcherson-common@0.3.16
+
 ## 0.3.17
 
 ### Patch Changes
