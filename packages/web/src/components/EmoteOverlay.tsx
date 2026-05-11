@@ -98,7 +98,7 @@ export function EmoteDock({ items, onSend }: { items: readonly ResolvedEmoteItem
             key={item.id}
             type="button"
             className="emote-option"
-            onClick={() => void onSend(item.id)}
+            onClick={(e) => { void onSend(item.id); e.currentTarget.blur(); }}
             aria-label={item.label}
           >
             {item.emoji ? item.emoji : <img src={item.imageUrl} alt="" />}

@@ -1,5 +1,13 @@
 # @7ito/sketcherson-server
 
+## 0.3.18
+
+### Patch Changes
+
+- Fix emote dock not collapsing after clicking an emote
+- Updated dependencies
+  - @7ito/sketcherson-common@0.3.18
+
 ## 0.3.17
 
 ### Patch Changes

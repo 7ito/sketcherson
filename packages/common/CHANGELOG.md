@@ -1,5 +1,11 @@
 # @7ito/sketcherson-common
 
+## 0.3.18
+
+### Patch Changes
+
+- Fix emote dock not collapsing after clicking an emote
+
 ## 0.3.17
 
 ### Patch Changes
