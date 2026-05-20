@@ -655,6 +655,8 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
       return rerollResult;
     }
 
+    this.touchRoom(room.value.room);
+
     return {
       ok: true,
       data: {

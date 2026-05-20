@@ -1418,6 +1418,42 @@ describe('RoomRuntime', () => {
     }
   });
 
+  it('advances room revision when the drawer rerolls so stale prompt art snapshots can be ignored', () => {
+    const service = createRoomRuntimeDriver({ random: () => 0 });
+    const createResult = service.createRoom('Host', 'socket-1', 'https://sketcherson.example');
+
+    if (!createResult.ok) {
+      throw new Error('Expected room creation to succeed');
+    }
+
+    const joinResult = service.joinRoom(createResult.data.room.code, 'Guest', 'socket-2', 'https://sketcherson.example');
+
+    if (!joinResult.ok) {
+      throw new Error('Expected room join to succeed');
+    }
+
+    const startResult = service.startRoom('socket-1', 'https://sketcherson.example');
+    expect(startResult.ok).toBe(true);
+
+    if (!startResult.ok || !startResult.data.room.match?.currentTurn) {
+      return;
+    }
+
+    const drawerSocketId = startResult.data.room.match.currentTurn.drawerPlayerId === createResult.data.playerId ? 'socket-1' : 'socket-2';
+    const revisionBeforeReroll = startResult.data.room.stateRevision ?? 0;
+
+    const rerollResult = service.rerollTurn(drawerSocketId, 'https://sketcherson.example');
+    expect(rerollResult.ok).toBe(true);
+
+    if (!rerollResult.ok || !rerollResult.data.room.match?.currentTurn) {
+      return;
+    }
+
+    expect(rerollResult.data.room.stateRevision).toBeGreaterThan(revisionBeforeReroll);
+    expect(rerollResult.data.room.match.currentTurn.prompt).toBe('Arrows');
+    expect(rerollResult.data.room.match.currentTurn.referenceArtUrl).toBe('/demo-assets/Arrows.svg');
+  });
+
   it('projects prompt metadata only to the drawer until reveal', () => {
     const service = createRoomRuntimeDriver({
       random: () => 0,

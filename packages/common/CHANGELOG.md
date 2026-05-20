@@ -1,5 +1,17 @@
 # @7ito/sketcherson-common
 
+## 0.3.21
+
+### Patch Changes
+
+- Fix stale realtime metadata handling for rapid rerolls.
+
+## 0.3.20
+
+### Patch Changes
+
+- Chat fixes and reroll after correct guess disabled
+
 ## 0.3.19
 
 ### Patch Changes

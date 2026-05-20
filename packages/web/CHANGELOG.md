@@ -1,5 +1,21 @@
 # @7ito/sketcherson-web
 
+## 0.3.25
+
+### Patch Changes
+
+- Prevent duplicate reroll requests and ignore stale prompt art snapshots after rapid rerolls.
+- Updated dependencies
+  - @7ito/sketcherson-common@0.3.21
+
+## 0.3.24
+
+### Patch Changes
+
+- Chat fixes and reroll after correct guess disabled
+- Updated dependencies
+  - @7ito/sketcherson-common@0.3.20
+
 ## 0.3.23
 
 ### Patch Changes

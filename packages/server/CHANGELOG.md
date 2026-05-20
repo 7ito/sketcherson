@@ -1,5 +1,21 @@
 # @7ito/sketcherson-server
 
+## 0.3.21
+
+### Patch Changes
+
+- Advance room revisions when rerolling prompts so clients can discard stale prompt art snapshots.
+- Updated dependencies
+  - @7ito/sketcherson-common@0.3.21
+
+## 0.3.20
+
+### Patch Changes
+
+- Chat fixes and reroll after correct guess disabled
+- Updated dependencies
+  - @7ito/sketcherson-common@0.3.20
+
 ## 0.3.19
 
 ### Patch Changes

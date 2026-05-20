@@ -92,6 +92,7 @@ export function MatchView({
   const [restartError, setRestartError] = useState('');
   const [isUpdatingEmotes, setIsUpdatingEmotes] = useState(false);
   const [emoteToggleError, setEmoteToggleError] = useState('');
+  const rerollInFlightRef = useRef(false);
   const restartDialogRef = useRef<HTMLDialogElement>(null);
   const roundWarningTurnRef = useRef<number | null>(null);
 
@@ -177,11 +178,20 @@ export function MatchView({
   }, [currentTurn?.turnNumber, phaseEndsAt, room.status]);
 
   const handleReroll = async () => {
+    if (rerollInFlightRef.current) {
+      return;
+    }
+
+    rerollInFlightRef.current = true;
     setRerollError('');
     setIsRerolling(true);
-    const errorMessage = await onReroll();
-    setIsRerolling(false);
-    if (errorMessage) setRerollError(errorMessage);
+    try {
+      const errorMessage = await onReroll();
+      if (errorMessage) setRerollError(errorMessage);
+    } finally {
+      rerollInFlightRef.current = false;
+      setIsRerolling(false);
+    }
   };
 
   const handlePause = async () => {

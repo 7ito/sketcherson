@@ -65,20 +65,28 @@ function buildRoom(overrides: Partial<RoomState> = {}): RoomState {
   };
 }
 
-function renderMatchView(room: RoomState, currentPlayerId = 'guest-1', slots?: SketchersonWebSlots) {
+function renderMatchView(
+  room: RoomState,
+  currentPlayerId = 'guest-1',
+  slots?: SketchersonWebSlots,
+  handlers?: { onReroll?: () => Promise<string | null> },
+) {
   return render(
     <WebExtensionSlotsProvider slots={slots}>
       <MatchView
-      room={room}
-      currentPlayerId={currentPlayerId}
-      connectionNotice={null}
-      onPause={vi.fn()}
-      onResume={vi.fn()}
-      onReroll={vi.fn()}
-      onKickPlayer={vi.fn()}
-      onSubmitDrawingAction={vi.fn<(action: unknown) => Promise<ApiResult<DrawingActionSuccess>>>()}
-      onSubmitMessage={vi.fn()}
+        room={room}
+        currentPlayerId={currentPlayerId}
+        connectionNotice={null}
+        onPause={vi.fn()}
+        onResume={vi.fn()}
+        onRestart={vi.fn()}
+        onReroll={handlers?.onReroll ?? vi.fn()}
+        onKickPlayer={vi.fn()}
+        onSubmitDrawingAction={vi.fn<(action: unknown) => Promise<ApiResult<DrawingActionSuccess>>>()}
+        onSubmitMessage={vi.fn()}
         onOpenSettings={vi.fn()}
+        onSaveSettings={vi.fn()}
+        onSendEmote={vi.fn()}
       />
     </WebExtensionSlotsProvider>,
   );
@@ -109,6 +117,37 @@ describe('MatchView extension slots', () => {
 });
 
 describe('MatchView reroll controls', () => {
+  it('guards against duplicate reroll clicks while a request is pending', async () => {
+    let resolveReroll: ((value: string | null) => void) | null = null;
+    const onReroll = vi.fn(() => new Promise<string | null>((resolve) => {
+      resolveReroll = resolve;
+    }));
+    const room = buildRoom({
+      match: {
+        ...buildRoom().match!,
+        currentTurn: {
+          ...buildRoom().match!.currentTurn!,
+          prompt: 'Archer',
+          promptVisibility: 'assigned',
+          referenceArtUrl: '/demo-assets/Archer.svg',
+          rerollsRemaining: 2,
+        },
+      },
+    });
+
+    renderMatchView(room, 'host-1', undefined, { onReroll });
+
+    const rerollButton = screen.getByRole('button', { name: /Reroll prompt/ });
+    fireEvent.click(rerollButton);
+    fireEvent.click(rerollButton);
+
+    expect(onReroll).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      resolveReroll?.(null);
+    });
+  });
+
   it('hides the drawer reroll button after a correct guess', () => {
     const room = buildRoom({
       match: {
@@ -162,11 +201,14 @@ describe('MatchView round warning audio', () => {
         connectionNotice={null}
         onPause={vi.fn()}
         onResume={vi.fn()}
+        onRestart={vi.fn()}
         onReroll={vi.fn()}
         onKickPlayer={vi.fn()}
         onSubmitDrawingAction={vi.fn<(action: unknown) => Promise<ApiResult<DrawingActionSuccess>>>()}
         onSubmitMessage={vi.fn()}
         onOpenSettings={vi.fn()}
+        onSaveSettings={vi.fn()}
+        onSendEmote={vi.fn()}
       />,
     );
 

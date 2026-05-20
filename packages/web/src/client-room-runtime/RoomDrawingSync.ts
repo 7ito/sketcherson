@@ -24,6 +24,7 @@ export interface RoomDrawingSync {
 
 export function createRoomDrawingSync(): RoomDrawingSync {
   let activeRoom: RoomState | null = null;
+  let latestAppliedRoomSnapshotRevision: number | undefined;
 
   const buildView = (): RoomDrawingView => ({
     room: activeRoom,
@@ -36,10 +37,25 @@ export function createRoomDrawingSync(): RoomDrawingSync {
   return {
     bindRoom(room) {
       activeRoom = room;
+      latestAppliedRoomSnapshotRevision = room?.stateRevision;
       return buildView();
     },
     applySnapshot(room) {
+      const incomingSnapshotRevision = room.stateRevision;
+      const isSameRoom = activeRoom?.code === room.code;
+      if (
+        isSameRoom &&
+        latestAppliedRoomSnapshotRevision !== undefined &&
+        incomingSnapshotRevision !== undefined &&
+        incomingSnapshotRevision < latestAppliedRoomSnapshotRevision
+      ) {
+        return buildView();
+      }
+
       activeRoom = drawingRealtimeCore.mergeSnapshot({ current: activeRoom, incoming: room });
+      latestAppliedRoomSnapshotRevision = isSameRoom
+        ? maxDefinedRevision(latestAppliedRoomSnapshotRevision, incomingSnapshotRevision)
+        : incomingSnapshotRevision;
       return buildView();
     },
     applyDrawingSnapshot(target, drawing, stateRevision) {
@@ -83,6 +99,18 @@ function areSameMatchTurn(current: RoomState, incoming: RoomState): boolean {
     currentTurn.totalTurns === incomingTurn.totalTurns &&
     currentTurn.drawerPlayerId === incomingTurn.drawerPlayerId
   );
+}
+
+function maxDefinedRevision(left: number | undefined, right: number | undefined): number | undefined {
+  if (left === undefined) {
+    return right;
+  }
+
+  if (right === undefined) {
+    return left;
+  }
+
+  return Math.max(left, right);
 }
 
 const drawingRealtimeCoreAccessors = {

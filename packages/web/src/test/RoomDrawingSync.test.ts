@@ -21,6 +21,8 @@ function buildRoomState(options?: {
   matchDrawing?: DrawingState | null;
   turnNumber?: number;
   drawerPlayerId?: string;
+  prompt?: string | null;
+  referenceArtUrl?: string | null;
   stateRevision?: number;
 }): RoomState {
   const matchDrawing = options?.matchDrawing;
@@ -60,9 +62,9 @@ function buildRoomState(options?: {
             totalTurns: 2,
             drawerPlayerId: options?.drawerPlayerId ?? 'player-1',
             drawerNickname: 'Host',
-            prompt: 'apple',
+            prompt: options?.prompt ?? 'apple',
             promptVisibility: 'assigned',
-            referenceArtUrl: null,
+            referenceArtUrl: options?.referenceArtUrl ?? null,
             rerollsRemaining: 1,
             rerolledFrom: null,
             correctGuessPlayerIds: [],
@@ -80,6 +82,65 @@ function buildRoomState(options?: {
 }
 
 describe('RoomDrawingSync', () => {
+  it('ignores stale match snapshots so reroll prompt art cannot roll backward', () => {
+    const sync = createRoomDrawingSync();
+    const latestRoom = buildRoomState({
+      matchDrawing: buildDrawingState(),
+      prompt: 'Dragon',
+      referenceArtUrl: '/demo-assets/Dragon.svg',
+      stateRevision: 6,
+    });
+    const staleRoom = buildRoomState({
+      matchDrawing: buildDrawingState(),
+      prompt: 'Arrows',
+      referenceArtUrl: '/demo-assets/Arrows.svg',
+      stateRevision: 5,
+    });
+
+    sync.bindRoom(latestRoom);
+    const view = sync.applySnapshot(staleRoom);
+
+    expect(view.room?.match?.currentTurn?.prompt).toBe('Dragon');
+    expect(view.room?.match?.currentTurn?.referenceArtUrl).toBe('/demo-assets/Dragon.svg');
+  });
+
+  it('still accepts metadata snapshots that are newer than the last metadata snapshot after drawing events', () => {
+    const sync = createRoomDrawingSync();
+    const room = buildRoomState({
+      matchDrawing: buildDrawingState(),
+      prompt: 'Archer',
+      referenceArtUrl: '/demo-assets/Archer.svg',
+      stateRevision: 1,
+    });
+
+    sync.bindRoom(room);
+    sync.applyEvent('match', {
+      code: room.code,
+      revision: 1,
+      stateRevision: 3,
+      action: {
+        type: 'beginStroke',
+        strokeId: 'stroke-1',
+        tool: 'pen',
+        color: '#101a35',
+        size: 6,
+        point: { x: 10, y: 20 },
+      },
+    });
+
+    const view = sync.applySnapshot(buildRoomState({
+      matchDrawing: buildDrawingState(),
+      prompt: 'Arrows',
+      referenceArtUrl: '/demo-assets/Arrows.svg',
+      stateRevision: 2,
+    }));
+
+    expect(view.room?.stateRevision).toBe(3);
+    expect(view.room?.match?.currentTurn?.prompt).toBe('Arrows');
+    expect(view.room?.match?.currentTurn?.referenceArtUrl).toBe('/demo-assets/Arrows.svg');
+    expect(view.drawings.match?.revision).toBe(1);
+  });
+
   it('preserves newer local lobby drawing when a stale snapshot arrives', () => {
     const localDrawing = buildDrawingState({ revision: 5 });
     const staleSnapshotDrawing = buildDrawingState({ revision: 3 });
