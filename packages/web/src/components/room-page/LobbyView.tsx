@@ -16,7 +16,7 @@ import {
   PlayerConnectionBadge,
   useAutoScrollToBottom,
 } from './helpers';
-import { renderRoomFeedItem } from './roomFeed';
+import { renderGroupedFeed } from './roomFeed';
 import { SettingsSummary, SharedSettingsFields } from './RoomSettings';
 import { SettingsGearButton } from './RoomShell';
 
@@ -73,7 +73,13 @@ export function LobbyView({
   const chatInputRef = useRef<HTMLInputElement>(null);
   const lobbyFeed = room.lobbyFeed ?? [];
   const lobbyFeedLength = lobbyFeed.length;
-  const { containerRef: chatFeedRef, handleScroll: handleChatFeedScroll } = useAutoScrollToBottom(lobbyFeedLength);
+  const lobbyFeedScrollKey = lobbyFeed[lobbyFeedLength - 1]?.id ?? lobbyFeedLength;
+  const {
+    containerRef: chatFeedRef,
+    handleScroll: handleChatFeedScroll,
+    isScrolledUp: isChatFeedScrolledUp,
+    scrollToBottom: scrollChatFeedToBottom,
+  } = useAutoScrollToBottom(lobbyFeedScrollKey);
 
   const isViewerHost = room.players.some((player) => player.id === currentPlayerId && player.isHost);
   const canEditSettings = isViewerHost && room.status === 'lobby';
@@ -365,11 +371,25 @@ export function LobbyView({
           <div className="chat-panel-header chat-panel-header-chat lobby-chat-divider">
             <span>{SHELL_ROOM_COPY.chatHeader}</span>
           </div>
-          <div ref={chatFeedRef} className="chat-feed" onScroll={handleChatFeedScroll}>
-            {lobbyFeedLength ? (
-              lobbyFeed.map((item) => renderRoomFeedItem(item, playerAccentColors, userSettings.profanityFilterEnabled))
-            ) : (
-              <div className="chat-msg-empty">{SHELL_COMMON_COPY.noMessagesYet}</div>
+          <div className="chat-feed-shell">
+            <div ref={chatFeedRef} className="chat-feed" aria-label="Room feed messages" onScroll={handleChatFeedScroll}>
+              {lobbyFeedLength ? (
+                renderGroupedFeed(lobbyFeed, playerAccentColors, userSettings.profanityFilterEnabled)
+              ) : (
+                <div className="chat-msg-empty">{SHELL_COMMON_COPY.noMessagesYet}</div>
+              )}
+            </div>
+            {isChatFeedScrolledUp && (
+              <button
+                type="button"
+                className="chat-scroll-bottom-button visible"
+                onClick={scrollChatFeedToBottom}
+                aria-label="Scroll to bottom"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
             )}
           </div>
           <form className="chat-compose" onSubmit={handleSubmitMessage}>

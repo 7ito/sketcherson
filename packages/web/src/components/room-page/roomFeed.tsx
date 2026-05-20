@@ -44,7 +44,7 @@ function formatFeedCopy(template: string, tokens: Record<string, string | number
   });
 }
 
-export function renderRoomFeedItem(item: RoomFeedItem, playerAccentColors: Map<string, string>, profanityFilterEnabled: boolean): ReactNode {
+export function renderRoomFeedItem(item: RoomFeedItem, playerAccentColors: Map<string, string>, profanityFilterEnabled: boolean, hideAuthor = false): ReactNode {
   const feedCopy = GAME_WEB_CONFIG.ui.copy.feed;
 
   if (item.type === 'roundHeader') {
@@ -93,26 +93,46 @@ export function renderRoomFeedItem(item: RoomFeedItem, playerAccentColors: Map<s
   const text = profanityFilterEnabled ? censorProfanity(item.text) : item.text;
 
   return (
-    <div key={item.id} className="chat-msg msg-message">
-      <div className="chat-msg-author" style={getPlayerAccentStyle(item.senderPlayerId, playerAccentColors)}>
-        {item.senderNickname}
-      </div>
+    <div key={item.id} className={`chat-msg msg-message${hideAuthor ? ' msg-consecutive' : ''}`}>
+      {!hideAuthor && (
+        <div className="chat-msg-author" style={getPlayerAccentStyle(item.senderPlayerId, playerAccentColors)}>
+          {item.senderNickname}
+        </div>
+      )}
       <div className="chat-msg-text">{text}</div>
     </div>
   );
 }
 
+export function renderGroupedFeed(items: RoomFeedItem[], playerAccentColors: Map<string, string>, profanityFilterEnabled: boolean): ReactNode[] {
+  const elements: ReactNode[] = [];
+  let lastSenderPlayerId: string | null = null;
+
+  for (const item of items) {
+    const isConsecutive = item.type === 'playerChat' && item.senderPlayerId === lastSenderPlayerId;
+    elements.push(renderRoomFeedItem(item, playerAccentColors, profanityFilterEnabled, isConsecutive));
+    lastSenderPlayerId = item.type === 'playerChat' ? item.senderPlayerId : null;
+  }
+
+  return elements;
+}
+
 export function renderStructuredRoomFeed(items: RoomFeedItem[], playerAccentColors: Map<string, string>, profanityFilterEnabled: boolean): ReactNode[] {
   const elements: ReactNode[] = [];
   let lastTurnNumber: number | null | undefined = undefined;
+  let lastSenderPlayerId: string | null = null;
 
   for (const item of items) {
     const turnNumber = item.turnNumber ?? null;
     if (lastTurnNumber !== undefined && turnNumber !== lastTurnNumber) {
       elements.push(<hr key={`sep-${item.id}`} className="chat-turn-separator" />);
+      lastSenderPlayerId = null;
     }
     lastTurnNumber = turnNumber;
-    elements.push(renderRoomFeedItem(item, playerAccentColors, profanityFilterEnabled));
+
+    const isConsecutive = item.type === 'playerChat' && item.senderPlayerId === lastSenderPlayerId;
+    elements.push(renderRoomFeedItem(item, playerAccentColors, profanityFilterEnabled, isConsecutive));
+    lastSenderPlayerId = item.type === 'playerChat' ? item.senderPlayerId : null;
   }
 
   return elements;

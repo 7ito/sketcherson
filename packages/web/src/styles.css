@@ -135,7 +135,7 @@ button:disabled {
 }
 
 .action-primary,
-button:not([class*="btn-"]):not([class*="tool-"]):not([class*="swatch"]):not([class*="tbtn"]):not([class*="chat-send"]):not([class*="secondary"]):not([class*="danger"]):not([class*="compact"]):not([class*="lobby-"]):not([class*="settings-"]):not([class*="home-dialog"]):not([class*="toast"]) {
+button:not([class*="btn-"]):not([class*="tool-"]):not([class*="swatch"]):not([class*="tbtn"]):not([class*="chat-send"]):not([class*="chat-scroll-bottom"]):not([class*="secondary"]):not([class*="danger"]):not([class*="compact"]):not([class*="lobby-"]):not([class*="settings-"]):not([class*="home-dialog"]):not([class*="toast"]) {
   background: var(--shell-color-primary);
   color: var(--shell-color-primary-text);
   box-shadow:
@@ -144,7 +144,7 @@ button:not([class*="btn-"]):not([class*="tool-"]):not([class*="swatch"]):not([cl
 }
 
 .action-primary:hover:not(:disabled),
-button:not([class*="btn-"]):not([class*="tool-"]):not([class*="swatch"]):not([class*="tbtn"]):not([class*="chat-send"]):not([class*="secondary"]):not([class*="danger"]):not([class*="compact"]):not([class*="lobby-"]):not([class*="settings-"]):not([class*="home-dialog"]):not([class*="toast"]):hover:not(:disabled) {
+button:not([class*="btn-"]):not([class*="tool-"]):not([class*="swatch"]):not([class*="tbtn"]):not([class*="chat-send"]):not([class*="chat-scroll-bottom"]):not([class*="secondary"]):not([class*="danger"]):not([class*="compact"]):not([class*="lobby-"]):not([class*="settings-"]):not([class*="home-dialog"]):not([class*="toast"]):hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow:
     0 2px 0 var(--shell-color-primary-strong),
@@ -152,7 +152,7 @@ button:not([class*="btn-"]):not([class*="tool-"]):not([class*="swatch"]):not([cl
 }
 
 .action-primary:active:not(:disabled),
-button:not([class*="btn-"]):not([class*="tool-"]):not([class*="swatch"]):not([class*="tbtn"]):not([class*="chat-send"]):not([class*="secondary"]):not([class*="danger"]):not([class*="compact"]):not([class*="lobby-"]):not([class*="settings-"]):not([class*="home-dialog"]):not([class*="toast"]):active:not(:disabled) {
+button:not([class*="btn-"]):not([class*="tool-"]):not([class*="swatch"]):not([class*="tbtn"]):not([class*="chat-send"]):not([class*="chat-scroll-bottom"]):not([class*="secondary"]):not([class*="danger"]):not([class*="compact"]):not([class*="lobby-"]):not([class*="settings-"]):not([class*="home-dialog"]):not([class*="toast"]):active:not(:disabled) {
   transform: translateY(1px);
   box-shadow: 0 0 0 var(--shell-color-primary-strong);
 }
@@ -2043,13 +2043,65 @@ label span {
   opacity: 0.5;
 }
 
+.chat-feed-shell {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
 .chat-feed {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 0.65rem;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
+}
+
+.chat-scroll-bottom-button {
+  position: absolute;
+  left: 50%;
+  bottom: 0.75rem;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid color-mix(in srgb, var(--shell-color-primary) 40%, var(--shell-color-border));
+  border-radius: 50%;
+  padding: 0;
+  background: color-mix(in srgb, var(--shell-color-surface-strong) 94%, transparent);
+  color: var(--shell-color-text);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.18);
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  opacity: 0;
+  transform: translateX(-50%) translateY(0.5rem) scale(0.85);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease, border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.chat-scroll-bottom-button.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.chat-scroll-bottom-button:hover {
+  border-color: var(--shell-color-primary);
+  background: var(--shell-color-surface-strong);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.24);
+}
+
+.chat-scroll-bottom-button:active {
+  transform: translateX(-50%) translateY(1px) scale(0.95);
+}
+
+.chat-scroll-bottom-button:focus-visible {
+  outline: none;
+  box-shadow: var(--shell-focus-ring), 0 6px 20px rgb(0 0 0 / 0.2);
 }
 
 .chat-msg {
@@ -2067,6 +2119,10 @@ label span {
 }
 
 .chat-msg .chat-msg-text { color: var(--shell-color-muted-text); }
+
+.chat-msg.msg-consecutive {
+  padding-top: 0;
+}
 
 .chat-msg.msg-correctGuess {
   background: transparent;

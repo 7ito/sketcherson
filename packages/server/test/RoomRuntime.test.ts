@@ -1295,6 +1295,78 @@ describe('RoomRuntime', () => {
     expect(rerollResult.data.room.match.currentTurn.drawing).toBeNull();
   });
 
+  it('rejects rerolls after any guesser has guessed correctly', () => {
+    vi.useFakeTimers();
+
+    const origin = 'https://sketcherson.example';
+    const service = createRoomRuntimeDriver({ countdownMs: 25, gameDefinition: TEST_GAME_DEFINITION, random: () => 0 });
+    const createResult = service.createRoom('Host', 'socket-1', origin);
+    expect(createResult.ok).toBe(true);
+    if (!createResult.ok) {
+      return;
+    }
+
+    const guestJoinResult = service.joinRoom(createResult.data.room.code, 'Guest', 'socket-2', origin);
+    expect(guestJoinResult.ok).toBe(true);
+    if (!guestJoinResult.ok) {
+      return;
+    }
+
+    const otherJoinResult = service.joinRoom(createResult.data.room.code, 'Other', 'socket-3', origin);
+    expect(otherJoinResult.ok).toBe(true);
+    if (!otherJoinResult.ok) {
+      return;
+    }
+
+    const startResult = service.startRoom('socket-1', origin);
+    expect(startResult.ok).toBe(true);
+    if (!startResult.ok || !startResult.data.room.match?.currentTurn) {
+      return;
+    }
+
+    const playersBySocket = [
+      { socketId: 'socket-1', playerId: createResult.data.playerId },
+      { socketId: 'socket-2', playerId: guestJoinResult.data.playerId },
+      { socketId: 'socket-3', playerId: otherJoinResult.data.playerId },
+    ];
+    const drawerSocketId = playersBySocket.find((player) => player.playerId === startResult.data.room.match?.currentTurn?.drawerPlayerId)?.socketId;
+    expect(drawerSocketId).toBeDefined();
+    if (!drawerSocketId) {
+      return;
+    }
+    const guesserSocketId = playersBySocket.find((player) => player.socketId !== drawerSocketId)?.socketId;
+    expect(guesserSocketId).toBeDefined();
+    if (!guesserSocketId) {
+      return;
+    }
+
+    vi.advanceTimersByTime(30);
+
+    const drawerState = service.getRoomStateForSocket(drawerSocketId, createResult.data.room.code, origin);
+    expect(drawerState.ok).toBe(true);
+    if (!drawerState.ok || !drawerState.data.room.match?.currentTurn?.prompt) {
+      return;
+    }
+
+    const guessResult = service.submitMessage(guesserSocketId, drawerState.data.room.match.currentTurn.prompt, origin);
+    expect(guessResult.ok).toBe(true);
+    if (!guessResult.ok) {
+      return;
+    }
+    expect(guessResult.data.room.status).toBe('round');
+    expect(guessResult.data.room.match?.currentTurn?.correctGuessPlayerIds.length).toBe(1);
+
+    const rerollResult = service.rerollTurn(drawerSocketId, origin);
+    expect(rerollResult.ok).toBe(false);
+    if (rerollResult.ok) {
+      return;
+    }
+    expect(rerollResult.error).toMatchObject({
+      code: 'REROLL_UNAVAILABLE',
+      message: 'Rerolls are no longer available after a correct guess.',
+    });
+  });
+
   it('lets the host configure unlimited rerolls for each turn', () => {
     const service = createRoomRuntimeDriver();
     const createResult = service.createRoom('Host', 'socket-1', 'https://sketcherson.example');

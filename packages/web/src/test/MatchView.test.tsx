@@ -108,6 +108,26 @@ describe('MatchView extension slots', () => {
   });
 });
 
+describe('MatchView reroll controls', () => {
+  it('hides the drawer reroll button after a correct guess', () => {
+    const room = buildRoom({
+      match: {
+        ...buildRoom().match!,
+        currentTurn: {
+          ...buildRoom().match!.currentTurn!,
+          prompt: 'Archer',
+          promptVisibility: 'assigned',
+          correctGuessPlayerIds: ['guest-1'],
+        },
+      },
+    });
+
+    renderMatchView(room, 'host-1');
+
+    expect(screen.queryByRole('button', { name: /Reroll prompt/ })).not.toBeInTheDocument();
+  });
+});
+
 describe('MatchView round warning audio', () => {
   afterEach(() => {
     vi.useRealTimers();

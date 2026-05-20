@@ -511,6 +511,16 @@ export class MatchController {
       };
     }
 
+    if (activeTurn.correctGuessPlayerIds.size > 0) {
+      return {
+        ok: false,
+        error: {
+          code: 'REROLL_UNAVAILABLE',
+          message: 'Rerolls are no longer available after a correct guess.',
+        },
+      };
+    }
+
     if (activeTurn.rerollsRemaining !== 'unlimited' && activeTurn.rerollsRemaining < 1) {
       return {
         ok: false,

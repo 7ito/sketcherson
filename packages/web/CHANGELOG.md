@@ -1,5 +1,13 @@
 # @7ito/sketcherson-web
 
+## 0.3.23
+
+### Patch Changes
+
+- Emotes fix
+- Updated dependencies
+  - @7ito/sketcherson-common@0.3.19
+
 ## 0.3.22
 
 ### Patch Changes

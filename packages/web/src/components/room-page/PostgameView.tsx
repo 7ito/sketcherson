@@ -101,7 +101,13 @@ export function PostgameView({
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const matchFeed = room.match ? room.match.feed ?? legacyChatMessagesToRoomFeed(room.match.chatMessages) : [];
   const matchFeedLength = matchFeed.length;
-  const { containerRef: chatFeedRef, handleScroll: handleChatFeedScroll } = useAutoScrollToBottom(matchFeedLength);
+  const matchFeedScrollKey = matchFeed[matchFeedLength - 1]?.id ?? matchFeedLength;
+  const {
+    containerRef: chatFeedRef,
+    handleScroll: handleChatFeedScroll,
+    isScrolledUp: isChatFeedScrolledUp,
+    scrollToBottom: scrollChatFeedToBottom,
+  } = useAutoScrollToBottom(matchFeedScrollKey);
 
   const playerAccentColors = useMemo(() => buildPlayerAccentMap(room.players), [room.players]);
   const isViewerHost = room.players.some((player) => player.id === currentPlayerId && player.isHost);
@@ -329,11 +335,25 @@ export function PostgameView({
             <span>{SHELL_ROOM_COPY.chatHeader}</span>
           </div>
 
-          <div ref={chatFeedRef} className="chat-feed" aria-label="Room feed messages" onScroll={handleChatFeedScroll}>
-            {matchFeedLength ? (
-              renderStructuredRoomFeed(matchFeed, playerAccentColors, userSettings.profanityFilterEnabled)
-            ) : (
-              <div className="chat-msg-empty">{SHELL_COMMON_COPY.noMessagesYet}</div>
+          <div className="chat-feed-shell">
+            <div ref={chatFeedRef} className="chat-feed" aria-label="Room feed messages" onScroll={handleChatFeedScroll}>
+              {matchFeedLength ? (
+                renderStructuredRoomFeed(matchFeed, playerAccentColors, userSettings.profanityFilterEnabled)
+              ) : (
+                <div className="chat-msg-empty">{SHELL_COMMON_COPY.noMessagesYet}</div>
+              )}
+            </div>
+            {isChatFeedScrolledUp && (
+              <button
+                type="button"
+                className="chat-scroll-bottom-button visible"
+                onClick={scrollChatFeedToBottom}
+                aria-label="Scroll to bottom"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
             )}
           </div>
 

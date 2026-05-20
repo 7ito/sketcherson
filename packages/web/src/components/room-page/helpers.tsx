@@ -1,7 +1,7 @@
 import type { PromptCollection } from '@7ito/sketcherson-common/prompts';
 import type { CurrentTurnState, FirstCorrectGuessTimeCapPreset, LobbySettings, RoomPlayer, RoomState, RoundTimerPreset } from '@7ito/sketcherson-common/room';
 import { normalizeLobbySettingsForGame } from '@7ito/sketcherson-common/settings';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { GAME_DEFINITION, GAME_RUNTIME, GAME_WEB_CONFIG } from '../../game';
 
 export const GAME_TERMINOLOGY = GAME_DEFINITION.terminology;
@@ -57,37 +57,100 @@ export function isNearBottom(container: HTMLDivElement): boolean {
 export function useAutoScrollToBottom(changeKey: string | number) {
   const containerRef = useRef<HTMLDivElement>(null);
   const shouldAutoScrollRef = useRef(true);
+  const scrollAnimationFrameRef = useRef<number | null>(null);
+  const isAnimatingScrollRef = useRef(false);
+  const [isScrolledUp, setIsScrolledUp] = useState(false);
 
-  const handleScroll = () => {
+  const syncScrollState = useCallback(() => {
     const container = containerRef.current;
 
     if (!container) {
       return;
     }
 
-    shouldAutoScrollRef.current = isNearBottom(container);
-  };
+    const shouldAutoScroll = isNearBottom(container);
 
-  useEffect(() => {
+    if (isAnimatingScrollRef.current) {
+      shouldAutoScrollRef.current = true;
+      setIsScrolledUp(!shouldAutoScroll);
+      return;
+    }
+
+    shouldAutoScrollRef.current = shouldAutoScroll;
+    setIsScrolledUp(!shouldAutoScroll);
+  }, []);
+
+  const handleScroll = useCallback(() => {
+    syncScrollState();
+  }, [syncScrollState]);
+
+  const scrollToBottom = useCallback(() => {
     const container = containerRef.current;
 
     if (!container) {
       return;
     }
 
-    shouldAutoScrollRef.current = isNearBottom(container);
+    if (scrollAnimationFrameRef.current !== null) {
+      window.cancelAnimationFrame(scrollAnimationFrameRef.current);
+    }
+
+    const startScrollTop = container.scrollTop;
+    const targetScrollTop = container.scrollHeight;
+    const distance = targetScrollTop - startScrollTop;
+
+    shouldAutoScrollRef.current = true;
+
+    if (distance <= 0) {
+      isAnimatingScrollRef.current = false;
+      setIsScrolledUp(false);
+      return;
+    }
+
+    isAnimatingScrollRef.current = true;
+    const durationMs = 500;
+    let startedAt: number | null = null;
+
+    const animateScroll = (timestamp: number) => {
+      startedAt ??= timestamp;
+      const progress = Math.min(1, (timestamp - startedAt) / durationMs);
+      const easedProgress = progress < 0.5
+        ? 4 * progress * progress * progress
+        : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+      container.scrollTop = startScrollTop + distance * easedProgress;
+
+      if (progress < 1) {
+        scrollAnimationFrameRef.current = window.requestAnimationFrame(animateScroll);
+        return;
+      }
+
+      container.scrollTop = targetScrollTop;
+      scrollAnimationFrameRef.current = null;
+      isAnimatingScrollRef.current = false;
+      shouldAutoScrollRef.current = true;
+      setIsScrolledUp(false);
+    };
+
+    scrollAnimationFrameRef.current = window.requestAnimationFrame(animateScroll);
   }, []);
 
   useEffect(() => {
     const container = containerRef.current;
 
-    if (!container || !shouldAutoScrollRef.current) {
+    if (!container) {
+      return;
+    }
+
+    if (!shouldAutoScrollRef.current) {
+      setIsScrolledUp(!isNearBottom(container));
       return;
     }
 
     const frameId = window.requestAnimationFrame(() => {
       container.scrollTop = container.scrollHeight;
       shouldAutoScrollRef.current = true;
+      setIsScrolledUp(false);
     });
 
     return () => {
@@ -95,9 +158,19 @@ export function useAutoScrollToBottom(changeKey: string | number) {
     };
   }, [changeKey]);
 
+  useEffect(() => {
+    return () => {
+      if (scrollAnimationFrameRef.current !== null) {
+        window.cancelAnimationFrame(scrollAnimationFrameRef.current);
+      }
+    };
+  }, []);
+
   return {
     containerRef,
     handleScroll,
+    isScrolledUp,
+    scrollToBottom,
   };
 }
 

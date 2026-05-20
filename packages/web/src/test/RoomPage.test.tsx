@@ -1,4 +1,4 @@
-import type { ApiResult, DrawingActionSuccess, JoinRoomSuccess, ReclaimRoomSuccess, RerollTurnSuccess, RoomStateSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@7ito/sketcherson-common/room';
+import type { ApiResult, DrawingActionSuccess, JoinRoomSuccess, ReclaimRoomSuccess, RerollTurnSuccess, RoomFeedItem, RoomStateSuccess, StartRoomSuccess, SubmitMessageSuccess, UpdateLobbySettingsSuccess } from '@7ito/sketcherson-common/room';
 import type { DrawingState } from '@7ito/sketcherson-common/drawing';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -1399,6 +1399,130 @@ describe('RoomPage', () => {
     clientHeightSpy.mockRestore();
   });
 
+  it('auto-scrolls the room feed when capped feed records are replaced without changing length', async () => {
+    let scrollHeight = 420;
+    const scrollHeightSpy = vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockImplementation(() => scrollHeight);
+    const clientHeightSpy = vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(100);
+    const buildFeed = (startId: number): RoomFeedItem[] => Array.from({ length: 200 }, (_, index) => ({
+      id: `message-${startId + index}`,
+      createdAt: Date.now() + index,
+      turnNumber: 1,
+      type: 'playerChat' as const,
+      senderPlayerId: 'guest-1',
+      senderNickname: 'Guest',
+      text: `guess ${startId + index}`,
+    }));
+    const buildRoom = (feed: RoomFeedItem[]) => ({
+      code: 'ABCDEF',
+      shareUrl: 'https://sketcherson.example/room/ABCDEF',
+      status: 'round' as const,
+      match: {
+        phaseEndsAt: Date.now() + 3_000,
+        currentTurn: {
+          turnNumber: 1,
+          totalTurns: 2,
+          drawerPlayerId: 'host-1',
+          drawerNickname: 'Host',
+          prompt: null,
+          promptVisibility: 'hidden' as const,
+          rerollsRemaining: 1,
+          rerolledFrom: null,
+          correctGuessPlayerIds: [],
+          drawing: buildDrawingState(),
+        },
+        completedTurns: [],
+        feed,
+        scoreboard: [
+          {
+            playerId: 'guest-1',
+            nickname: 'Guest',
+            score: 0,
+          },
+          {
+            playerId: 'host-1',
+            nickname: 'Host',
+            score: 0,
+          },
+        ],
+      },
+      settings: {
+        roundTimerSeconds: 90,
+        firstCorrectGuessTimeCapSeconds: 30,
+        turnsPerPlayer: 1,
+        artEnabled: true,
+      },
+      players: [
+        {
+          id: 'host-1',
+          nickname: 'Host',
+          connected: true,
+          reconnectBy: null,
+          isHost: true,
+        },
+        {
+          id: 'guest-1',
+          nickname: 'Guest',
+          connected: true,
+          reconnectBy: null,
+          isHost: false,
+        },
+      ],
+      lobbyDrawing: null,
+      lobbyFeed: [],
+    });
+    const renderRoomPage = (feed: RoomFeedItem[]) => (
+      <MemoryRouter initialEntries={['/room/ABCDEF']}>
+        <RoomSessionContext.Provider
+          value={{
+            activeRoom: buildRoom(feed),
+            joinedSession: {
+              playerId: 'guest-1',
+              roomCode: 'ABCDEF',
+              nickname: 'Guest',
+              sessionToken: 'session-2',
+            },
+            sessionRecoveryError: null,
+            roomExitNotice: null,
+            createRoom: vi.fn(),
+            joinRoom: vi.fn<() => Promise<ApiResult<JoinRoomSuccess>>>(),
+            reclaimStoredSession: vi.fn<() => Promise<ApiResult<ReclaimRoomSuccess> | null>>().mockResolvedValue(null),
+            lookupRoom: vi.fn<() => Promise<ApiResult<RoomStateSuccess>>>(),
+            updateLobbySettings: vi.fn<() => Promise<ApiResult<UpdateLobbySettingsSuccess>>>(),
+            startRoom: vi.fn<() => Promise<ApiResult<StartRoomSuccess>>>(),
+            pauseRoom: vi.fn(),
+            resumeRoom: vi.fn(),
+            kickPlayer: vi.fn(),
+            rerollTurn: vi.fn<() => Promise<ApiResult<RerollTurnSuccess>>>(),
+            submitDrawingAction: vi.fn<() => Promise<ApiResult<DrawingActionSuccess>>>(),
+            submitRoomMessage: vi.fn<() => Promise<ApiResult<SubmitMessageSuccess>>>(),
+          }}
+        >
+          <Routes>
+            <Route path="/room/:code" element={<RoomPage />} />
+          </Routes>
+        </RoomSessionContext.Provider>
+      </MemoryRouter>
+    );
+
+    const initialFeed = buildFeed(1);
+    const nextFeed = buildFeed(2);
+    const { rerender } = render(renderRoomPage(initialFeed));
+    const feed = screen.getByLabelText('Room feed messages');
+
+    feed.scrollTop = 275;
+    fireEvent.scroll(feed);
+    scrollHeight = 480;
+
+    rerender(renderRoomPage(nextFeed));
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Room feed messages').scrollTop).toBe(480);
+    });
+
+    scrollHeightSpy.mockRestore();
+    clientHeightSpy.mockRestore();
+  });
+
   it('keeps the room feed position when a new message is appended and the viewer scrolled up', async () => {
     let scrollHeight = 160;
     const scrollHeightSpy = vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockImplementation(() => scrollHeight);
@@ -1527,6 +1651,14 @@ describe('RoomPage', () => {
     await waitFor(() => {
       expect(screen.getByLabelText('Room feed messages').scrollTop).toBe(0);
     });
+
+    const scrollButton = screen.getByRole('button', { name: 'Scroll to bottom' });
+    fireEvent.click(scrollButton);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Room feed messages').scrollTop).toBe(260);
+    });
+    expect(screen.queryByRole('button', { name: 'Scroll to bottom' })).not.toBeInTheDocument();
 
     scrollHeightSpy.mockRestore();
     clientHeightSpy.mockRestore();
