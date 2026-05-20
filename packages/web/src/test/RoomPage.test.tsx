@@ -1270,7 +1270,7 @@ describe('RoomPage', () => {
     let scrollHeight = 120;
     const scrollHeightSpy = vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockImplementation(() => scrollHeight);
     const clientHeightSpy = vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(100);
-    const buildRoom = (chatMessages: Array<{ id: string; senderPlayerId: string; senderNickname: string; kind: 'chat'; text: string; createdAt: number }>) => ({
+    const buildRoom = (chatMessages: Array<{ id: string; senderPlayerId: string; senderNickname: string; kind: 'message'; text: string; createdAt: number }>) => ({
       code: 'ABCDEF',
       shareUrl: 'https://sketcherson.example/room/ABCDEF',
       status: 'round' as const,
@@ -1326,7 +1326,7 @@ describe('RoomPage', () => {
         },
       ],
     });
-    const renderRoomPage = (chatMessages: Array<{ id: string; senderPlayerId: string; senderNickname: string; kind: 'chat'; text: string; createdAt: number }>) => (
+    const renderRoomPage = (chatMessages: Array<{ id: string; senderPlayerId: string; senderNickname: string; kind: 'message'; text: string; createdAt: number }>) => (
       <MemoryRouter initialEntries={['/room/ABCDEF']}>
         <RoomSessionContext.Provider
           value={{
@@ -1365,7 +1365,7 @@ describe('RoomPage', () => {
         id: 'message-1',
         senderPlayerId: 'guest-1',
         senderNickname: 'Guest',
-        kind: 'chat' as const,
+        kind: 'message' as const,
         text: 'first guess',
         createdAt: Date.now(),
       },
@@ -1384,7 +1384,7 @@ describe('RoomPage', () => {
           id: 'message-2',
           senderPlayerId: 'host-1',
           senderNickname: 'Host',
-          kind: 'chat',
+          kind: 'message',
           text: 'second guess',
           createdAt: Date.now() + 1,
         },
@@ -1527,7 +1527,7 @@ describe('RoomPage', () => {
     let scrollHeight = 160;
     const scrollHeightSpy = vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockImplementation(() => scrollHeight);
     const clientHeightSpy = vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(100);
-    const buildRoom = (chatMessages: Array<{ id: string; senderPlayerId: string; senderNickname: string; kind: 'chat'; text: string; createdAt: number }>) => ({
+    const buildRoom = (chatMessages: Array<{ id: string; senderPlayerId: string; senderNickname: string; kind: 'message'; text: string; createdAt: number }>) => ({
       code: 'ABCDEF',
       shareUrl: 'https://sketcherson.example/room/ABCDEF',
       status: 'round' as const,
@@ -1583,7 +1583,7 @@ describe('RoomPage', () => {
         },
       ],
     });
-    const renderRoomPage = (chatMessages: Array<{ id: string; senderPlayerId: string; senderNickname: string; kind: 'chat'; text: string; createdAt: number }>) => (
+    const renderRoomPage = (chatMessages: Array<{ id: string; senderPlayerId: string; senderNickname: string; kind: 'message'; text: string; createdAt: number }>) => (
       <MemoryRouter initialEntries={['/room/ABCDEF']}>
         <RoomSessionContext.Provider
           value={{
@@ -1622,7 +1622,7 @@ describe('RoomPage', () => {
         id: 'message-1',
         senderPlayerId: 'guest-1',
         senderNickname: 'Guest',
-        kind: 'chat' as const,
+        kind: 'message' as const,
         text: 'first guess',
         createdAt: Date.now(),
       },
@@ -1641,7 +1641,7 @@ describe('RoomPage', () => {
           id: 'message-2',
           senderPlayerId: 'host-1',
           senderNickname: 'Host',
-          kind: 'chat',
+          kind: 'message',
           text: 'second guess',
           createdAt: Date.now() + 1,
         },
