@@ -2434,6 +2434,72 @@ describe('RoomRuntime', () => {
     expect(secondGuess.data.room.match.completedTurns).toHaveLength(1);
   });
 
+  it('stores postgame chat in the match feed rendered by the postgame screen', () => {
+    vi.useFakeTimers();
+
+    const origin = 'https://sketcherson.example';
+    const service = createRoomRuntimeDriver({
+      countdownMs: 25,
+      revealMs: 25,
+      roundDurationOverrideMs: 40,
+      random: () => 0,
+    });
+    const createResult = service.createRoom('Host', 'socket-1', origin);
+
+    if (!createResult.ok) {
+      throw new Error('Expected room creation to succeed');
+    }
+
+    const joinResult = service.joinRoom(createResult.data.room.code, 'Guest', 'socket-2', origin);
+
+    if (!joinResult.ok) {
+      throw new Error('Expected room join to succeed');
+    }
+
+    const settingsUpdate = service.updateLobbySettings(
+      'socket-1',
+      {
+        roundTimerSeconds: 60,
+        firstCorrectGuessTimeCapSeconds: 30,
+        turnsPerPlayer: 1,
+        artEnabled: true,
+      },
+      origin,
+    );
+    expect(settingsUpdate.ok).toBe(true);
+
+    const startResult = service.startRoom('socket-1', origin);
+    expect(startResult.ok).toBe(true);
+
+    vi.advanceTimersByTime(200);
+
+    const postgameState = service.getRoomState(createResult.data.room.code, origin);
+    expect(postgameState.ok).toBe(true);
+
+    if (!postgameState.ok) {
+      return;
+    }
+
+    expect(postgameState.data.room.status).toBe('postgame');
+
+    const messageResult = service.submitMessage('socket-2', 'gg everyone', origin);
+    expect(messageResult.ok).toBe(true);
+
+    if (!messageResult.ok) {
+      return;
+    }
+
+    expect(messageResult.data.room.status).toBe('postgame');
+    expect(messageResult.data.room.match?.feed.at(-1)).toMatchObject({
+      type: 'playerChat',
+      senderPlayerId: joinResult.data.playerId,
+      senderNickname: 'Guest',
+      text: 'gg everyone',
+      turnNumber: null,
+    });
+    expect(messageResult.data.room.lobbyFeed.some((item) => item.type === 'playerChat' && item.text === 'gg everyone')).toBe(false);
+  });
+
   it('allows the host to adjust settings in postgame and start a fresh rematch in the same room', () => {
     vi.useFakeTimers();
 

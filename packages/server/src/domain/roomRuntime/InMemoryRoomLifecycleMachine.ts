@@ -726,7 +726,7 @@ export class InMemoryRoomLifecycleMachine implements RoomEngine, RoomLifecycleMa
       };
     }
 
-    if (currentRoom.status === 'lobby' || currentRoom.status === 'postgame') {
+    if (currentRoom.status === 'lobby') {
       appendRoomFeedRecord(currentRoom.lobbyFeed, {
         id: this.ids.randomUUID(),
         type: 'playerChat',
